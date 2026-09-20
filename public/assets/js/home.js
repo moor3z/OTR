@@ -1,4 +1,4 @@
-import { api, getConfig, productCard, wireAddButtons, gbp, $ } from './site.js';
+import { api, getConfig, productCard, wireAddButtons, gbp, $ } from './site.js?v=5';
 
 getConfig().then((c) => {
   if (c.hero_headline) $('#hero-headline').textContent = c.hero_headline;
