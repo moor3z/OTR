@@ -97,6 +97,7 @@ export function addToBasket(p, v, qty) {
 const ICON = {
   search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
   basket: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9h14l-1.4 10.2a2 2 0 0 1-2 1.8H8.4a2 2 0 0 1-2-1.8L5 9Z"/><path d="M9 9V7a3 3 0 0 1 6 0v2"/></svg>',
+  menu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
   close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
 };
 const searchForm = (id) => `<form class="search-form" action="/shop" method="get" role="search">
@@ -107,7 +108,7 @@ const searchForm = (id) => `<form class="search-form" action="/shop" method="get
 function renderChrome() {
   const here = location.pathname.replace(/\/$/, '') || '/';
   const cat = new URLSearchParams(location.search).get('category');
-  const nav = [['/shop', 'Shop all', null], ['/shop?category=snap-bars', 'Snap Bars', 'snap-bars'], ['/shop?category=wax-melt-shapes', 'Melt Shapes', 'wax-melt-shapes'],
+  const nav = [['/', 'Home', 'home'], ['/shop?category=snap-bars', 'Snap Bars', 'snap-bars'], ['/shop?category=wax-melt-shapes', 'Melt Shapes', 'wax-melt-shapes'],
     ['/shop?category=sample-boxes', 'Sample Boxes', 'sample-boxes'], ['/shop?category=gift-sets', 'Gift Sets', 'gift-sets'], ['/shop?category=accessories', 'Accessories', 'accessories']];
   const header = document.createElement('div');
   header.innerHTML = `<a class="skip" href="#main">Skip to content</a>
@@ -118,15 +119,19 @@ function renderChrome() {
         <img src="/assets/img/logo-180.webp" srcset="/assets/img/logo-180.webp 1x, /assets/img/logo-360.webp 2x" width="180" height="204" alt="Over The Rainbow Wax Melts">
       </a>
       <div class="header-search desktop">${searchForm('q-desktop')}</div>
-      <button class="icon-btn search-toggle" type="button" aria-expanded="false" aria-controls="mobile-search" aria-label="Search">${ICON.search}</button>
       <button class="icon-btn basket-btn" type="button" id="basket-btn" aria-haspopup="dialog">
         ${ICON.basket}<span class="basket-count" data-n="0" aria-hidden="true">0</span><span class="visually-hidden" id="basket-label">Basket, 0 items</span>
       </button>
+      <button class="icon-btn menu-toggle" type="button" aria-expanded="false" aria-controls="site-menu"><span class="menu-icon when-closed">${ICON.menu}</span><span class="menu-icon when-open">${ICON.close}</span><span class="visually-hidden">Menu</span></button>
     </div>
-    <div class="header-search mobile" id="mobile-search">${searchForm('q-mobile')}</div>
-    <nav class="site-nav" aria-label="Shop categories">
-      ${nav.map(([href, label, c]) => `<a href="${href}"${here === '/shop' && (cat || null) === c ? ' aria-current="page"' : ''}>${label}</a>`).join('')}
-    </nav>
+    <div class="site-menu" id="site-menu">
+      <div class="header-search mobile">${searchForm('q-mobile')}</div>
+      <nav class="site-nav" aria-label="Shop categories">
+        ${nav.map(([href, label, c]) => `<a href="${href}"${(c === 'home' ? here === '/' : here === '/shop' && cat === c) ? ' aria-current="page"' : ''}>${label}</a>`).join('')}
+        <a class="nav-extra" href="/delivery-returns">Delivery &amp; returns</a>
+        <a class="nav-extra" href="/contact">Contact</a>
+      </nav>
+    </div>
   </div></header>`;
   document.body.prepend(...header.childNodes);
 
@@ -140,12 +145,17 @@ function renderChrome() {
   document.body.append(footer);
   $('#year').textContent = new Date().getFullYear();
 
-  const toggle = $('.search-toggle'), mobile = $('#mobile-search');
-  toggle.addEventListener('click', () => {
-    const open = mobile.classList.toggle('is-open');
+  // Phone/tablet menu: one button opens search + all links
+  const toggle = $('.menu-toggle'), menu = $('#site-menu');
+  const setMenu = (open) => {
+    menu.classList.toggle('is-open', open);
     toggle.setAttribute('aria-expanded', String(open));
-    if (open) $('input', mobile).focus();
-  });
+  };
+  toggle.addEventListener('click', () => setMenu(!menu.classList.contains('is-open')));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && menu.classList.contains('is-open')) { setMenu(false); toggle.focus(); } });
+  document.addEventListener('click', (e) => { if (menu.classList.contains('is-open') && !e.composedPath().includes($('.site-header'))) setMenu(false); });
+  menu.addEventListener('submit', () => setMenu(false));
+  menu.addEventListener('click', (e) => { if (e.target.closest('a')) setMenu(false); });
   const q = new URLSearchParams(location.search).get('q');
   if (q) document.querySelectorAll('.search-form input').forEach((i) => (i.value = q));
 

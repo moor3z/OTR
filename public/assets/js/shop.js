@@ -27,8 +27,8 @@ function render() {
     `<li><button type="button" class="chip" data-cat="${c.id}" aria-pressed="${c.id === state.category}">${esc(c.name)}</button></li>`).join('');
   document.querySelectorAll('#scents .chip').forEach((b) => b.setAttribute('aria-pressed', String(state.scents.has(b.dataset.scent))));
   document.querySelectorAll('.site-nav a').forEach((a) => {
-    const c = new URL(a.href).searchParams.get('category') || 'all';
-    c === state.category ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current');
+    const u = new URL(a.href), c = u.searchParams.get('category');
+    u.pathname === '/shop' && c === state.category ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current');
   });
 
   const q = state.q.toLowerCase();
