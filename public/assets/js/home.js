@@ -1,4 +1,5 @@
-import { api, getConfig, productCard, wireAddButtons, gbp, $ } from './site.js?v=5';
+import { postCard } from './blog.js?v=6';
+import { api, getConfig, productCard, wireAddButtons, gbp, $ } from './site.js?v=6';
 
 getConfig().then((c) => {
   if (c.hero_headline) $('#hero-headline').textContent = c.hero_headline;
@@ -20,3 +21,9 @@ api('/api/products').then(({ products }) => {
     : `<div class="empty"><p>Products are on their way. Check back soon.</p></div>`;
   wireAddButtons(root, (id) => products.find((p) => p.id === id));
 }).catch((e) => { root.innerHTML = `<div class="notice notice-error" role="alert"><p>${e.message}</p><button class="btn btn-ghost btn-sm" data-reload>Try again</button></div>`; });
+
+api('/api/posts').then(({ posts }) => {
+  if (!posts.length) return;
+  $('#home-blog').hidden = false;
+  $('#home-posts').innerHTML = posts.slice(0, 4).map(postCard).join('');
+}).catch(() => {});

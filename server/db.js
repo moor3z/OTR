@@ -1,6 +1,7 @@
 // Database access (Cloudflare D1 / SQLite). The schema is created automatically
 // on first request, and sample content is seeded if the database is empty.
 import { SAMPLE_PRODUCTS, DEFAULT_SETTINGS, DEFAULT_PAGES } from './seed.js';
+import { FAQ_PAGE, BLOG_POSTS } from './content.js';
 
 const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)`,
@@ -38,6 +39,10 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS pages (
      slug TEXT PRIMARY KEY, title TEXT NOT NULL, body TEXT NOT NULL,
      needs_review INTEGER NOT NULL DEFAULT 1, updated_at TEXT NOT NULL)`,
+  `CREATE TABLE IF NOT EXISTS posts (
+     slug TEXT PRIMARY KEY, title TEXT NOT NULL, excerpt TEXT NOT NULL DEFAULT '',
+     body TEXT NOT NULL DEFAULT '', image_url TEXT NOT NULL DEFAULT '',
+     published INTEGER NOT NULL DEFAULT 1, published_at TEXT NOT NULL, updated_at TEXT NOT NULL)`,
 ];
 
 let ready = null; // memoised per worker isolate
@@ -55,7 +60,28 @@ export function getDb(env) {
 async function init(db) {
   await db.batch(SCHEMA.map((s) => db.prepare(s)));
   const seeded = await db.prepare(`SELECT value FROM settings WHERE key='seeded'`).first();
-  if (seeded) return;
+  if (!seeded) await seed(db);
+  await migrateContent(db);
+}
+
+// One-off content additions for databases created before a feature existed.
+// INSERT OR IGNORE means nothing you have edited is ever overwritten.
+async function migrateContent(db) {
+  const row = await db.prepare(`SELECT value FROM settings WHERE key='content_version'`).first();
+  if (row && Number(row.value) >= 2) return;
+  const now = new Date();
+  const stmts = [db.prepare(`INSERT OR IGNORE INTO pages(slug,title,body,needs_review,updated_at) VALUES(?,?,?,0,?)`)
+    .bind(FAQ_PAGE.slug, FAQ_PAGE.title, FAQ_PAGE.body, now.toISOString())];
+  BLOG_POSTS.forEach((p, i) => {
+    const when = new Date(now.getTime() - i * 60000).toISOString(); // keeps the intended order, newest first
+    stmts.push(db.prepare(`INSERT OR IGNORE INTO posts(slug,title,excerpt,body,image_url,published,published_at,updated_at) VALUES(?,?,?,?,?,1,?,?)`)
+      .bind(p.slug, p.title, p.excerpt, p.body, p.image_url, when, when));
+  });
+  stmts.push(db.prepare(`INSERT INTO settings(key,value) VALUES('content_version','2') ON CONFLICT(key) DO UPDATE SET value='2'`));
+  await db.batch(stmts);
+}
+
+async function seed(db) {
   const now = new Date().toISOString();
   const stmts = [];
   for (const [k, v] of Object.entries(DEFAULT_SETTINGS))

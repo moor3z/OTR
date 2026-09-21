@@ -1,4 +1,4 @@
-import { api, getConfig, esc, $ } from './site.js?v=5';
+import { api, getConfig, esc, $ } from './site.js?v=6';
 
 // Tiny safe formatter for the editable pages: "## Heading", "- list item",
 // blank line = new paragraph. Everything is escaped first; no HTML is allowed in.
@@ -7,6 +7,8 @@ export function format(body) {
   return body.replace(/\r/g, '').split(/\n{2,}/).map((block) => {
     const lines = block.split('\n').filter((l) => l.trim());
     if (!lines.length) return '';
+    // "Q: question" followed by the answer lines becomes a tap-to-open FAQ item
+    if (/^Q:\s*/i.test(lines[0])) return `<details class="info faq"><summary>${mark(lines[0].replace(/^Q:\s*/i, ''))}</summary><div>${lines.slice(1).map(mark).join('<br>')}</div></details>`;
     let html = '', list = [], para = [];
     const flush = () => { if (list.length) { html += `<ul>${list.map((l) => `<li>${mark(l)}</li>`).join('')}</ul>`; list = []; } if (para.length) { html += `<p>${para.map(mark).join('<br>')}</p>`; para = []; } };
     for (const l of lines) {

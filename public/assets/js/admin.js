@@ -175,7 +175,7 @@ async function showPages() {
     const p = pages.find((x) => x.slug === b.dataset.page);
     editor.innerHTML = `<form id="page-form"><h2 id="editor-title">Edit ${esc(p.title)}</h2><div class="form-msg"></div>
       <div class="field"><label for="pg-title">Title</label><input id="pg-title" type="text" value="${esc(p.title)}"></div>
-      <div class="field"><label for="pg-body">Content <span class="hint">Blank line = new paragraph. Start a line with ## for a heading or - for a bullet.</span></label><textarea id="pg-body" class="tall">${esc(p.body)}</textarea></div>
+      <div class="field"><label for="pg-body">Content <span class="hint">Blank line = new paragraph. Start a line with ## for a heading or - for a bullet. On the FAQ page, start a line with Q: for a question and put the answer on the line below.</span></label><textarea id="pg-body" class="tall">${esc(p.body)}</textarea></div>
       <div class="checks field"><label><input type="checkbox" id="pg-review"${p.needs_review ? ' checked' : ''}>Still a placeholder (shows a notice on the page)</label></div>
       <div class="editor-actions"><button class="btn btn-primary" type="submit">Save page</button><button class="btn btn-ghost" type="button" data-close>Cancel</button></div></form>`;
     editor.showModal();
@@ -183,8 +183,45 @@ async function showPages() {
   }));
 }
 
+/* ── Blog ───────────────────────────────────────────────────────────────── */
+let posts = [];
+async function showBlog() {
+  ({ posts } = await api('/posts'));
+  panel.innerHTML = `<div class="bar"><h1>Blog</h1><button class="btn btn-primary btn-sm" data-new-post>Add post</button></div>
+    ${posts.length ? `<ul class="rows">${posts.map((p) => `<li class="row"><img src="${esc(p.image_url || '/assets/ph/blank.svg')}" alt="" style="object-fit:contain">
+      <div><span class="row-title">${esc(p.title)}</span> ${p.published ? '<span class="tag paid">Published</span>' : '<span class="tag hidden">Draft</span>'}
+        <p class="row-sub">${when(p.published_at)}</p></div>
+      <button class="btn btn-ghost btn-sm" data-post="${esc(p.slug)}">Edit</button></li>`).join('')}</ul>` : `<div class="empty"><p>No posts yet.</p></div>`}`;
+}
+
+function openPost(p) {
+  const isNew = !p; p = p || { published: true, image_url: '' };
+  editor.innerHTML = `<form id="post-form"><h2 id="editor-title">${isNew ? 'Add post' : 'Edit post'}</h2><div class="form-msg"></div>
+    <div class="field"><label for="b-title">Title</label><input id="b-title" type="text" value="${esc(p.title)}" required></div>
+    <div class="field"><label for="b-excerpt">Short summary <span class="hint">Shown on the blog list and under the title</span></label><textarea id="b-excerpt" style="min-height:80px" maxlength="300">${esc(p.excerpt)}</textarea></div>
+    <div class="field"><label>Image</label><div class="img-pick"><img id="b-img" src="${esc(p.image_url || '/assets/ph/blank.svg')}" alt="Current image" style="object-fit:contain">
+      <div><input type="file" id="b-file" accept="image/jpeg,image/png,image/webp"><span class="hint" id="b-file-note">Photos are resized and compressed automatically before upload.</span></div></div><input type="hidden" id="b-image-url" value="${esc(p.image_url)}"></div>
+    <div class="field"><label for="b-body">Post <span class="hint">Blank line = new paragraph. Start a line with ## for a heading or - for a bullet.</span></label><textarea id="b-body" class="tall">${esc(p.body)}</textarea></div>
+    <div class="checks field"><label><input type="checkbox" id="b-published"${p.published ? ' checked' : ''}>Published (untick to keep as a draft)</label></div>
+    <div class="editor-actions"><button class="btn btn-primary" type="submit">Save post</button><button class="btn btn-ghost" type="button" data-close>Cancel</button>${isNew ? '' : '<button class="link-btn" type="button" id="b-delete" style="margin-left:auto;color:var(--danger)">Delete post</button>'}</div></form>`;
+  editor.showModal();
+  const form = $('#post-form');
+  $('#b-file').onchange = async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const note = $('#b-file-note'); note.textContent = 'Uploading…';
+    try { const blob = await shrink(file); const { url } = await api('/images', { method: 'POST', body: blob, raw: true, type: blob.type }); $('#b-image-url').value = url; $('#b-img').src = url; note.textContent = 'Uploaded. Save the post to keep it.'; }
+    catch (err) { note.textContent = err.message; }
+  };
+  if (!isNew) $('#b-delete').onclick = async () => { if (!confirm(`Delete “${p.title}”? This cannot be undone.`)) return; try { await api(`/posts/${p.slug}`, { method: 'DELETE' }); editor.close(); flash('Post deleted'); showBlog(); } catch (err) { fieldErrors(form, err); } };
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const body = { title: $('#b-title').value, excerpt: $('#b-excerpt').value, body: $('#b-body').value, image_url: $('#b-image-url').value, published: $('#b-published').checked, published_at: p.published_at };
+    try { await api(isNew ? '/posts' : `/posts/${p.slug}`, { method: isNew ? 'POST' : 'PUT', body }); editor.close(); flash('Post saved'); showBlog(); }
+    catch (err) { fieldErrors(form, err); }
+  };
+}
 /* ── Wiring ─────────────────────────────────────────────────────────────── */
-const TABS = { orders: showOrders, products: showProducts, settings: showSettings, pages: showPages };
+const TABS = { orders: showOrders, products: showProducts, settings: showSettings, pages: showPages, blog: showBlog };
 function go(tab) {
   document.querySelectorAll('[role=tab]').forEach((t) => t.setAttribute('aria-selected', String(t.dataset.tab === tab)));
   panel.setAttribute('aria-labelledby', `tab-${tab}`);
@@ -198,6 +235,8 @@ document.addEventListener('click', (e) => {
   else if (t.closest('[data-order]')) openOrder(t.closest('[data-order]').dataset.order).catch(fail);
   else if (t.closest('[data-product]')) openProduct(products.find((p) => p.id === t.closest('[data-product]').dataset.product));
   else if (t.closest('[data-new-product]')) openProduct(null);
+  else if (t.closest('[data-post]')) openPost(posts.find((p) => p.slug === t.closest('[data-post]').dataset.post));
+  else if (t.closest('[data-new-post]')) openPost(null);
   else if (t.closest('[data-delete-samples]')) { if (confirm('Delete every product still tagged Sample?')) api('/sample', { method: 'DELETE' }).then((r) => { flash(`${r.deleted} sample products deleted`); showProducts(); }).catch(fail); }
 });
 api('/me').then((me) => { $('#who').textContent = `Signed in as ${me.email}`; go(TABS[location.hash.slice(1)] ? location.hash.slice(1) : 'orders'); }).catch(fail);

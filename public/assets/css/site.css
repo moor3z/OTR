@@ -240,6 +240,27 @@ dialog.drawer::backdrop { background: rgba(46, 20, 55, .55); }
 .prose { max-width: 70ch; } .prose h2 { margin-top: 1.75em; font-size: 1.5rem; } .prose ul { padding-left: 1.25rem; } .prose li { margin-bottom: .375rem; }
 .todo { background: #fff6cf; border-radius: 6px; padding: .125rem .375rem; font-weight: 500; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
 
+/* Blog */
+.post-grid { display: grid; gap: 2rem 1.5rem; list-style: none; margin: 0; padding: 0; }
+@media (min-width: 640px) { .post-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1040px) { .post-grid { grid-template-columns: repeat(4, 1fr); } #blog-root .post-grid { grid-template-columns: repeat(2, 1fr); gap: 2.5rem 2rem; } #more-posts { grid-template-columns: repeat(3, 1fr); } }
+.post-grid .skeleton { aspect-ratio: 4/3; }
+.post-card { display: flex; flex-direction: column; height: 100%; }
+.post-media { position: relative; display: block; aspect-ratio: 16/10; border-radius: var(--r-md); overflow: hidden; }
+.post-media img { position: absolute; inset: 1rem; width: calc(100% - 2rem); height: calc(100% - 2rem); object-fit: contain; filter: drop-shadow(0 6px 8px rgba(46, 20, 55, .18)); transition: transform .2s ease; }
+.post-card:hover .post-media img { transform: scale(1.04); }
+.post-date { font-size: .875rem; color: var(--muted); margin: .875rem 0 .25rem; }
+.post-card h3 { font-size: 1.1875rem; margin-bottom: .375rem; } .post-card h3 a { color: inherit; text-decoration: none; } .post-card h3 a:hover { text-decoration: underline; }
+.post-more { margin-top: auto; font-weight: 600; min-height: 44px; display: inline-flex; align-items: center; }
+.post { max-width: 760px; margin-inline: auto; padding-bottom: 1rem; }
+.post-head h1 { font-size: clamp(1.875rem, 5.5vw, 2.75rem); } .post-head .post-date { margin-top: 1rem; }
+.post-lede { font-size: 1.1875rem; color: var(--muted); }
+.post-hero { background: var(--blush); border-radius: var(--r-lg); padding: 1.5rem; margin: 1.5rem 0; display: grid; place-items: center; }
+.post-hero img { max-height: 320px; width: auto; object-fit: contain; filter: drop-shadow(0 8px 10px rgba(46, 20, 55, .18)); }
+/* FAQ */
+details.faq summary { font-family: var(--body); font-weight: 600; gap: 1rem; text-align: left; }
+details.faq + details.faq { border-top: 0; } details.faq { border-bottom: 2px solid var(--line); } .prose h2 + details.faq { border-top: 2px solid var(--line); }
+
 /* Footer */
 .site-footer { background: var(--plum); color: #eadcf0; margin-top: 3rem; padding: 2.5rem 0 2rem; border-radius: var(--r-lg) var(--r-lg) 0 0; }
 .footer-grid { display: grid; gap: 1.5rem; } @media (min-width: 720px) { .footer-grid { grid-template-columns: 1.3fr 1fr 1fr; } }

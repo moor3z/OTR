@@ -128,6 +128,8 @@ function renderChrome() {
       <div class="header-search mobile">${searchForm('q-mobile')}</div>
       <nav class="site-nav" aria-label="Shop categories">
         ${nav.map(([href, label, c]) => `<a href="${href}"${(c === 'home' ? here === '/' : here === '/shop' && cat === c) ? ' aria-current="page"' : ''}>${label}</a>`).join('')}
+        <a class="nav-extra" href="/blog">Blog</a>
+        <a class="nav-extra" href="/faq">FAQs</a>
         <a class="nav-extra" href="/delivery-returns">Delivery &amp; returns</a>
         <a class="nav-extra" href="/contact">Contact</a>
       </nav>
@@ -139,8 +141,8 @@ function renderChrome() {
   footer.className = 'site-footer';
   footer.innerHTML = `<div class="wrap"><div class="footer-grid">
     <div><h2>Over The Rainbow</h2><p>Wax melts, delivered across the UK.</p><p id="footer-contact"></p></div>
-    <div><h2>Shop</h2><ul><li><a href="/shop">All products</a></li><li><a href="/shop?category=sample-boxes">Sample boxes</a></li><li><a href="/shop?category=gift-sets">Gift sets</a></li><li><a href="/basket">Your basket</a></li></ul></div>
-    <div><h2>Help</h2><ul><li><a href="/contact">Contact</a></li><li><a href="/delivery-returns">Delivery &amp; returns</a></li><li><a href="/privacy">Privacy policy</a></li><li><a href="/terms">Terms &amp; conditions</a></li></ul></div>
+    <div><h2>Shop</h2><ul><li><a href="/shop">All products</a></li><li><a href="/shop?category=sample-boxes">Sample boxes</a></li><li><a href="/shop?category=gift-sets">Gift sets</a></li><li><a href="/blog">Blog</a></li><li><a href="/basket">Your basket</a></li></ul></div>
+    <div><h2>Help</h2><ul><li><a href="/faq">FAQs</a></li><li><a href="/contact">Contact</a></li><li><a href="/delivery-returns">Delivery &amp; returns</a></li><li><a href="/privacy">Privacy policy</a></li><li><a href="/terms">Terms &amp; conditions</a></li></ul></div>
   </div><p class="footer-base">© <span id="year"></span> Over The Rainbow. Prices in GBP. UK delivery only.</p></div>`;
   document.body.append(footer);
   $('#year').textContent = new Date().getFullYear();

@@ -8,6 +8,7 @@ A small, complete ecommerce site: storefront, basket, Stripe Checkout, order sto
 public/      the website (HTML, CSS, JS, logo, fonts, sample images) + /admin
 functions/   server endpoints (/api/*, /img/*) — run on Cloudflare, never sent to the browser
 server/      shared server code: database, pricing, Stripe, email, admin auth
+server/content.js  starter FAQ page and blog posts
 server/seed.js   ← ALL SAMPLE PRODUCTS, PRICES AND PLACEHOLDER COPY LIVE HERE
 tests/       automated checks (optional, dev only)
 tools/       script that drew the sample product images (dev only)
@@ -87,7 +88,9 @@ No key is ever sent to the browser; the storefront uses no Stripe publishable ke
 
 ## Day-to-day
 
-Admin → **Orders** (paid orders, set fulfilment status, private notes) · **Products** (add/edit, photos, prices, options, stock, hide, mark sold out, feature on homepage) · **Delivery & settings** (delivery charge, free-delivery threshold, dispatch estimate, homepage wording, business details) · **Pages** (Contact, Delivery & returns, Privacy, Terms).
+Admin → **Orders** (paid orders, set fulfilment status, private notes) · **Products** (add/edit, photos, prices, options, stock, hide, mark sold out, feature on homepage) · **Delivery & settings** (delivery charge, free-delivery threshold, dispatch estimate, homepage wording, business details) · **Pages** (Contact, Delivery & returns, Privacy, Terms, FAQ) · **Blog** (add, edit, draft, publish and delete posts).
+
+On the FAQ page, start a line with `Q:` for the question and put the answer on the next line. The starter FAQ and the four starter blog posts come from `server/content.js`; they are inserted once and never overwrite anything you have edited.
 
 Photos are resized to 1200px WebP in the browser before upload and stored in the database, so no separate image hosting is needed.
 

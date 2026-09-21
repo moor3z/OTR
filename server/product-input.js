@@ -3,7 +3,7 @@ import { clean, httpError, randomId } from './util.js';
 
 export const slugify = (s) => s.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
 
-const okImage = (u) => u === '' || /^\/(img|assets)\/[\w\-./]+$/.test(u) || /^https:\/\/[^\s"'<>]+$/.test(u);
+export const okImage = (u) => u === '' || /^\/(img|assets)\/[\w\-./]+$/.test(u) || /^https:\/\/[^\s"'<>]+$/.test(u);
 
 export function parseProduct(body, productId) {
   const fields = {};
