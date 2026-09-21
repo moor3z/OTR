@@ -25,7 +25,7 @@ async def main():
         await pg.click('[data-scent=fruity]'); await pg.click('[data-cat=all]')
         check('sold-out card has disabled button', await pg.locator('.card.is-out button[disabled]').count() >= 2)
         await pg.screenshot(path='/tmp/shop-m.png')
-        await pg.fill('#q-mobile', 'lavender') if await pg.locator('#q-mobile').is_visible() else await pg.click('.search-toggle')
+        await pg.click('.menu-toggle')
         await pg.fill('#q-mobile', 'lavender'); await pg.press('#q-mobile', 'Enter'); await pg.wait_for_timeout(200)
         check('search finds Lavender Dreams', await pg.locator('.card').count() == 1)
         # product with variants

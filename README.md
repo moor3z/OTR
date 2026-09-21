@@ -93,6 +93,12 @@ Photos are resized to 1200px WebP in the browser before upload and stored in the
 
 Categories and scent filters are defined once in `server/db.js` (`CATEGORIES`, `SCENTS`) and mirrored at the top of `public/assets/js/admin.js`.
 
+## Updating design files (cache-busting)
+
+Every page loads its CSS and JS with a version number (`site.css?v=5`). When any file in `public/assets/css` or `public/assets/js` changes, raise the number so browsers fetch the new files straight away: `python3 tools/bump_version.py 6`. Updates supplied as zips already have this done.
+
+Category tile photos live in `public/assets/img/cat/` (`snap-bars.webp`, `wax-melt-shapes.webp`, `sample-boxes.webp`, `gift-sets.webp`, `accessories.webp`). Replace a file with the same name to swap a photo.
+
 ## What was tested, and what was not
 
 Run here against Cloudflare's local runtime (`wrangler pages dev`) with a local stand-in for Stripe's API:
