@@ -1,4 +1,4 @@
-import { api, esc, $ } from './site.js?v=6';
+import { api, esc, $ } from './site.js?v=7';
 
 const TINTS = ['var(--lilac)', 'var(--yellow)', 'var(--peach)', 'var(--pink)', 'var(--mint)'];
 export const postDate = (iso) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -7,7 +7,7 @@ export function postCard(p, i = 0) {
   const href = `/blog-post?slug=${encodeURIComponent(p.slug)}`;
   return `<li><article class="post-card">
     <a class="post-media" href="${href}" tabindex="-1" aria-hidden="true" style="background:${TINTS[i % TINTS.length]}">
-      ${p.image_url ? `<img src="${esc(p.image_url)}" alt="" loading="lazy" decoding="async">` : ''}</a>
+      ${p.image_url ? `<img src="${esc(p.image_url)}" alt="" decoding="async">` : ''}</a>
     <p class="post-date"><time datetime="${esc(p.published_at)}">${postDate(p.published_at)}</time></p>
     <h3><a href="${href}">${esc(p.title)}</a></h3>
     <p class="card-desc">${esc(p.excerpt)}</p>

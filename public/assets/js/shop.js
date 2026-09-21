@@ -1,4 +1,4 @@
-import { api, getConfig, productCard, wireAddButtons, esc, $ } from './site.js?v=6';
+import { api, getConfig, productCard, wireAddButtons, esc, $ } from './site.js?v=7';
 
 const params = new URLSearchParams(location.search);
 const state = {
