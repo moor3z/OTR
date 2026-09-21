@@ -1,7 +1,7 @@
 // Database access (Cloudflare D1 / SQLite). The schema is created automatically
 // on first request, and sample content is seeded if the database is empty.
 import { SAMPLE_PRODUCTS, DEFAULT_SETTINGS, DEFAULT_PAGES } from './seed.js';
-import { FAQ_PAGE, BLOG_POSTS } from './content.js';
+import { FAQ_PAGE, BLOG_POSTS, ABOUT_COPY, POLICY_PAGES } from './content.js';
 
 const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)`,
@@ -68,16 +68,26 @@ async function init(db) {
 // INSERT OR IGNORE means nothing you have edited is ever overwritten.
 async function migrateContent(db) {
   const row = await db.prepare(`SELECT value FROM settings WHERE key='content_version'`).first();
-  if (row && Number(row.value) >= 2) return;
+  const have = Number(row?.value || 0);
+  if (have >= 3) return;
   const now = new Date();
-  const stmts = [db.prepare(`INSERT OR IGNORE INTO pages(slug,title,body,needs_review,updated_at) VALUES(?,?,?,0,?)`)
-    .bind(FAQ_PAGE.slug, FAQ_PAGE.title, FAQ_PAGE.body, now.toISOString())];
-  BLOG_POSTS.forEach((p, i) => {
-    const when = new Date(now.getTime() - i * 60000).toISOString(); // keeps the intended order, newest first
-    stmts.push(db.prepare(`INSERT OR IGNORE INTO posts(slug,title,excerpt,body,image_url,published,published_at,updated_at) VALUES(?,?,?,?,?,1,?,?)`)
-      .bind(p.slug, p.title, p.excerpt, p.body, p.image_url, when, when));
-  });
-  stmts.push(db.prepare(`INSERT INTO settings(key,value) VALUES('content_version','2') ON CONFLICT(key) DO UPDATE SET value='2'`));
+  const stmts = [];
+  if (have < 2) { // FAQ page and starter blog posts
+    stmts.push(db.prepare(`INSERT OR IGNORE INTO pages(slug,title,body,needs_review,updated_at) VALUES(?,?,?,0,?)`)
+      .bind(FAQ_PAGE.slug, FAQ_PAGE.title, FAQ_PAGE.body, now.toISOString()));
+    BLOG_POSTS.forEach((p, i) => {
+      const when = new Date(now.getTime() - i * 60000).toISOString(); // keeps the intended order, newest first
+      stmts.push(db.prepare(`INSERT OR IGNORE INTO posts(slug,title,excerpt,body,image_url,published,published_at,updated_at) VALUES(?,?,?,?,?,1,?,?)`)
+        .bind(p.slug, p.title, p.excerpt, p.body, p.image_url, when, when));
+    });
+  }
+  if (have < 3) { // about wording + policy pages, only where the placeholder is untouched (instr, not LIKE: D1 caps LIKE pattern length)
+    stmts.push(db.prepare(`UPDATE settings SET value=? WHERE key='intro_text' AND substr(value,1,16)='PLACEHOLDER COPY'`).bind(ABOUT_COPY.intro_text));
+    stmts.push(db.prepare(`UPDATE settings SET value=? WHERE key='intro_title' AND value='Hello from Over The Rainbow'`).bind(ABOUT_COPY.intro_title));
+    for (const pg of POLICY_PAGES)
+      stmts.push(db.prepare(`UPDATE pages SET body=?, updated_at=? WHERE slug=? AND instr(body, ?) > 0`).bind(pg.body, now.toISOString(), pg.slug, pg.stillPlaceholder));
+  }
+  stmts.push(db.prepare(`INSERT INTO settings(key,value) VALUES('content_version','3') ON CONFLICT(key) DO UPDATE SET value='3'`));
   await db.batch(stmts);
 }
 
