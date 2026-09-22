@@ -109,7 +109,7 @@ function renderChrome() {
   const here = location.pathname.replace(/\/$/, '') || '/';
   const cat = new URLSearchParams(location.search).get('category');
   const nav = [['/', 'Home', 'home'], ['/shop?category=snap-bars', 'Snap Bars', 'snap-bars'], ['/shop?category=wax-melt-shapes', 'Melt Shapes', 'wax-melt-shapes'],
-    ['/shop?category=sample-boxes', 'Sample Boxes', 'sample-boxes'], ['/shop?category=gift-sets', 'Gift Sets', 'gift-sets'], ['/shop?category=accessories', 'Accessories', 'accessories']];
+    ['/shop?category=sample-boxes', 'Sample Boxes', 'sample-boxes'], ['/shop?category=gift-sets', 'Gift Sets', 'gift-sets'], ['/shop?category=accessories', 'Accessories', 'accessories'], ['/seasonal', 'Seasonal', 'seasonal']];
   const header = document.createElement('div');
   header.innerHTML = `<a class="skip" href="#main">Skip to content</a>
   <div id="announce"></div>
@@ -127,7 +127,7 @@ function renderChrome() {
     <div class="site-menu" id="site-menu">
       <div class="header-search mobile">${searchForm('q-mobile')}</div>
       <nav class="site-nav" aria-label="Shop categories">
-        ${nav.map(([href, label, c]) => `<a href="${href}"${(c === 'home' ? here === '/' : here === '/shop' && cat === c) ? ' aria-current="page"' : ''}>${label}</a>`).join('')}
+        ${nav.map(([href, label, c]) => `<a href="${href}"${(c === 'home' ? here === '/' : c === 'seasonal' ? here === '/seasonal' : here === '/shop' && cat === c) ? ' aria-current="page"' : ''}>${label}</a>`).join('')}
         <a class="nav-extra" href="/blog">Blog</a>
         <a class="nav-extra" href="/faq">FAQs</a>
         <a class="nav-extra" href="/delivery-returns">Delivery &amp; returns</a>

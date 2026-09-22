@@ -1,6 +1,6 @@
-import { api, esc, $ } from './site.js?v=20';
-import { format } from './page.js?v=20';
-import { postCard, postDate } from './blog.js?v=20';
+import { api, esc, $ } from './site.js?v=22';
+import { format } from './page.js?v=22';
+import { postCard, postDate } from './blog.js?v=22';
 
 const slug = new URLSearchParams(location.search).get('slug') || '';
 const root = $('#post-root');
@@ -9,7 +9,6 @@ Promise.all([api(`/api/posts/${encodeURIComponent(slug)}`), api('/api/posts')]).
   document.title = `${post.title} | Over The Rainbow`;
   document.querySelector('meta[name="description"]').content = post.excerpt || post.title;
   root.innerHTML = `<header class="post-head">
-      <p class="post-date"><time datetime="${esc(post.published_at)}">${postDate(post.published_at)}</time></p>
       <h1>${esc(post.title)}</h1>
       ${post.excerpt ? `<p class="post-lede">${esc(post.excerpt)}</p>` : ''}
     </header>

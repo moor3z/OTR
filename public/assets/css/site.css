@@ -114,9 +114,13 @@ a { color: var(--pink-text); text-underline-offset: 3px; }
 .snapbar a img { order: 2; flex: none; width: 124px; height: 88px; object-fit: contain; filter: drop-shadow(0 6px 8px rgba(46, 20, 55, .18)); transition: transform .2s ease; }
 .snapbar a:hover img { transform: scale(1.05); }
 .snapbar li:nth-child(1) a { background: var(--pink); } .snapbar li:nth-child(2) a { background: var(--peach); }
-.snapbar li:nth-child(3) a { background: var(--yellow); } .snapbar li:nth-child(4) a { background: var(--mint); } .snapbar li:nth-child(5) a { background: var(--lilac); }
-@media (min-width: 720px) { .snapbar { grid-template-columns: repeat(5, 1fr); } .snapbar a { flex-direction: column; justify-content: flex-end; align-items: stretch; min-height: 0; padding: 1rem .875rem 1rem; gap: .75rem; font-size: 1.0625rem; }
+.snapbar li:nth-child(3) a { background: var(--yellow); } .snapbar li:nth-child(4) a { background: var(--mint); } .snapbar li:nth-child(5) a { background: var(--lilac); } .snapbar li:nth-child(6) a { background: #a6dbf8; }
+@media (min-width: 720px) { .snapbar { grid-template-columns: repeat(3, 1fr); } .snapbar a { flex-direction: column; justify-content: flex-end; align-items: stretch; min-height: 0; padding: 1rem .875rem 1rem; gap: .75rem; font-size: 1.0625rem; }
   .snapbar a img { order: 0; width: 100%; height: clamp(110px, 12vw, 160px); } .snapbar a span { text-align: center; } }
+@media (min-width: 1040px) { .snapbar { grid-template-columns: repeat(6, 1fr); } .snapbar a { font-size: 1rem; padding-inline: .625rem; } }
+.seasonal-head { display: flex; gap: 1.5rem; align-items: center; } .seasonal-head img { width: 150px; height: 150px; border-radius: var(--r-md); object-fit: cover; flex: none; } .seasonal-head h1 { margin-bottom: .25em; }
+@media (max-width: 599px) { .seasonal-head { flex-direction: column; align-items: flex-start; } .seasonal-head img { width: 110px; height: 110px; } }
+#home-faq details.info:first-of-type { border-top: 2px solid var(--line); }
 
 /* Product grid and cards */
 .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem .875rem; list-style: none; margin: 0; padding: 0; }

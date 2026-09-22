@@ -1,5 +1,6 @@
-import { postCard } from './blog.js?v=20';
-import { api, getConfig, productCard, wireAddButtons, gbp, $ } from './site.js?v=20';
+import { postCard } from './blog.js?v=22';
+import { format } from './page.js?v=22';
+import { api, getConfig, productCard, wireAddButtons, gbp, $ } from './site.js?v=22';
 
 getConfig().then((c) => {
   if (c.hero_headline) $('#hero-headline').textContent = c.hero_headline;
@@ -26,4 +27,12 @@ api('/api/posts').then(({ posts }) => {
   if (!posts.length) return;
   $('#home-blog').hidden = false;
   $('#home-posts').innerHTML = posts.slice(0, 4).map(postCard).join('');
+}).catch(() => {});
+
+// A handful of FAQs under the blog. Pulls the first questions from the FAQ page so they stay in sync.
+api('/api/page/faq').then(({ page }) => {
+  const qs = page.body.replace(/\r/g, '').split(/\n{2,}/).filter((b) => /^Q:\s*/i.test(b.trim()));
+  if (!qs.length) return;
+  $('#home-faq').hidden = false;
+  $('#home-faq-list').innerHTML = format(qs.slice(0, 5).join('\n\n'));
 }).catch(() => {});

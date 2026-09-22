@@ -1,4 +1,4 @@
-import { api, getConfig, productCard, wireAddButtons, esc, $ } from './site.js?v=20';
+import { api, getConfig, productCard, wireAddButtons, esc, $ } from './site.js?v=22';
 
 const params = new URLSearchParams(location.search);
 const state = {
@@ -8,7 +8,8 @@ const state = {
 };
 let products = [], categories = [];
 const results = $('#results'), count = $('#result-count');
-const cap = (s) => s[0].toUpperCase() + s.slice(1);
+const LABELS = { halloween: 'Halloween & Autumn', christmas: 'Christmas & Winter' };
+const cap = (s) => LABELS[s] || s[0].toUpperCase() + s.slice(1);
 
 function syncUrl() {
   const p = new URLSearchParams();
@@ -28,7 +29,7 @@ function render() {
   document.querySelectorAll('#scents .chip').forEach((b) => b.setAttribute('aria-pressed', String(state.scents.has(b.dataset.scent))));
   document.querySelectorAll('.site-nav a').forEach((a) => {
     const u = new URL(a.href), c = u.searchParams.get('category');
-    u.pathname === '/shop' && c === state.category ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current');
+    u.pathname === '/shop' && (c || 'all') === state.category ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current');
   });
 
   const q = state.q.toLowerCase();

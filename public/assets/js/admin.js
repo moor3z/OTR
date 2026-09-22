@@ -130,7 +130,7 @@ function showProducts(reload = true) {
       ${samples ? `<div class="notice notice-demo"><p><strong>${samples} sample product${samples === 1 ? '' : 's'} with made-up prices.</strong> Edit them into real products (saving removes the Sample tag) or clear them out.</p><button class="btn btn-ghost btn-sm" data-delete-samples>Delete all sample products</button></div>` : ''}
       <div class="panel-card" style="padding:1rem">
         <input type="search" id="pf-q" placeholder="Search by name" value="${esc(pf.q)}" style="margin-bottom:.75rem">
-        <p class="filter-label">Scent</p><div class="chips" style="margin:0 0 .75rem;padding:4px 0">${[['all', 'All'], ['allyear', 'All year round'], ['halloween', 'Halloween'], ['christmas', 'Christmas'], ['fresh', 'Fresh'], ['floral', 'Floral'], ['fruity', 'Fruity'], ['sweet', 'Sweet']].map(([v, l]) => chip('scent', v, l)).join('')}</div>
+        <p class="filter-label">Scent</p><div class="chips" style="margin:0 0 .75rem;padding:4px 0">${[['all', 'All'], ['allyear', 'All year round'], ['halloween', 'Halloween & Autumn'], ['christmas', 'Christmas & Winter'], ['fresh', 'Fresh'], ['floral', 'Floral'], ['fruity', 'Fruity'], ['sweet', 'Sweet']].map(([v, l]) => chip('scent', v, l)).join('')}</div>
         <p class="filter-label">Status</p><div class="chips" style="margin:0;padding:4px 0">${[['all', 'All'], ['live', 'On sale'], ['soldout', 'Sold out'], ['hidden', 'Hidden'], ['todo', 'Needs price or photo']].map(([v, l]) => chip('status', v, l)).join('')}</div>
       </div>
       <p class="muted small" role="status">${list.length} of ${products.length} products</p>
@@ -179,7 +179,7 @@ function openProduct(p) {
     ${field('p-desc', 'Full description', 'Shown on the product page under “About this scent”', `<textarea id="p-desc" placeholder="A few sentences about the scent, when it suits, and what makes it special.">${esc(p.description)}</textarea>`)}
 
     <details class="help" id="more-details"><summary>4. More details (scent filters, weight, usage and safety)</summary>
-      <fieldset class="field" style="border:0;padding:0;margin-top:.75rem"><legend>Scent filters <span class="hint">Tick all that apply. Customers use these to filter the shop.</span></legend><div class="checks">${SCENTS.map((s) => `<label><input type="checkbox" name="scent" value="${s}"${p.scents.includes(s) ? ' checked' : ''}>${s[0].toUpperCase() + s.slice(1)}</label>`).join('')}</div></fieldset>
+      <fieldset class="field" style="border:0;padding:0;margin-top:.75rem"><legend>Scent filters <span class="hint">Tick all that apply. Customers use these to filter the shop.</span></legend><div class="checks">${SCENTS.map((s) => `<label><input type="checkbox" name="scent" value="${s}"${p.scents.includes(s) ? ' checked' : ''}>${({ halloween: 'Halloween & Autumn', christmas: 'Christmas & Winter' })[s] || s[0].toUpperCase() + s.slice(1)}</label>`).join('')}</div></fieldset>
       ${field('p-weight', 'Weight or size', 'Shown on the product page, e.g. 50g snap bar or Bag of 6 hearts, 45g', `<input id="p-weight" type="text" value="${esc(p.weight)}">`)}
       ${field('p-usage', 'Usage instructions', 'Standard wording is filled in. Change it only if this product is used differently.', `<textarea id="p-usage">${esc(p.usage)}</textarea>`)}
       ${field('p-safety', 'Safety information', 'Standard wording is filled in. Add any warnings or allergens specific to this scent from its CLP label.', `<textarea id="p-safety">${esc(p.safety)}</textarea>`)}
