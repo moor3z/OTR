@@ -88,13 +88,13 @@ No key is ever sent to the browser; the storefront uses no Stripe publishable ke
 
 ## Day-to-day
 
-Admin → **Orders** (paid orders, set fulfilment status, private notes) · **Products** (add/edit, photos, prices, options, stock, hide, mark sold out, feature on homepage) · **Delivery & settings** (delivery charge, free-delivery threshold, dispatch estimate, homepage wording, business details) · **Pages** (Contact, Delivery & returns, Privacy, Terms, FAQ) · **Blog** (add, edit, draft, publish and delete posts).
+Admin → **Orders** (paid orders, set fulfilment status, private notes) · **Products** (add/edit, photos, prices, options, stock, hide, mark sold out, feature on homepage) · **Delivery & settings** (delivery charge, free-delivery threshold, dispatch estimate, homepage wording, business details) · **Pages** (Contact, Delivery & returns, Privacy, Terms, FAQ) · **Blog** (add, edit, draft, publish and delete posts) · **How to** (step-by-step guide for whoever runs the shop). Delivery & settings has a “Where does this appear on the shop?” panel under each section; the screenshots live in `public/assets/img/help/` (including `positions.webp`, the Position example in the product form).
 
 On the FAQ page, start a line with `Q:` for the question and put the answer on the next line. The starter FAQ and the four starter blog posts come from `server/content.js`; they are inserted once and never overwrite anything you have edited.
 
 Photos are resized to 1200px WebP in the browser before upload and stored in the database, so no separate image hosting is needed.
 
-Categories and scent filters are defined once in `server/db.js` (`CATEGORIES`, `SCENTS`) and mirrored at the top of `public/assets/js/admin.js`.
+Categories and scent filters (Fresh, Floral, Fruity, Sweet, Halloween, Christmas) are defined once in `server/db.js` (`CATEGORIES`, `SCENTS`) and mirrored at the top of `public/assets/js/admin.js`.
 
 ## Updating design files (cache-busting)
 

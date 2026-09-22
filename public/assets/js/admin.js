@@ -137,6 +137,9 @@ function openProduct(p) {
       ${field('p-usage', 'Usage instructions', 'Standard wording is filled in. Change it only if this product is used differently.', `<textarea id="p-usage">${esc(p.usage)}</textarea>`)}
       ${field('p-safety', 'Safety information', 'Standard wording is filled in. Add any warnings or allergens specific to this scent from its CLP label.', `<textarea id="p-safety">${esc(p.safety)}</textarea>`)}
       ${field('p-sort', 'Position in lists', 'Lower numbers show first. Leave as is unless you want to move it.', `<input id="p-sort" type="number" step="1" value="${p.sort ?? 0}">`)}
+      <details class="where"><summary>What does Position do?</summary>
+        <p class="small">Products are laid out in order of their Position number, lowest first, on the shop page and the homepage. Two products with the same number are sorted by name. Give a product a low number, such as 1, to push it to the front, or a high number, such as 900, to send it to the back. Customers can still re-sort by price or name.</p>
+        <img src="/assets/img/help/positions.webp" alt="" loading="lazy"></details>
     </details>
 
     <h3 class="form-section">5. Visibility</h3>
