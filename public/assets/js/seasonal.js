@@ -1,4 +1,4 @@
-import { api, productCard, wireAddButtons, esc, $ } from './site.js?v=23';
+import { api, productCard, wireAddButtons, esc, $ } from './site.js?v=24';
 
 api('/api/products').then(({ products }) => {
   for (const [tag, id, empty] of [['halloween', '#halloween', 'Our Halloween and autumn scents are coming soon.'], ['christmas', '#christmas', 'Our Christmas and winter scents are coming soon.']]) {

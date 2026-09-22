@@ -164,9 +164,9 @@ function renderChrome() {
 
   getConfig().then((c) => {
     if (c.announcement) $('#announce').innerHTML = `<div class="announce">${esc(c.announcement)}</div>`;
-    if (c.payment_mode !== 'live') {
+    if (c.payment_mode === 'demo') { // no Stripe keys at all: warn shoppers. Test mode shows only in the admin Status box.
       const b = document.createElement('div'); b.className = 'test-banner';
-      b.textContent = c.payment_mode === 'demo' ? 'Demo mode: payments are not connected. No orders will be taken.' : 'Test mode: Stripe test payments only. No real money is taken.';
+      b.textContent = 'Demo mode: payments are not connected. No orders will be taken.';
       document.body.prepend(b);
     }
     if (c.contact_email) $('#footer-contact').innerHTML = `<a href="mailto:${esc(c.contact_email)}">${esc(c.contact_email)}</a>`;
