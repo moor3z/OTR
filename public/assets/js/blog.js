@@ -1,4 +1,4 @@
-import { api, esc, $ } from './site.js?v=24';
+import { api, esc, $ } from './site.js?v=25';
 
 const TINTS = ['var(--lilac)', 'var(--yellow)', 'var(--peach)', 'var(--pink)', 'var(--mint)'];
 export const postDate = (iso) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });

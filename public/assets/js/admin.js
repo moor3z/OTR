@@ -159,12 +159,16 @@ function openProduct(p) {
       <li><strong>Name, category and photo</strong> are what customers see first. Square photos on a plain background look best.</li>
       <li><strong>Price and stock</strong>: type the price in pounds (3.50, not £3.50). Stock counts down as people buy, and the product shows as sold out at 0.</li>
       <li><strong>Short description</strong> is one line under the name on the shop page. <strong>Full description</strong> is the “About this scent” text on the product page.</li>
-      <li><strong>More details</strong> holds the scent filters, weight, and the usage and safety text. The usage and safety text is already filled in with our standard wording. Add anything specific to this scent from its CLP label.</li>
+      <li><strong>Seasonal?</strong> puts the product on the Seasonal page as well as its category. <strong>More details</strong> holds the weight and the usage and safety text. The usage and safety text is already filled in with our standard wording. Add anything specific to this scent from its CLP label.</li>
       <li>A new product starts <strong>hidden</strong>. Untick “Hide from shop” when it is ready to sell.</li></ol></details>
 
     <h3 class="form-section">1. The basics</h3>
     ${field('p-name', 'Product name', '', `<input id="p-name" type="text" value="${esc(p.name)}" required placeholder="e.g. Cherry Vanilla Snap Bar">`)}
     ${field('p-cat', 'Category', 'Which shop section it appears in', `<select id="p-cat">${CATEGORIES.map(([id, n]) => `<option value="${id}"${id === p.category ? ' selected' : ''}>${n}</option>`).join('')}</select>`)}
+    <fieldset class="field" style="border:0;padding:0"><legend>Seasonal? <span class="hint">Tick one to put it on the Seasonal page as well. It stays in its category too.</span></legend><div class="checks">
+      <label><input type="checkbox" name="scent" value="halloween"${p.scents.includes('halloween') ? ' checked' : ''}>Halloween &amp; Autumn</label>
+      <label><input type="checkbox" name="scent" value="christmas"${p.scents.includes('christmas') ? ' checked' : ''}>Christmas &amp; Winter</label></div></fieldset>
+    <fieldset class="field" style="border:0;padding:0"><legend>Scent type <span class="hint">Tick all that apply. Customers use these to filter the shop.</span></legend><div class="checks">${['fresh', 'floral', 'fruity', 'sweet'].map((s) => `<label><input type="checkbox" name="scent" value="${s}"${p.scents.includes(s) ? ' checked' : ''}>${s[0].toUpperCase() + s.slice(1)}</label>`).join('')}</div></fieldset>
     <div class="field"><label>Photo</label><div class="img-pick"><img id="p-img" src="${esc(p.image_url || '/assets/ph/blank.svg')}" alt="Current image">
       <div><input type="file" id="p-file" accept="image/jpeg,image/png,image/webp"><span class="hint" id="p-file-note">Choose a photo from your phone or computer. It is resized automatically.</span></div></div><input type="hidden" id="p-image-url" value="${esc(p.image_url)}"></div>
 
@@ -178,8 +182,7 @@ function openProduct(p) {
     ${field('p-short', 'Short description', 'One line, shown under the name on the shop page', `<input id="p-short" type="text" maxlength="200" value="${esc(p.short_desc)}" placeholder="e.g. Sweet cherries with a creamy vanilla finish.">`)}
     ${field('p-desc', 'Full description', 'Shown on the product page under “About this scent”', `<textarea id="p-desc" placeholder="A few sentences about the scent, when it suits, and what makes it special.">${esc(p.description)}</textarea>`)}
 
-    <details class="help" id="more-details"><summary>4. More details (scent filters, weight, usage and safety)</summary>
-      <fieldset class="field" style="border:0;padding:0;margin-top:.75rem"><legend>Scent filters <span class="hint">Tick all that apply. Customers use these to filter the shop.</span></legend><div class="checks">${SCENTS.map((s) => `<label><input type="checkbox" name="scent" value="${s}"${p.scents.includes(s) ? ' checked' : ''}>${({ halloween: 'Halloween & Autumn', christmas: 'Christmas & Winter' })[s] || s[0].toUpperCase() + s.slice(1)}</label>`).join('')}</div></fieldset>
+    <details class="help" id="more-details"><summary>4. More details (weight, usage, safety, position)</summary>
       ${field('p-weight', 'Weight or size', 'Shown on the product page, e.g. 50g snap bar or Bag of 6 hearts, 45g', `<input id="p-weight" type="text" value="${esc(p.weight)}">`)}
       ${field('p-usage', 'Usage instructions', 'Standard wording is filled in. Change it only if this product is used differently.', `<textarea id="p-usage">${esc(p.usage)}</textarea>`)}
       ${field('p-safety', 'Safety information', 'Standard wording is filled in. Add any warnings or allergens specific to this scent from its CLP label.', `<textarea id="p-safety">${esc(p.safety)}</textarea>`)}
