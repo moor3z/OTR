@@ -58,13 +58,60 @@ async function openOrder(id) {
     <dl class="kv"><dt>Subtotal</dt><dd>${gbp(o.subtotal_pence)}</dd><dt>Delivery</dt><dd>${gbp(o.delivery_pence)}</dd><dt><strong>Total</strong></dt><dd><strong>${gbp(o.total_pence)}</strong></dd></dl>
     <div class="field"><label for="fulfilment">Fulfilment status</label><select id="fulfilment">${FULFILMENT.map((f) => `<option${f === o.fulfilment ? ' selected' : ''}>${f}</option>`).join('')}</select></div>
     <div class="field"><label for="note">Private note</label><textarea id="note">${esc(o.admin_note)}</textarea></div>
-    <div class="editor-actions"><button class="btn btn-primary" type="submit" value="save">Save order</button><button class="btn btn-ghost" type="button" data-close>Close</button></div></form>`;
+    <div class="editor-actions"><button class="btn btn-primary" type="submit" value="save">Save order</button><button class="btn btn-ghost" type="button" data-close>Close</button>
+      <button class="btn btn-ghost" type="button" id="o-label">Print address label</button><button class="btn btn-ghost" type="button" id="o-slip">Print packing slip</button>
+      <button class="link-btn" type="button" id="o-delete" style="margin-left:auto;color:var(--danger)">Delete order</button></div></form>`;
   editor.showModal();
+  $('#o-label').onclick = () => printOrder(o, 'label');
+  $('#o-slip').onclick = () => printOrder(o, 'slip');
+  $('#o-delete').onclick = async () => {
+    const warn = o.status === 'paid' && o.mode === 'live'
+      ? `Delete PAID order ${o.ref}?\n\nThis is a real customer order. Deleting it removes your only record of the sale here, and sales records normally have to be kept for tax. Only do this if you are sure.`
+      : `Delete order ${o.ref}? This cannot be undone.`;
+    if (!confirm(warn)) return;
+    try { await api(`/orders/${id}`, { method: 'DELETE' }); editor.close(); flash('Order deleted'); showOrders(); } catch (err) { fieldErrors($('#order-form'), err); }
+  };
   $('#order-form').onsubmit = async (e) => {
     e.preventDefault();
     try { await api(`/orders/${id}`, { method: 'PUT', body: { fulfilment: $('#fulfilment').value, admin_note: $('#note').value } }); editor.close(); flash('Order saved'); showOrders(); }
     catch (err) { fieldErrors(e.target, err); }
   };
+}
+
+
+// Opens a print-ready page for an order: a 6x4in address label, or an A5 packing slip.
+let shopSettings = null;
+async function printOrder(o, mode) {
+  if (!shopSettings) { try { shopSettings = (await api('/settings')).settings; } catch { shopSettings = {}; } }
+  const a = o.address;
+  const to = [o.name, a.line1, a.line2, a.city, a.county, a.postcode].filter(Boolean).map(esc);
+  const from = [shopSettings.business_name, ...(shopSettings.business_address || '').split(/\n/)].filter(Boolean).map(esc);
+  const win = window.open('', '_blank', 'width=800,height=700');
+  if (!win) { flash('Allow pop-ups for this site to print.'); return; }
+  const label = `<div class="label"><div class="to">${to.join('<br>')}</div><div class="foot"><span>Order ${esc(o.ref)}</span>${from.length ? `<span>From: ${from.join(', ')}</span>` : ''}</div></div>`;
+  const slip = `<div class="slip"><div class="head"><div><h1>${esc(shopSettings.business_name || 'Over The Rainbow')}</h1>${from.slice(1).length ? `<p>${from.slice(1).join('<br>')}</p>` : ''}</div>
+      <div class="right"><strong>Order ${esc(o.ref)}</strong><br>${when(o.paid_at || o.created_at)}</div></div>
+    <h2>Deliver to</h2><p>${to.join('<br>')}${o.phone ? `<br>${esc(o.phone)}` : ''}</p>
+    <h2>Items</h2><table><tr><th>Item</th><th>Qty</th><th class="r">Price</th></tr>
+      ${o.items.map((i) => `<tr><td>${esc(i.name)}${i.label ? ` – ${esc(i.label)}` : ''}</td><td>${i.qty}</td><td class="r">${gbp(i.line_pence)}</td></tr>`).join('')}
+      <tr class="tot"><td colspan="2">Delivery</td><td class="r">${o.delivery_pence ? gbp(o.delivery_pence) : 'Free'}</td></tr>
+      <tr class="tot"><td colspan="2"><strong>Total paid</strong></td><td class="r"><strong>${gbp(o.total_pence)}</strong></td></tr></table>
+    <p class="thanks">Thank you for your order! Any problems, email ${esc(shopSettings.contact_email || '')}.</p></div>`;
+  win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${mode === 'label' ? 'Label' : 'Packing slip'} ${esc(o.ref)}</title><style>
+    body { font-family: Arial, sans-serif; color: #000; margin: 0; padding: 0; }
+    @page { margin: 0; ${mode === 'label' ? 'size: 6in 4in;' : 'size: A5;'} }
+    .label { width: 6in; height: 4in; box-sizing: border-box; padding: .4in .5in; display: flex; flex-direction: column; justify-content: center; }
+    .to { font-size: 26pt; line-height: 1.3; font-weight: 700; }
+    .foot { margin-top: auto; display: flex; justify-content: space-between; gap: 1em; font-size: 9pt; color: #333; }
+    .slip { width: 148mm; box-sizing: border-box; padding: 12mm; font-size: 11pt; }
+    .head { display: flex; justify-content: space-between; gap: 1em; border-bottom: 2px solid #000; padding-bottom: 6mm; margin-bottom: 6mm; } .head h1 { font-size: 16pt; margin: 0 0 2mm; } .head p { margin: 0; font-size: 9pt; } .right { text-align: right; }
+    h2 { font-size: 11pt; margin: 6mm 0 2mm; text-transform: uppercase; letter-spacing: .05em; }
+    table { width: 100%; border-collapse: collapse; } th, td { text-align: left; padding: 2mm 0; border-bottom: 1px solid #ccc; vertical-align: top; } th { font-size: 9pt; } .r { text-align: right; } .tot td { border: 0; }
+    .thanks { margin-top: 10mm; font-size: 10pt; }
+    @media screen { body { background: #888; padding: 20px; } .label, .slip { background: #fff; margin: 0 auto; box-shadow: 0 2px 12px rgba(0,0,0,.4); } .bar { text-align: center; margin-bottom: 16px; } .bar button { font: 600 15px Arial; padding: 10px 22px; border-radius: 999px; border: 0; background: #ff89cd; cursor: pointer; } }
+    @media print { .bar { display: none; } }
+  </style></head><body><div class="bar"><button onclick="print()">Print</button></div>${mode === 'label' ? label : slip}</body></html>`);
+  win.document.close();
 }
 
 /* ── Products ───────────────────────────────────────────────────────────── */
@@ -202,14 +249,13 @@ async function showSettings() {
   const [{ settings: s }, me] = await Promise.all([api('/settings'), api('/me')]);
   const text = (k, label, hint = '', area = false) => `<div class="field"><label for="s-${k}">${label}${hint ? ` <span class="hint">${hint}</span>` : ''}</label>${area ? `<textarea id="s-${k}" data-k="${k}">${esc(s[k])}</textarea>` : `<input id="s-${k}" data-k="${k}" type="text" value="${esc(s[k])}">`}</div>`;
   const money = (k, label, hint) => `<div class="field"><label for="s-${k}">${label} <span class="hint">${hint}</span></label><input id="s-${k}" data-money="${k}" type="text" inputmode="decimal" value="${s[k] && s[k] !== '0' ? (s[k] / 100).toFixed(2) : ''}"></div>`;
-  const missing = ['contact_email', 'business_address'].filter((k) => !s[k]);
   panel.innerHTML = `<div class="bar"><h1>Delivery &amp; settings</h1></div><form id="settings-form"><div class="form-msg"></div>
     <div class="panel-card"><h2>Status</h2><dl class="kv"><dt>Payments</dt><dd>${{ demo: 'Demo mode. Stripe keys are not set, so no payments can be taken.', test: 'Stripe TEST mode. Only test cards work; no real money moves.', live: 'Stripe LIVE mode. Real payments.' }[me.payment_mode]}</dd>
       <dt>Order emails</dt><dd>${me.email_configured ? 'On' : 'Off. No email provider is configured.'}</dd></dl></div>
     <div class="panel-card"><h2>Delivery (UK only)</h2>${where(['delivery-1', 'delivery-2'], ['Delivery name and charge, in the basket and at checkout', 'Free delivery message (only shown when a threshold is set)', 'Dispatch estimate, on every product page and in order emails'])}<div class="row-2">${money('delivery_pence', 'Delivery charge (£)', 'Flat rate per order')}${money('free_delivery_threshold_pence', 'Free delivery over (£)', 'Leave blank for no free delivery')}</div>
       ${text('delivery_name', 'Delivery name', 'Shown in the basket and on Stripe')}${text('dispatch_estimate', 'Dispatch estimate', 'Shown on product pages and confirmations')}</div>
     <div class="panel-card"><h2>Homepage wording</h2>${where(['wording-1', 'wording-2'], ['Announcement bar, across the top of every page (blank = hidden)', 'Headline', 'Line under the headline', 'About section title', 'About section text'])}${text('announcement', 'Announcement bar', 'Leave blank to hide')}${text('hero_headline', 'Headline')}${text('hero_sub', 'Line under the headline')}${text('intro_title', 'About section title')}${text('intro_text', 'About section text', '', true)}</div>
-    <div class="panel-card"><h2>Business details</h2>${where(['business-1', 'business-2'], ['Contact page: email, phone and address', 'Footer on every page: contact email'])}${missing.length ? '<div class="notice notice-demo"><p>Needed before launch: a contact email and your business address. They appear on the Contact page and in the footer.</p></div>' : ''}
+    <div class="panel-card"><h2>Business details</h2>${where(['business-1', 'business-2'], ['Contact page: email, phone and address', 'Footer on every page: contact email'])}
       ${text('business_name', 'Business name')}${text('contact_email', 'Public contact email')}${text('contact_phone', 'Public phone number', 'Optional')}${text('business_address', 'Business address', '', true)}${text('order_notify_email', 'Send new-order alerts to', 'Needs an email provider')}</div>
     <button class="btn btn-primary" type="submit">Save settings</button></form>`;
   $('#settings-form').onsubmit = async (e) => {
@@ -289,7 +335,7 @@ function showHelp() {
   ${step('Feature a product on the homepage', ['Edit the product and tick <strong>Feature on homepage</strong>. The first eight featured products show in the “A few scents to start with” section.', 'The <strong>Position</strong> number decides the order everywhere. Lower numbers show first.'])}
   </div>
   <div class="panel-card"><h2>Orders</h2>
-  ${step('When an order comes in', ['You get an email headed <em>New paid order</em>. The customer gets a confirmation at the same time.', 'Open the <strong>Orders</strong> tab. Paid orders are listed newest first. Click <strong>Open</strong> to see what was bought and the delivery address.', 'Pack it, then change <strong>Fulfilment status</strong> to <em>dispatched</em> and click <strong>Save order</strong>. Use the Private note for tracking numbers or anything to remember.', 'Only orders marked <strong>paid</strong> should be sent. Anything under “Unpaid, expired and demo” was never paid for.'])}
+  ${step('When an order comes in', ['You get an email headed <em>New paid order</em>. The customer gets a confirmation at the same time.', 'Open the <strong>Orders</strong> tab. Paid orders are listed newest first. Click <strong>Open</strong> to see what was bought and the delivery address.', 'Click <strong>Print packing slip</strong> to print a note to go in the parcel, and <strong>Print address label</strong> for a 6×4 inch label (or plain paper). Both open in a new window with a Print button; if nothing opens, allow pop-ups for this site.', 'Pack it, then change <strong>Fulfilment status</strong> to <em>dispatched</em> and click <strong>Save order</strong>. Use the Private note for tracking numbers or anything to remember.', 'Only orders marked <strong>paid</strong> should be sent. Anything under “Unpaid, expired and demo” was never paid for.', 'To remove an order completely, open it and click <strong>Delete order</strong>. Use this for test orders and abandoned checkouts. Keep real paid orders, even cancelled ones, because sales records normally have to be kept for tax.'])}
   ${step('Refund a customer', [
     'Refunds are made in Stripe, the company that takes the card payments. The money goes back to the card the customer paid with; you cannot refund to a different card or by bank transfer.',
     'In the <strong>Orders</strong> tab, click <strong>Open</strong> on the order and click the <strong>Open payment in Stripe</strong> button. It takes you straight to that payment. If Stripe asks you to log in, use the Stripe account details (<a href="https://dashboard.stripe.com/login" target="_blank" rel="noopener">dashboard.stripe.com/login</a>).',

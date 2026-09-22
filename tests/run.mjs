@@ -98,5 +98,7 @@ r = await fetch(BASE + '/api/admin/settings', { method: 'PUT', body: '{}', heade
 ok('cross-origin admin writes are blocked', r.status === 403);
 await j('/api/admin/products/rose-garden-melts', { method: 'PUT', body: JSON.stringify({ ...pid, hidden: false }) });
 
+r = await j(`/api/admin/orders/${paid[0].id}`, { method: 'DELETE' });
+ok('admin can delete an order', r.status === 200 && (await j(`/api/admin/orders/${paid[0].id}`)).status === 404);
 console.log(`\n${pass} passed, ${failN} failed`);
 process.exit(failN ? 1 : 0);
