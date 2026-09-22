@@ -142,9 +142,9 @@ Fresh cotton, sea-breeze and other clean scents give a bathroom that just-cleane
 The hallway is the first thing people notice when they walk in. Choose the scent you love most and make it the one people remember your home by.
 
 ## And for the seasons
-Swapping scents with the seasons is half the fun. Spiced and berry fragrances in autumn and winter, fresh florals in spring, and fruity, tropical scents for summer.
+Swapping scents with the seasons is half the fun. Pumpkin and spiced fragrances for Halloween, pine and candy cane for Christmas, fresh florals in spring, and fruity, tropical scents for summer.
 
-Our shop lets you filter by scent family, so you can browse Fresh, Floral, Fruity, Sweet and Seasonal and find a match for every room.`,
+Our shop lets you filter by scent family, so you can browse Fresh, Floral, Fruity, Sweet, Halloween and Christmas and find a match for every room.`,
   },
   {
     slug: 'how-to-store-wax-melts',
@@ -175,7 +175,7 @@ Wax melts are made to be enjoyed. They are at their best when fresh, so there is
 // place, so anything already edited in the admin area is left alone.
 export const ABOUT_COPY = {
   "intro_title": "Handmade in Cheshire by Michelle",
-  "intro_text": "Every Over The Rainbow wax melt is homemade, cruelty free and poured by hand in small batches here in Cheshire. We're passionate about premium quality, and it shows: luxurious, highly scented melts with an excellent scent throw that fills the room.\n\nWhat makes us really special is the variety. Our scent-sational range runs from fresh and floral to fruity, sweet and seasonal, and every fragrance is tested before it goes on sale and labelled to CLP requirements.\n\nNew scents are added all the time, so be sure to check back regularly!"
+  "intro_text": "Every Over The Rainbow wax melt is homemade, cruelty free and poured by hand in small batches here in Cheshire. We're passionate about premium quality, and it shows: luxurious, highly scented melts with an excellent scent throw that fills the room.\n\nWhat makes us really special is the variety. Our scent-sational range runs from fresh and floral to fruity and sweet, plus Halloween and Christmas specials, and every fragrance is tested before it goes on sale and labelled to CLP requirements.\n\nNew scents are added all the time, so be sure to check back regularly!"
 };
 
 export const POLICY_PAGES = [
@@ -189,7 +189,7 @@ export const SHOP_EMAIL = 'michelle@overtherainbowwaxmelts.co.uk';
 
 // Michelle's scent list (from the FizzyWhiz fragrance oil orders, Sept 2026). Added once as
 // HIDDEN products with no price, no stock and no photo, for completing in the admin area.
-// [name, category, scent filter tags]
+// [name, category, scent filter tags]. Order: all-year-round first, then Halloween, then Christmas.
 export const SCENT_PRODUCTS = [
   [
    "Clean Cotton",
@@ -204,52 +204,6 @@ export const SCENT_PRODUCTS = [
    [
     "fresh",
     "floral"
-   ]
-  ],
-  [
-   "Troll's Breath",
-   "snap-bars",
-   [
-    "sweet",
-    "seasonal"
-   ]
-  ],
-  [
-   "Spooktacular",
-   "snap-bars",
-   [
-    "sweet",
-    "seasonal"
-   ]
-  ],
-  [
-   "Trick or Treat",
-   "snap-bars",
-   [
-    "sweet",
-    "seasonal"
-   ]
-  ],
-  [
-   "Witches Brew",
-   "snap-bars",
-   [
-    "seasonal"
-   ]
-  ],
-  [
-   "Spooky Pumpkin",
-   "snap-bars",
-   [
-    "seasonal"
-   ]
-  ],
-  [
-   "Vanilla Pumpkin",
-   "snap-bars",
-   [
-    "sweet",
-    "seasonal"
    ]
   ],
   [
@@ -348,29 +302,6 @@ export const SCENT_PRODUCTS = [
    ]
   ],
   [
-   "Candy Cane",
-   "snap-bars",
-   [
-    "sweet",
-    "seasonal"
-   ]
-  ],
-  [
-   "The Headless Horseman",
-   "snap-bars",
-   [
-    "seasonal"
-   ]
-  ],
-  [
-   "Forest Pine & Cedarwood",
-   "snap-bars",
-   [
-    "fresh",
-    "seasonal"
-   ]
-  ],
-  [
    "Amber & Sandalwood",
    "snap-bars",
    [
@@ -382,14 +313,6 @@ export const SCENT_PRODUCTS = [
    "snap-bars",
    [
     "sweet"
-   ]
-  ],
-  [
-   "Orange & Cinnamon",
-   "snap-bars",
-   [
-    "fruity",
-    "seasonal"
    ]
   ],
   [
@@ -424,6 +347,83 @@ export const SCENT_PRODUCTS = [
    "snap-bars",
    [
     "sweet"
+   ]
+  ],
+  [
+   "Troll's Breath",
+   "snap-bars",
+   [
+    "sweet",
+    "halloween"
+   ]
+  ],
+  [
+   "Spooktacular",
+   "snap-bars",
+   [
+    "sweet",
+    "halloween"
+   ]
+  ],
+  [
+   "Trick or Treat",
+   "snap-bars",
+   [
+    "sweet",
+    "halloween"
+   ]
+  ],
+  [
+   "Witches Brew",
+   "snap-bars",
+   [
+    "halloween"
+   ]
+  ],
+  [
+   "Spooky Pumpkin",
+   "snap-bars",
+   [
+    "halloween"
+   ]
+  ],
+  [
+   "Vanilla Pumpkin",
+   "snap-bars",
+   [
+    "sweet",
+    "halloween"
+   ]
+  ],
+  [
+   "The Headless Horseman",
+   "snap-bars",
+   [
+    "halloween"
+   ]
+  ],
+  [
+   "Candy Cane",
+   "snap-bars",
+   [
+    "sweet",
+    "christmas"
+   ]
+  ],
+  [
+   "Forest Pine & Cedarwood",
+   "snap-bars",
+   [
+    "fresh",
+    "christmas"
+   ]
+  ],
+  [
+   "Orange & Cinnamon",
+   "snap-bars",
+   [
+    "fruity",
+    "christmas"
    ]
   ]
 ];

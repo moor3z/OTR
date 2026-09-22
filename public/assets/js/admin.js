@@ -7,7 +7,7 @@ const toPence = (s) => { const n = Number(String(s).replace(/[£,\s]/g, '')); re
 const when = (iso) => iso ? new Date(iso).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : '';
 const panel = $('#panel'), editor = $('#editor');
 const CATEGORIES = [['snap-bars', 'Snap Bars'], ['wax-melt-shapes', 'Wax Melt Shapes'], ['sample-boxes', 'Sample Boxes'], ['gift-sets', 'Gift Sets'], ['accessories', 'Accessories']];
-const SCENTS = ['fresh', 'floral', 'fruity', 'sweet', 'seasonal'];
+const SCENTS = ['fresh', 'floral', 'fruity', 'sweet', 'halloween', 'christmas'];
 const FULFILMENT = ['unfulfilled', 'packed', 'dispatched', 'delivered', 'cancelled'];
 
 async function api(path, { method = 'GET', body, raw, type } = {}) {

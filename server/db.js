@@ -69,7 +69,7 @@ async function init(db) {
 async function migrateContent(db) {
   const row = await db.prepare(`SELECT value FROM settings WHERE key='content_version'`).first();
   const have = Number(row?.value || 0);
-  if (have >= 5) return;
+  if (have >= 6) return;
   const now = new Date();
   const stmts = [];
   if (have < 2) { // FAQ page and starter blog posts
@@ -103,7 +103,17 @@ async function migrateContent(db) {
       stmts.push(db.prepare(`INSERT OR IGNORE INTO variants(id,product_id,label,price_pence,stock,sort) VALUES(?,?,'Default',0,0,0)`).bind(`${id}--1`, id));
     });
   }
-  stmts.push(db.prepare(`INSERT INTO settings(key,value) VALUES('content_version','5') ON CONFLICT(key) DO UPDATE SET value='5'`));
+  if (have < 6) { // 'seasonal' filter split into Halloween and Christmas; scents grouped all-year / Halloween / Christmas
+    SCENT_PRODUCTS.forEach(([name, , tags], i) => {
+      const id = name.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      stmts.push(db.prepare(`UPDATE products SET scents=?, sort=? WHERE id=?`).bind(tags.join(','), 100 + i, id));
+    });
+    stmts.push(db.prepare(`UPDATE products SET scents=replace(scents,'seasonal','halloween') WHERE id='pumpkin-spice-melts'`));
+    stmts.push(db.prepare(`UPDATE products SET scents=replace(scents,'seasonal','christmas') WHERE id='winter-berries-melts'`));
+    stmts.push(db.prepare(`UPDATE products SET scents=replace(replace(scents,',seasonal',''),'seasonal','') WHERE scents LIKE '%seasonal%'`));
+    stmts.push(db.prepare(`UPDATE posts SET body=replace(body,'browse Fresh, Floral, Fruity, Sweet and Seasonal','browse Fresh, Floral, Fruity, Sweet, Halloween and Christmas') WHERE slug='choosing-a-scent-for-every-room'`));
+  }
+  stmts.push(db.prepare(`INSERT INTO settings(key,value) VALUES('content_version','6') ON CONFLICT(key) DO UPDATE SET value='6'`));
   await db.batch(stmts);
 }
 
@@ -143,7 +153,7 @@ export const CATEGORIES = [
   { id: 'gift-sets', name: 'Gift Sets' },
   { id: 'accessories', name: 'Accessories' },
 ];
-export const SCENTS = ['fresh', 'floral', 'fruity', 'sweet', 'seasonal'];
+export const SCENTS = ['fresh', 'floral', 'fruity', 'sweet', 'halloween', 'christmas'];
 
 // Load products with their variants. includeHidden is for admin only.
 export async function loadProducts(db, { includeHidden = false, id = null } = {}) {
