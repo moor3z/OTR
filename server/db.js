@@ -1,7 +1,7 @@
 // Database access (Cloudflare D1 / SQLite). The schema is created automatically
 // on first request, and sample content is seeded if the database is empty.
 import { SAMPLE_PRODUCTS, DEFAULT_SETTINGS, DEFAULT_PAGES } from './seed.js';
-import { FAQ_PAGE, BLOG_POSTS, ABOUT_COPY, POLICY_PAGES } from './content.js';
+import { FAQ_PAGE, BLOG_POSTS, ABOUT_COPY, POLICY_PAGES, SHOP_EMAIL, SCENT_PRODUCTS } from './content.js';
 
 const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)`,
@@ -69,7 +69,7 @@ async function init(db) {
 async function migrateContent(db) {
   const row = await db.prepare(`SELECT value FROM settings WHERE key='content_version'`).first();
   const have = Number(row?.value || 0);
-  if (have >= 3) return;
+  if (have >= 5) return;
   const now = new Date();
   const stmts = [];
   if (have < 2) { // FAQ page and starter blog posts
@@ -87,7 +87,23 @@ async function migrateContent(db) {
     for (const pg of POLICY_PAGES)
       stmts.push(db.prepare(`UPDATE pages SET body=?, updated_at=? WHERE slug=? AND instr(body, ?) > 0`).bind(pg.body, now.toISOString(), pg.slug, pg.stillPlaceholder));
   }
-  stmts.push(db.prepare(`INSERT INTO settings(key,value) VALUES('content_version','3') ON CONFLICT(key) DO UPDATE SET value='3'`));
+  if (have < 4) { // contact email: fill blank settings and the blank on the privacy page
+    for (const key of ['contact_email', 'order_notify_email'])
+      stmts.push(db.prepare(`INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value WHERE settings.value=''`).bind(key, SHOP_EMAIL));
+    stmts.push(db.prepare(`UPDATE pages SET body=replace(body, '[TO COMPLETE BEFORE LAUNCH: contact email address]', ?) WHERE slug='privacy'`).bind(SHOP_EMAIL));
+  }
+  if (have < 5) { // Michelle's scents, hidden until a price, stock and photo are added in the admin area
+    const TODO = 'TO COMPLETE: add the usage instructions / safety information from the CLP label for this scent.';
+    SCENT_PRODUCTS.forEach(([name, category, tags], i) => {
+      const id = name.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      stmts.push(db.prepare(
+        `INSERT OR IGNORE INTO products(id,name,category,scents,short_desc,description,weight,usage,safety,image_url,option_name,hidden,sold_out,featured,is_sample,sort,created_at)
+         VALUES(?,?,?,?,'','','',?,?,'','',1,0,0,0,?,?)`)
+        .bind(id, name, category, tags.join(','), TODO, TODO, 100 + i, now.toISOString()));
+      stmts.push(db.prepare(`INSERT OR IGNORE INTO variants(id,product_id,label,price_pence,stock,sort) VALUES(?,?,'Default',0,0,0)`).bind(`${id}--1`, id));
+    });
+  }
+  stmts.push(db.prepare(`INSERT INTO settings(key,value) VALUES('content_version','5') ON CONFLICT(key) DO UPDATE SET value='5'`));
   await db.batch(stmts);
 }
 

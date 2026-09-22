@@ -183,3 +183,247 @@ export const POLICY_PAGES = [
   { slug: 'delivery-returns', stillPlaceholder: 'which courier or postal service you use, your real', body: "## Delivery\nWe deliver to UK addresses only. The delivery charge is shown in your basket before you pay, and any free delivery offer is applied automatically.\n\nOrders are sent with Royal Mail, Evri or DPD. We choose the service that best suits the size and weight of your parcel. Where the service includes tracking, the courier will send updates to the email address or phone number you gave at checkout.\n\n## Dispatch and delivery times\n[TO COMPLETE BEFORE LAUNCH: your dispatch time, for example \"Our melts are made in small batches, so orders are dispatched within 3 working days.\"]\n\nMost parcels arrive within a few working days of dispatch. Delivery times are estimates from the couriers and are not guaranteed, especially around Christmas and other busy periods.\n\nPlease check your address carefully at checkout. If you spot a mistake, contact us straight away and we will correct it if your order has not yet been sent.\n\n## If your parcel does not arrive\nIf your order has not arrived within 10 working days of dispatch, contact us with your order number and we will chase it with the courier. If it cannot be found, we will send a replacement or refund you.\n\n## Changed your mind\nYou can cancel your order for any reason up to 14 days after the day you receive it. Tell us by email, then send the items back within 14 days of telling us. Items should be unused and in their original packaging.\n\nYou will need to pay the return postage, and we recommend a tracked service as we cannot refund parcels that do not reach us. Once we receive the items we will refund what you paid for them, plus the standard delivery charge, to your original payment method within 14 days.\n\nIf you want to cancel before your order has been dispatched, contact us and we will cancel and refund it in full.\n\n## Damaged, faulty or wrong items\nIf something arrives damaged, faulty or is not what you ordered, contact us within 30 days with your order number and a photo. We will send a replacement or give you a full refund, whichever you prefer, and you will not pay any return postage.\n\n## How to contact us\nUse the details on our Contact page and include your order number, which starts with OTR. We aim to reply within [TO COMPLETE BEFORE LAUNCH: your reply time, for example \"2 working days\"].\n\nNothing in this policy affects your legal rights as a consumer." },
   { slug: 'terms', stillPlaceholder: 'LAUNCH: your terms of sale. Typical sections', body: "These terms apply when you buy from this website. Please read them before you order. By placing an order you agree to them.\n\n## Who we are\nOver The Rainbow is run by [TO COMPLETE BEFORE LAUNCH: the legal name of the business or person who runs the shop, and the business address]. You can reach us using the details on our Contact page.\n\n## Ordering\n- You must be 18 or over to order.\n- When you pay, you are making an offer to buy. Your order is accepted, and a contract is formed, when your payment is confirmed and we send your order confirmation.\n- We sell to consumers for personal use. If you would like to buy wholesale, please contact us first.\n- If we cannot supply something you have paid for, for example because of a stock or pricing error, we will tell you as soon as we can and refund you in full.\n\n## Prices and payment\n- Prices are shown in pounds sterling (GBP). [TO COMPLETE BEFORE LAUNCH: your VAT statement. Either \"We are not VAT registered, so no VAT is charged.\" or \"Prices include VAT. Our VAT number is ...\"]\n- The delivery charge is shown in your basket before you pay.\n- Payment is taken securely by Stripe when you order. We never see or store your card details.\n- Prices can change at any time, but changes never affect an order you have already paid for.\n\n## Our products\n- Every item is made by hand, so colours, shapes and decorations may vary slightly from the photos.\n- Scent is personal, and how strongly a melt fragrances a room depends on the burner, the room and the amount used.\n- Photos of burners and accessories in product pictures are for illustration and are only included where the description says so.\n\n## Using our products safely\nWax melts are for home fragrance only and are not food. Always read and follow the safety label and instructions supplied with each product, and the instructions for your burner. Never leave a lit burner unattended, and keep burners and melts out of reach of children and pets.\n\n## Delivery\nWe deliver to UK addresses only. Details of couriers, dispatch times and what happens if a parcel goes missing are on our Delivery and returns page, which forms part of these terms.\n\n## Cancellations, returns and faulty items\nYou can cancel within 14 days of receiving your order, and you have rights if anything arrives damaged, faulty or not as described. How to do this, and how refunds are made, is explained on our Delivery and returns page.\n\n## Our responsibility to you\n- If we fail to comply with these terms, we are responsible for loss or damage you suffer that is a foreseeable result of our failure.\n- We are not responsible for loss caused by products being used other than as instructed, or for delays outside our control, such as courier strikes or severe weather.\n- We supply products for domestic and private use only and have no liability for loss of profit or business.\n- Nothing in these terms limits our liability for death or personal injury caused by our negligence, for fraud, or for any of your legal rights as a consumer.\n\n## This website\nThe content, photos and branding on this website belong to Over The Rainbow and must not be copied without our permission. We try to keep the site accurate and available, but we cannot promise it will always be free from errors or interruptions.\n\n## Your information\nWe use your personal information only as set out in our Privacy policy.\n\n## Complaints and the law that applies\nIf you have a problem, please contact us first and we will do our best to put it right. These terms are governed by the law of England and Wales. You can bring legal proceedings in the courts of England and Wales, or in Scotland or Northern Ireland if you live there.\n\n## Changes to these terms\nWe may update these terms from time to time. The terms that apply to your order are the ones shown on this page on the day you ordered.\n\nLast updated: [TO COMPLETE BEFORE LAUNCH: date you publish this]." },
 ];
+
+// Public contact address. Applied once, only where the setting is still blank.
+export const SHOP_EMAIL = 'michelle@overtherainbowwaxmelts.co.uk';
+
+// Michelle's scent list (from the FizzyWhiz fragrance oil orders, Sept 2026). Added once as
+// HIDDEN products with no price, no stock and no photo, for completing in the admin area.
+// [name, category, scent filter tags]
+export const SCENT_PRODUCTS = [
+  [
+   "Clean Cotton",
+   "snap-bars",
+   [
+    "fresh"
+   ]
+  ],
+  [
+   "Spring Awakening",
+   "snap-bars",
+   [
+    "fresh",
+    "floral"
+   ]
+  ],
+  [
+   "Troll's Breath",
+   "snap-bars",
+   [
+    "sweet",
+    "seasonal"
+   ]
+  ],
+  [
+   "Spooktacular",
+   "snap-bars",
+   [
+    "sweet",
+    "seasonal"
+   ]
+  ],
+  [
+   "Trick or Treat",
+   "snap-bars",
+   [
+    "sweet",
+    "seasonal"
+   ]
+  ],
+  [
+   "Witches Brew",
+   "snap-bars",
+   [
+    "seasonal"
+   ]
+  ],
+  [
+   "Spooky Pumpkin",
+   "snap-bars",
+   [
+    "seasonal"
+   ]
+  ],
+  [
+   "Vanilla Pumpkin",
+   "snap-bars",
+   [
+    "sweet",
+    "seasonal"
+   ]
+  ],
+  [
+   "Toasted Marshmallow",
+   "snap-bars",
+   [
+    "sweet"
+   ]
+  ],
+  [
+   "Detol",
+   "snap-bars",
+   [
+    "fresh"
+   ]
+  ],
+  [
+   "Flashy Lemon",
+   "snap-bars",
+   [
+    "fresh",
+    "fruity"
+   ]
+  ],
+  [
+   "Lemon Lavender",
+   "snap-bars",
+   [
+    "floral",
+    "fresh"
+   ]
+  ],
+  [
+   "Lenora Blue",
+   "snap-bars",
+   [
+    "fresh"
+   ]
+  ],
+  [
+   "Lemon & Lime Fizz",
+   "snap-bars",
+   [
+    "fruity"
+   ]
+  ],
+  [
+   "Pink Lemonade",
+   "snap-bars",
+   [
+    "fruity",
+    "sweet"
+   ]
+  ],
+  [
+   "Blue Raspberry Slushy",
+   "snap-bars",
+   [
+    "fruity",
+    "sweet"
+   ]
+  ],
+  [
+   "White Musk & Golden Maple",
+   "snap-bars",
+   [
+    "sweet"
+   ]
+  ],
+  [
+   "Fluffy Towels",
+   "snap-bars",
+   [
+    "fresh"
+   ]
+  ],
+  [
+   "Ghosts",
+   "snap-bars",
+   [
+    "floral"
+   ]
+  ],
+  [
+   "Black Opium",
+   "snap-bars",
+   [
+    "sweet"
+   ]
+  ],
+  [
+   "Savage",
+   "snap-bars",
+   [
+    "fresh"
+   ]
+  ],
+  [
+   "Candy Cane",
+   "snap-bars",
+   [
+    "sweet",
+    "seasonal"
+   ]
+  ],
+  [
+   "The Headless Horseman",
+   "snap-bars",
+   [
+    "seasonal"
+   ]
+  ],
+  [
+   "Forest Pine & Cedarwood",
+   "snap-bars",
+   [
+    "fresh",
+    "seasonal"
+   ]
+  ],
+  [
+   "Amber & Sandalwood",
+   "snap-bars",
+   [
+    "sweet"
+   ]
+  ],
+  [
+   "Dragons Blood",
+   "snap-bars",
+   [
+    "sweet"
+   ]
+  ],
+  [
+   "Orange & Cinnamon",
+   "snap-bars",
+   [
+    "fruity",
+    "seasonal"
+   ]
+  ],
+  [
+   "Cherry Vanilla",
+   "snap-bars",
+   [
+    "fruity",
+    "sweet"
+   ]
+  ],
+  [
+   "Cherry",
+   "snap-bars",
+   [
+    "fruity"
+   ]
+  ],
+  [
+   "Angels",
+   "snap-bars",
+   [
+    "sweet"
+   ]
+  ],
+  [
+   "Oud Wood",
+   "snap-bars",
+   []
+  ],
+  [
+   "Vanilla Perfume",
+   "snap-bars",
+   [
+    "sweet"
+   ]
+  ]
+];

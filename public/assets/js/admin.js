@@ -75,7 +75,7 @@ async function showProducts() {
   panel.innerHTML = `<div class="bar"><h1>Products</h1><button class="btn btn-primary btn-sm" data-new-product>Add product</button></div>
     ${samples ? `<div class="notice notice-demo"><p><strong>${samples} sample product${samples === 1 ? '' : 's'} with made-up prices.</strong> Edit them into real products (saving removes the Sample tag) or clear them out.</p><button class="btn btn-ghost btn-sm" data-delete-samples>Delete all sample products</button></div>` : ''}
     ${products.length ? `<ul class="rows">${products.map((p) => `<li class="row"><img src="${esc(p.image_url || '/assets/ph/blank.svg')}" alt="">
-      <div><span class="row-title">${esc(p.name)}</span> ${p.is_sample ? '<span class="tag sample">Sample</span>' : ''}${p.hidden ? '<span class="tag hidden">Hidden</span>' : ''}${p.sold_out ? '<span class="tag warn">Marked sold out</span>' : !p.available ? '<span class="tag warn">Out of stock</span>' : ''}
+      <div><span class="row-title">${esc(p.name)}</span> ${p.is_sample ? '<span class="tag sample">Sample</span>' : ''}${p.hidden ? '<span class="tag hidden">Hidden</span>' : ''}${p.variants.some((v) => !v.price_pence) ? '<span class="tag warn">Needs price</span>' : ''}${!p.image_url ? '<span class="tag">No photo</span>' : ''}${p.sold_out ? '<span class="tag warn">Marked sold out</span>' : !p.available ? '<span class="tag warn">Out of stock</span>' : ''}
         <p class="row-sub">${p.variants.map((v) => `${p.variants.length > 1 ? esc(v.label) + ' ' : ''}${gbp(v.price_pence)}, ${v.stock} in stock`).join(' | ')}</p></div>
       <button class="btn btn-ghost btn-sm" data-product="${esc(p.id)}">Edit</button></li>`).join('')}</ul>` : `<div class="empty"><p>No products yet. Add your first one.</p></div>`}`;
 }

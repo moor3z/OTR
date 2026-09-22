@@ -1,4 +1,4 @@
-import { api, basket, gbp, esc, $ } from './site.js?v=7';
+import { api, basket, gbp, esc, $ } from './site.js?v=8';
 
 const root = $('#status-root'), view = root.dataset.view;
 const token = new URLSearchParams(location.search).get('token') || '';
