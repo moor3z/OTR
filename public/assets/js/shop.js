@@ -1,4 +1,4 @@
-import { api, getConfig, productCard, wireAddButtons, esc, $ } from './site.js?v=25';
+import { api, getConfig, productCard, wireAddButtons, esc, $ } from './site.js?v=26';
 
 const params = new URLSearchParams(location.search);
 const state = {
@@ -21,10 +21,11 @@ function syncUrl() {
 }
 
 function render() {
-  const catName = categories.find((c) => c.id === state.category)?.name || 'All Products';
+  const allCats = [...categories, { id: 'seasonal', name: 'Seasonal' }];
+  const catName = allCats.find((c) => c.id === state.category)?.name || 'All Products';
   $('#shop-title').textContent = state.q ? `Results for “${state.q}”` : catName;
   document.title = `${state.q ? 'Search' : catName} | Over The Rainbow`;
-  $('#cats').innerHTML = [{ id: 'all', name: 'All Products' }, ...categories].map((c) =>
+  $('#cats').innerHTML = [{ id: 'all', name: 'All Products' }, ...allCats].map((c) =>
     `<li><button type="button" class="chip" data-cat="${c.id}" aria-pressed="${c.id === state.category}">${esc(c.name)}</button></li>`).join('');
   document.querySelectorAll('#scents .chip').forEach((b) => b.setAttribute('aria-pressed', String(state.scents.has(b.dataset.scent))));
   document.querySelectorAll('.site-nav a').forEach((a) => {
@@ -33,8 +34,9 @@ function render() {
   });
 
   const q = state.q.toLowerCase();
+  const isSeasonal = (p) => p.scents.includes('halloween') || p.scents.includes('christmas');
   let list = products.filter((p) =>
-    (state.category === 'all' || p.category === state.category) &&
+    (state.category === 'all' || (state.category === 'seasonal' ? isSeasonal(p) : p.category === state.category)) &&
     (!state.scents.size || p.scents.some((s) => state.scents.has(s))) &&
     (!q || `${p.name} ${p.short_desc} ${p.scents.join(' ')}`.toLowerCase().includes(q)));
   const by = { 'price-asc': (a, b) => a.from_pence - b.from_pence, 'price-desc': (a, b) => b.from_pence - a.from_pence,
@@ -42,14 +44,21 @@ function render() {
   if (by) list = [...list].sort(by);
 
   count.textContent = `${list.length} product${list.length === 1 ? '' : 's'}`;
-  results.innerHTML = list.length ? `<ul class="grid">${list.map(productCard).join('')}</ul>`
+  const grid = (items) => `<ul class="grid">${items.map(productCard).join('')}</ul>`;
+  let html = '';
+  if (state.category === 'seasonal' && list.length) {
+    // Same layout as every other category, split under two season headings
+    const hal = list.filter((p) => p.scents.includes('halloween')), xmas = list.filter((p) => p.scents.includes('christmas') && !p.scents.includes('halloween'));
+    html = (hal.length ? `<h2 class="season-heading">Halloween &amp; Autumn Scents</h2>${grid(hal)}` : '') + (xmas.length ? `<h2 class="season-heading">Christmas &amp; Winter Scents</h2>${grid(xmas)}` : '');
+  } else if (list.length) html = grid(list);
+  results.innerHTML = html ? html
     : `<div class="empty"><h2>Nothing matches that</h2><p>Try a different scent, or clear the filters to see everything.</p><button type="button" class="btn btn-primary" id="clear">Clear filters</button></div>`;
   syncUrl();
 }
 
 Promise.all([getConfig(), api('/api/products')]).then(([cfg, data]) => {
   categories = cfg.categories; products = data.products;
-  if (state.category !== 'all' && !categories.some((c) => c.id === state.category)) state.category = 'all';
+  if (state.category !== 'all' && state.category !== 'seasonal' && !categories.some((c) => c.id === state.category)) state.category = 'all';
   $('#scents').innerHTML = cfg.scents.map((s) => `<li><button type="button" class="chip scent" data-scent="${s}" aria-pressed="false">${cap(s)}</button></li>`).join('');
   $('#sort').value = state.sort;
   render();

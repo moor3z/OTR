@@ -104,7 +104,7 @@ function renderChrome() {
   const here = location.pathname.replace(/\/$/, '') || '/';
   const cat = new URLSearchParams(location.search).get('category');
   const nav = [['/', 'Home', 'home'], ['/shop?category=snap-bars', 'Snap Bars', 'snap-bars'], ['/shop?category=wax-melt-shapes', 'Melt Shapes', 'wax-melt-shapes'],
-    ['/shop?category=sample-boxes', 'Sample Boxes', 'sample-boxes'], ['/shop?category=gift-sets', 'Gift Sets', 'gift-sets'], ['/shop?category=accessories', 'Accessories', 'accessories'], ['/seasonal', 'Seasonal', 'seasonal']];
+    ['/shop?category=sample-boxes', 'Sample Boxes', 'sample-boxes'], ['/shop?category=gift-sets', 'Gift Sets', 'gift-sets'], ['/shop?category=accessories', 'Accessories', 'accessories'], ['/shop?category=seasonal', 'Seasonal', 'seasonal']];
   const header = document.createElement('div');
   header.innerHTML = `<a class="skip" href="#main">Skip to content</a>
   <div id="announce"></div>
@@ -122,7 +122,7 @@ function renderChrome() {
       <nav class="site-nav" aria-label="Shop">
         <a class="nav-home" href="/"${here === '/' ? ' aria-current="page"' : ''}>Home</a>
         <div class="nav-grid">
-          ${nav.slice(1).map(([href, label, c]) => `<a class="nav-tile" href="${href}"${(c === 'seasonal' ? here === '/seasonal' : here === '/shop' && cat === c) ? ' aria-current="page"' : ''}><img src="/assets/img/cat/${c}.webp" alt="" loading="lazy" decoding="async"><span>${label}</span></a>`).join('')}
+          ${nav.slice(1).map(([href, label, c]) => `<a class="nav-tile" href="${href}"${here === '/shop' && cat === c ? ' aria-current="page"' : ''}><img src="/assets/img/cat/${c}.webp" alt="" loading="lazy" decoding="async"><span>${label}</span></a>`).join('')}
         </div>
         <div class="nav-more">
           <a href="/shop"${here === '/shop' && !cat ? ' aria-current="page"' : ''}>All products</a>

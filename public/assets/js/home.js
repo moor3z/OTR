@@ -1,6 +1,6 @@
-import { postCard } from './blog.js?v=25';
-import { format } from './page.js?v=25';
-import { api, getConfig, productCard, wireAddButtons, gbp, $ } from './site.js?v=25';
+import { postCard } from './blog.js?v=26';
+import { format } from './page.js?v=26';
+import { api, getConfig, productCard, wireAddButtons, gbp, $ } from './site.js?v=26';
 
 getConfig().then((c) => {
   if (c.hero_headline) $('#hero-headline').textContent = c.hero_headline;

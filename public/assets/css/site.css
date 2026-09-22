@@ -120,6 +120,7 @@ a { color: var(--pink-text); text-underline-offset: 3px; }
 @media (min-width: 720px) { .snapbar { grid-template-columns: repeat(3, 1fr); } .snapbar a { flex-direction: column; justify-content: flex-end; align-items: stretch; min-height: 0; padding: 1rem .875rem 1rem; gap: .75rem; font-size: 1.0625rem; }
   .snapbar a img { order: 0; width: 100%; height: clamp(110px, 12vw, 160px); } .snapbar a span { text-align: center; } }
 @media (min-width: 1040px) { .snapbar { grid-template-columns: repeat(6, 1fr); } .snapbar a { font-size: 1rem; padding-inline: .625rem; } }
+.season-heading { font-size: 1.5rem; margin: 2rem 0 1rem; } .season-heading:first-child { margin-top: .5rem; }
 .seasonal-head { display: flex; gap: 1.5rem; align-items: center; } .seasonal-head img { width: 150px; height: 150px; border-radius: var(--r-md); object-fit: cover; flex: none; } .seasonal-head h1 { margin-bottom: .25em; }
 @media (max-width: 599px) { .seasonal-head { flex-direction: column; align-items: flex-start; } .seasonal-head img { width: 110px; height: 110px; } }
 #home-faq details.info:first-of-type { border-top: 2px solid var(--line); }

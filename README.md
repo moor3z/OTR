@@ -100,7 +100,9 @@ Categories and scent filters (Fresh, Floral, Fruity, Sweet, Halloween, Christmas
 
 Every page loads its CSS and JS with a version number (`site.css?v=5`). When any file in `public/assets/css` or `public/assets/js` changes, raise the number so browsers fetch the new files straight away: `python3 tools/bump_version.py 6`. Updates supplied as zips already have this done.
 
-Category tile photos live in `public/assets/img/cat/` (`snap-bars.webp`, `wax-melt-shapes.webp`, `sample-boxes.webp`, `gift-sets.webp`, `accessories.webp`). Replace a file with the same name to swap a photo.
+The Seasonal tile and menu link open `/shop?category=seasonal`, a virtual category on the shop page that lists products tagged Halloween & Autumn and Christmas & Winter. The homepage shows the first five FAQ questions under the blog.
+
+Category tile photos live in `public/assets/img/cat/` (`snap-bars.webp`, `wax-melt-shapes.webp`, `sample-boxes.webp`, `gift-sets.webp`, `accessories.webp`, `seasonal.webp`). Replace a file with the same name to swap a photo.
 
 ## What was tested, and what was not
 
