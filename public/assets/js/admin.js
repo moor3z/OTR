@@ -69,15 +69,31 @@ async function openOrder(id) {
 
 /* ── Products ───────────────────────────────────────────────────────────── */
 let products = [];
-async function showProducts() {
-  ({ products } = await api('/products'));
-  const samples = products.filter((p) => p.is_sample).length;
-  panel.innerHTML = `<div class="bar"><h1>Products</h1><button class="btn btn-primary btn-sm" data-new-product>Add product</button></div>
-    ${samples ? `<div class="notice notice-demo"><p><strong>${samples} sample product${samples === 1 ? '' : 's'} with made-up prices.</strong> Edit them into real products (saving removes the Sample tag) or clear them out.</p><button class="btn btn-ghost btn-sm" data-delete-samples>Delete all sample products</button></div>` : ''}
-    ${products.length ? `<ul class="rows">${products.map((p) => `<li class="row"><img src="${esc(p.image_url || '/assets/ph/blank.svg')}" alt="">
-      <div><span class="row-title">${esc(p.name)}</span> ${p.is_sample ? '<span class="tag sample">Sample</span>' : ''}${p.hidden ? '<span class="tag hidden">Hidden</span>' : ''}${p.variants.some((v) => !v.price_pence) ? '<span class="tag warn">Needs price</span>' : ''}${!p.image_url ? '<span class="tag">No photo</span>' : ''}${p.sold_out ? '<span class="tag warn">Marked sold out</span>' : !p.available ? '<span class="tag warn">Out of stock</span>' : ''}
-        <p class="row-sub">${p.variants.map((v) => `${p.variants.length > 1 ? esc(v.label) + ' ' : ''}${gbp(v.price_pence)}, ${v.stock} in stock`).join(' | ')}</p></div>
-      <button class="btn btn-ghost btn-sm" data-product="${esc(p.id)}">Edit</button></li>`).join('')}</ul>` : `<div class="empty"><p>No products yet. Add your first one.</p></div>`}`;
+const pf = { scent: 'all', status: 'all', q: '' }; // product list filters, kept while you edit
+function showProducts(reload = true) {
+  return (reload ? api('/products').then((d) => (products = d.products)) : Promise.resolve()).then(() => {
+    const samples = products.filter((p) => p.is_sample).length;
+    const q = pf.q.toLowerCase();
+    const list = products.filter((p) =>
+      (pf.scent === 'all' || (pf.scent === 'allyear' ? !p.scents.includes('halloween') && !p.scents.includes('christmas') : p.scents.includes(pf.scent))) &&
+      (pf.status === 'all' || (pf.status === 'live' ? !p.hidden && p.available : pf.status === 'hidden' ? p.hidden : pf.status === 'todo' ? p.variants.some((v) => !v.price_pence) || !p.image_url : true)) &&
+      (!q || p.name.toLowerCase().includes(q)));
+    const chip = (group, value, label) => `<button type="button" class="chip" data-pf="${group}" data-v="${value}" aria-pressed="${pf[group] === value}">${label}</button>`;
+    panel.innerHTML = `<div class="bar"><h1>Products</h1><button class="btn btn-primary btn-sm" data-new-product>Add product</button></div>
+      ${samples ? `<div class="notice notice-demo"><p><strong>${samples} sample product${samples === 1 ? '' : 's'} with made-up prices.</strong> Edit them into real products (saving removes the Sample tag) or clear them out.</p><button class="btn btn-ghost btn-sm" data-delete-samples>Delete all sample products</button></div>` : ''}
+      <div class="panel-card" style="padding:1rem">
+        <input type="search" id="pf-q" placeholder="Search by name" value="${esc(pf.q)}" style="margin-bottom:.75rem">
+        <p class="filter-label">Scent</p><div class="chips" style="margin:0 0 .75rem;padding:4px 0">${[['all', 'All'], ['allyear', 'All year round'], ['halloween', 'Halloween'], ['christmas', 'Christmas'], ['fresh', 'Fresh'], ['floral', 'Floral'], ['fruity', 'Fruity'], ['sweet', 'Sweet']].map(([v, l]) => chip('scent', v, l)).join('')}</div>
+        <p class="filter-label">Status</p><div class="chips" style="margin:0;padding:4px 0">${[['all', 'All'], ['live', 'On sale'], ['hidden', 'Hidden'], ['todo', 'Needs price or photo']].map(([v, l]) => chip('status', v, l)).join('')}</div>
+      </div>
+      <p class="muted small" role="status">${list.length} of ${products.length} products</p>
+      ${list.length ? `<ul class="rows">${list.map((p) => `<li class="row"><img src="${esc(p.image_url || '/assets/ph/blank.svg')}" alt="">
+        <div><span class="row-title">${esc(p.name)}</span> ${p.is_sample ? '<span class="tag sample">Sample</span>' : ''}${p.hidden ? '<span class="tag hidden">Hidden</span>' : ''}${p.variants.some((v) => !v.price_pence) ? '<span class="tag warn">Needs price</span>' : ''}${!p.image_url ? '<span class="tag">No photo</span>' : ''}${p.sold_out ? '<span class="tag warn">Marked sold out</span>' : !p.available ? '<span class="tag warn">Out of stock</span>' : ''}${p.scents.filter((s) => s === 'halloween' || s === 'christmas').map((s) => `<span class="tag">${s[0].toUpperCase() + s.slice(1)}</span>`).join('')}
+          <p class="row-sub">${p.variants.map((v) => `${p.variants.length > 1 ? esc(v.label) + ' ' : ''}${gbp(v.price_pence)}, ${v.stock} in stock`).join(' | ')}</p></div>
+        <button class="btn btn-ghost btn-sm" data-product="${esc(p.id)}">Edit</button></li>`).join('')}</ul>` : `<div class="empty"><p>${products.length ? 'No products match those filters.' : 'No products yet. Add your first one.'}</p></div>`}`;
+    const search = $('#pf-q');
+    search.oninput = () => { const pos = search.selectionStart; pf.q = search.value; showProducts(false).then(() => { const n = $('#pf-q'); n.focus(); n.setSelectionRange(pos, pos); }); };
+  });
 }
 
 const variantRow = (v = {}) => `<div class="variant" data-vid="${esc(v.id || '')}">
@@ -230,7 +246,8 @@ function go(tab) {
 }
 document.addEventListener('click', (e) => {
   const t = e.target;
-  if (t.closest('[data-tab]')) go(t.closest('[data-tab]').dataset.tab);
+  if (t.closest('[data-pf]')) { const c = t.closest('[data-pf]'); pf[c.dataset.pf] = c.dataset.v; showProducts(false); }
+  else if (t.closest('[data-tab]')) go(t.closest('[data-tab]').dataset.tab);
   else if (t.closest('[data-close]')) editor.close();
   else if (t.closest('[data-order]')) openOrder(t.closest('[data-order]').dataset.order).catch(fail);
   else if (t.closest('[data-product]')) openProduct(products.find((p) => p.id === t.closest('[data-product]').dataset.product));
