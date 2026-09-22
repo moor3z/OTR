@@ -158,6 +158,12 @@ async function shrink(file) {
   return out;
 }
 
+
+// Collapsible "Where does this appear?" panel with an annotated screenshot of the shop.
+const where = (imgs, legend) => `<details class="where"><summary>Where does this appear on the shop?</summary>
+  <ol class="where-legend">${legend.map((l) => `<li>${l}</li>`).join('')}</ol>
+  ${imgs.map((i) => `<img src="/assets/img/help/${i}.webp" alt="" loading="lazy">`).join('')}</details>`;
+
 /* ── Settings ───────────────────────────────────────────────────────────── */
 async function showSettings() {
   const [{ settings: s }, me] = await Promise.all([api('/settings'), api('/me')]);
@@ -167,10 +173,10 @@ async function showSettings() {
   panel.innerHTML = `<div class="bar"><h1>Delivery &amp; settings</h1></div><form id="settings-form"><div class="form-msg"></div>
     <div class="panel-card"><h2>Status</h2><dl class="kv"><dt>Payments</dt><dd>${{ demo: 'Demo mode. Stripe keys are not set, so no payments can be taken.', test: 'Stripe TEST mode. Only test cards work; no real money moves.', live: 'Stripe LIVE mode. Real payments.' }[me.payment_mode]}</dd>
       <dt>Order emails</dt><dd>${me.email_configured ? 'On' : 'Off. No email provider is configured.'}</dd></dl></div>
-    <div class="panel-card"><h2>Delivery (UK only)</h2><div class="row-2">${money('delivery_pence', 'Delivery charge (£)', 'Flat rate per order')}${money('free_delivery_threshold_pence', 'Free delivery over (£)', 'Leave blank for no free delivery')}</div>
+    <div class="panel-card"><h2>Delivery (UK only)</h2>${where(['delivery-1', 'delivery-2'], ['Delivery name and charge, in the basket and at checkout', 'Free delivery message (only shown when a threshold is set)', 'Dispatch estimate, on every product page and in order emails'])}<div class="row-2">${money('delivery_pence', 'Delivery charge (£)', 'Flat rate per order')}${money('free_delivery_threshold_pence', 'Free delivery over (£)', 'Leave blank for no free delivery')}</div>
       ${text('delivery_name', 'Delivery name', 'Shown in the basket and on Stripe')}${text('dispatch_estimate', 'Dispatch estimate', 'Shown on product pages and confirmations')}</div>
-    <div class="panel-card"><h2>Homepage wording</h2>${text('announcement', 'Announcement bar', 'Leave blank to hide')}${text('hero_headline', 'Headline')}${text('hero_sub', 'Line under the headline')}${text('intro_title', 'About section title')}${text('intro_text', 'About section text', '', true)}</div>
-    <div class="panel-card"><h2>Business details</h2>${missing.length ? '<div class="notice notice-demo"><p>Needed before launch: a contact email and your business address. They appear on the Contact page and in the footer.</p></div>' : ''}
+    <div class="panel-card"><h2>Homepage wording</h2>${where(['wording-1', 'wording-2'], ['Announcement bar, across the top of every page (blank = hidden)', 'Headline', 'Line under the headline', 'About section title', 'About section text'])}${text('announcement', 'Announcement bar', 'Leave blank to hide')}${text('hero_headline', 'Headline')}${text('hero_sub', 'Line under the headline')}${text('intro_title', 'About section title')}${text('intro_text', 'About section text', '', true)}</div>
+    <div class="panel-card"><h2>Business details</h2>${where(['business-1', 'business-2'], ['Contact page: email, phone and address', 'Footer on every page: contact email'])}${missing.length ? '<div class="notice notice-demo"><p>Needed before launch: a contact email and your business address. They appear on the Contact page and in the footer.</p></div>' : ''}
       ${text('business_name', 'Business name')}${text('contact_email', 'Public contact email')}${text('contact_phone', 'Public phone number', 'Optional')}${text('business_address', 'Business address', '', true)}${text('order_notify_email', 'Send new-order alerts to', 'Needs an email provider')}</div>
     <button class="btn btn-primary" type="submit">Save settings</button></form>`;
   $('#settings-form').onsubmit = async (e) => {
@@ -236,8 +242,36 @@ function openPost(p) {
     catch (err) { fieldErrors(form, err); }
   };
 }
+
+/* ── Help ───────────────────────────────────────────────────────────────── */
+function showHelp() {
+  const step = (title, items) => `<details class="help"><summary>${title}</summary><ol>${items.map((i) => `<li>${i}</li>`).join('')}</ol></details>`;
+  panel.innerHTML = `<div class="bar"><h1>How to run the shop</h1></div>
+  <p class="muted">Everything here is done in this admin area. Changes go live as soon as you click Save, so there is nothing else to publish. If something looks wrong on the shop after a change, reload the page first.</p>
+  <div class="panel-card"><h2>Products</h2>
+  ${step('Put a new scent on sale', ['Open the <strong>Products</strong> tab and use the filters to find it (the <em>Needs price or photo</em> button lists everything not yet finished).', 'Click <strong>Edit</strong>. Type the price in pounds (for example 3.50) and how many you have in stock.', 'Click <strong>Choose File</strong> under Image and pick a photo from your phone or computer. Square photos look best.', 'Fill in the short description (shown on the shop page), the full description, and the usage and safety text from the CLP label.', 'Untick <strong>Hide from shop</strong>, then click <strong>Save product</strong>.'])}
+  ${step('Add a brand-new product', ['Products tab → <strong>Add product</strong>.', 'Give it a name, choose the category (Snap Bars, Wax Melt Shapes, Sample Boxes, Gift Sets or Accessories) and tick the scent filters that apply.', 'If it comes in sizes or scents, type what the customer chooses between (for example <em>Size</em>) and click <strong>Add another option</strong> for each one, with its own price and stock.', 'Add a photo, price, stock and descriptions, then Save.'])}
+  ${step('Change a price or stock level', ['Products tab → search for the product → <strong>Edit</strong>.', 'Change the price or stock number and click <strong>Save product</strong>. Stock goes down by itself when customers buy.'])}
+  ${step('Mark something as sold out, or take it off the shop', ['Edit the product.', '<strong>Mark as sold out</strong> keeps it visible with a Sold out label. <strong>Hide from shop</strong> removes it completely.', 'Untick the box again when it is back.'])}
+  ${step('Feature a product on the homepage', ['Edit the product and tick <strong>Feature on homepage</strong>. The first eight featured products show in the “A few scents to start with” section.', 'The <strong>Position</strong> number decides the order everywhere. Lower numbers show first.'])}
+  </div>
+  <div class="panel-card"><h2>Orders</h2>
+  ${step('When an order comes in', ['You get an email headed <em>New paid order</em>. The customer gets a confirmation at the same time.', 'Open the <strong>Orders</strong> tab. Paid orders are listed newest first. Click <strong>Open</strong> to see what was bought and the delivery address.', 'Pack it, then change <strong>Fulfilment status</strong> to <em>dispatched</em> and click <strong>Save order</strong>. Use the Private note for tracking numbers or anything to remember.', 'Only orders marked <strong>paid</strong> should be sent. Anything under “Unpaid, expired and demo” was never paid for.'])}
+  ${step('Refund a customer', ['Refunds are done in Stripe, not here: open the order, copy the <strong>Stripe ref</strong>, find that payment in Stripe → Payments and click Refund.', 'Then set the order’s fulfilment status to <em>cancelled</em> here so it is not sent.'])}
+  </div>
+  <div class="panel-card"><h2>Wording and pages</h2>
+  ${step('Change the homepage wording, delivery charge or business details', ['Open <strong>Delivery &amp; settings</strong>. Each section has a “Where does this appear on the shop?” link showing exactly what each box changes.', 'Edit the boxes and click <strong>Save settings</strong> at the bottom.', 'The announcement bar is handy for “Christmas orders by 18 December” type notices. Leave it blank to hide it.'])}
+  ${step('Edit the Contact, Delivery, Privacy, Terms or FAQ pages', ['Open <strong>Pages</strong> and click <strong>Edit</strong>.', 'Leave a blank line between paragraphs. Start a line with <code>## </code> for a heading, <code>- </code> for a bullet, or <code>Q: </code> for an FAQ question (answer on the next line).', 'Untick <strong>Still a placeholder</strong> once the page is finished, then Save.'])}
+  ${step('Write a blog post', ['Open <strong>Blog</strong> → <strong>Add post</strong>.', 'Add a title, a one-line summary, a photo and the post itself (same formatting rules as pages).', 'Untick <strong>Published</strong> to save it as a draft and come back later.'])}
+  </div>
+  <div class="panel-card"><h2>Signing in</h2>
+  ${step('Getting in and out', ['Go to <strong>${location.origin}/admin/</strong>. Sign in with Google, or ask for a code to be emailed to you.', 'You stay signed in for 24 hours on that device. Click <strong>Sign out</strong> at the top right if you are on a shared computer.', 'Only email addresses on the allowed list can get in. Adding someone new is done in Cloudflare, not here.'])}
+  </div>`;
+  return Promise.resolve();
+}
+
 /* ── Wiring ─────────────────────────────────────────────────────────────── */
-const TABS = { orders: showOrders, products: showProducts, settings: showSettings, pages: showPages, blog: showBlog };
+const TABS = { orders: showOrders, products: showProducts, settings: showSettings, pages: showPages, blog: showBlog, help: showHelp };
 function go(tab) {
   document.querySelectorAll('[role=tab]').forEach((t) => t.setAttribute('aria-selected', String(t.dataset.tab === tab)));
   panel.setAttribute('aria-labelledby', `tab-${tab}`);

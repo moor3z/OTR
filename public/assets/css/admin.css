@@ -24,3 +24,11 @@ dialog.editor::backdrop { background: rgba(46, 20, 55, .55); }
 .img-pick { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; } .img-pick img { width: 96px; height: 96px; border-radius: 12px; object-fit: cover; background: var(--blush); }
 .kv { display: grid; grid-template-columns: auto 1fr; gap: .25rem 1rem; margin: 0 0 1rem; } .kv dt { color: var(--muted); } .kv dd { margin: 0; }
 textarea.tall { min-height: 320px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .9375rem; }
+details.where, details.help { border: 1px solid var(--line); border-radius: var(--r-sm); padding: 0 1rem; margin: 0 0 1rem; background: #faf7fb; }
+details.where summary, details.help summary { cursor: pointer; padding: .75rem 0; font-weight: 600; color: var(--pink-text); min-height: 44px; display: flex; align-items: center; }
+details.help summary { color: var(--plum); font-family: var(--display); font-size: 1.0625rem; }
+details.where img { width: 100%; border-radius: var(--r-sm); border: 1px solid var(--line); margin: 0 0 1rem; }
+.where-legend { margin: 0 0 1rem; padding-left: 0; list-style: none; counter-reset: n; }
+.where-legend li { counter-increment: n; display: flex; gap: .625rem; align-items: baseline; margin-bottom: .375rem; }
+.where-legend li::before { content: counter(n); flex: none; width: 26px; height: 26px; border-radius: 50%; background: #ff2d8f; color: #fff; font-weight: 700; text-align: center; line-height: 26px; font-size: .9375rem; }
+details.help ol { margin: 0 0 1rem; padding-left: 1.25rem; } details.help li { margin-bottom: .5rem; } details.help code { background: var(--line); padding: 0 .3rem; border-radius: 4px; }
