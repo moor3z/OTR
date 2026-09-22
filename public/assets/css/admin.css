@@ -19,6 +19,9 @@ dialog.editor::backdrop { background: rgba(46, 20, 55, .55); }
 .editor form, .editor .editor-body { padding: 1.25rem; } .editor h2 { font-size: 1.375rem; }
 .editor-actions { display: flex; gap: .75rem; flex-wrap: wrap; position: sticky; bottom: 0; background: #fff; padding: 1rem 0 0; border-top: 1px solid var(--line); margin-top: 1rem; }
 .variant { display: grid; grid-template-columns: 1.4fr 1fr 1fr auto; gap: .5rem; align-items: end; margin-bottom: .5rem; } .variant label { font-size: .875rem; }
+.variant.single { grid-template-columns: 1fr 1fr; } .variant.single .v-label, .variant.single .v-remove { display: none; }
+.form-section { font-size: 1.0625rem; margin: 1.5rem 0 .75rem; padding-top: 1rem; border-top: 2px solid var(--line); }
+.checks label .hint { margin-left: .25rem; }
 .checks { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; } .checks label { display: inline-flex; gap: .5rem; align-items: center; font-weight: 500; min-height: 44px; margin: 0; }
 .checks input { width: 22px; height: 22px; accent-color: var(--plum); }
 .img-pick { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; } .img-pick img { width: 96px; height: 96px; border-radius: 12px; object-fit: cover; background: var(--blush); }
@@ -32,3 +35,4 @@ details.where img { width: 100%; border-radius: var(--r-sm); border: 1px solid v
 .where-legend li { counter-increment: n; display: flex; gap: .625rem; align-items: baseline; margin-bottom: .375rem; }
 .where-legend li::before { content: counter(n); flex: none; width: 26px; height: 26px; border-radius: 50%; background: #ff2d8f; color: #fff; font-weight: 700; text-align: center; line-height: 26px; font-size: .9375rem; }
 details.help ol { margin: 0 0 1rem; padding-left: 1.25rem; } details.help li { margin-bottom: .5rem; } details.help code { background: var(--line); padding: 0 .3rem; border-radius: 4px; }
+[hidden] { display: none !important; }

@@ -7,10 +7,7 @@
 //  Replace via the admin area; you should not need to edit this file.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const USAGE =
-  'PLACEHOLDER — replace with your own usage instructions for this product.';
-const SAFETY =
-  'PLACEHOLDER — add the product-specific safety information and any required allergen or hazard labelling for this scent before launch.';
+import { DEFAULT_USAGE as USAGE, DEFAULT_SAFETY as SAFETY } from './content.js';
 
 // price in pence. variants: [label, pricePence, stock]
 const p = (id, name, category, scents, short, description, weight, variants, extra = {}) => ({

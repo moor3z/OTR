@@ -427,3 +427,17 @@ export const SCENT_PRODUCTS = [
    ]
   ]
 ];
+
+// Default usage and safety text for every product, taken from the FAQ. Applied
+// once to any product still carrying a placeholder, and pre-filled on new products.
+export const DEFAULT_USAGE = `Break off one or two pieces and place them in the dish of your burner. Light an unscented tealight underneath, or switch on your electric warmer, and the wax will melt and release its fragrance. Never add water to the dish.
+
+The wax does not evaporate, only the fragrance does. When you can no longer smell it, let the wax cool and set, pop it out and replace it with a fresh piece. Never pour wax down the sink.
+
+Store your melts somewhere cool and dry, out of direct sunlight, ideally in a tin or sealed bag.`;
+
+export const DEFAULT_SAFETY = `For home fragrance only. Not for eating. Keep melts and burners out of reach of children and pets.
+
+Never leave a lit burner unattended. Place it on a flat, heat-resistant surface, away from draughts, curtains and anything that could catch fire, and always follow the instructions that came with your burner. The dish and the melted wax get hot, so let them cool before handling.
+
+Read the CLP label on the packaging before use. It lists the allergens in this particular scent and any warnings that apply to it. If you or anyone in your home has allergies or sensitivities, check the label first.`;

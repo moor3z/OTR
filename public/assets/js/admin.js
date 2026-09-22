@@ -53,7 +53,7 @@ async function openOrder(id) {
     <p>${statusTag(o)} ${o.status === 'paid' ? `Paid ${when(o.paid_at)}` : `Created ${when(o.created_at)}. Not paid, do not send.`}</p>
     <dl class="kv"><dt>Customer</dt><dd>${esc(o.name)}<br><a href="mailto:${esc(o.email)}">${esc(o.email)}</a>${o.phone ? `<br>${esc(o.phone)}` : ''}</dd>
       <dt>Deliver to</dt><dd>${[o.name, a.line1, a.line2, a.city, a.county, a.postcode].filter(Boolean).map(esc).join('<br>')}</dd>
-      ${o.payment_intent ? `<dt>Stripe ref</dt><dd>${esc(o.payment_intent)}</dd>` : ''}</dl>
+      ${o.payment_intent ? `<dt>Stripe ref</dt><dd>${esc(o.payment_intent)}<br><a class="btn btn-ghost btn-sm" style="margin-top:.375rem" href="https://dashboard.stripe.com/${o.mode === 'live' ? '' : 'test/'}payments/${encodeURIComponent(o.payment_intent)}" target="_blank" rel="noopener">Open payment in Stripe</a></dd>` : ''}</dl>
     <ul class="rows">${o.items.map((i) => `<li class="row order"><div><span class="row-title">${esc(i.name)}${i.label ? ` (${esc(i.label)})` : ''}</span><p class="row-sub">${i.qty} × ${gbp(i.unit_pence)}</p></div><strong>${gbp(i.line_pence)}</strong></li>`).join('')}</ul>
     <dl class="kv"><dt>Subtotal</dt><dd>${gbp(o.subtotal_pence)}</dd><dt>Delivery</dt><dd>${gbp(o.delivery_pence)}</dd><dt><strong>Total</strong></dt><dd><strong>${gbp(o.total_pence)}</strong></dd></dl>
     <div class="field"><label for="fulfilment">Fulfilment status</label><select id="fulfilment">${FULFILMENT.map((f) => `<option${f === o.fulfilment ? ' selected' : ''}>${f}</option>`).join('')}</select></div>
@@ -96,50 +96,80 @@ function showProducts(reload = true) {
   });
 }
 
-const variantRow = (v = {}) => `<div class="variant" data-vid="${esc(v.id || '')}">
-  <div><label>Option name<input type="text" data-v="label" value="${esc(v.label && v.label !== 'Default' ? v.label : '')}" placeholder="e.g. Bag of 6"></label></div>
-  <div><label>Price (£)<input type="text" inputmode="decimal" data-v="price" value="${v.price_pence != null ? (v.price_pence / 100).toFixed(2) : ''}" required></label></div>
-  <div><label>Stock<input type="number" min="0" step="1" data-v="stock" value="${v.stock ?? 0}" required></label></div>
-  <button type="button" class="link-btn" data-remove-variant aria-label="Remove this option">Remove</button></div>`;
+const variantRow = (v = {}, multi = false) => `<div class="variant${multi ? '' : ' single'}" data-vid="${esc(v.id || '')}">
+  <div class="v-label"><label>Option name <span class="hint">e.g. Bag of 6, Large</span><input type="text" data-v="label" value="${esc(v.label && v.label !== 'Default' ? v.label : '')}" placeholder="e.g. Bag of 6"></label></div>
+  <div><label>Price (£)<input type="text" inputmode="decimal" data-v="price" value="${v.price_pence != null && v.price_pence ? (v.price_pence / 100).toFixed(2) : ''}" placeholder="3.50" required></label></div>
+  <div><label>In stock<input type="number" min="0" step="1" data-v="stock" value="${v.stock ?? 0}" required></label></div>
+  <button type="button" class="link-btn v-remove" data-remove-variant aria-label="Remove this option">Remove</button></div>`;
 
+let adminDefaults = { usage: '', safety: '' };
 function openProduct(p) {
-  const isNew = !p; p = p || { scents: [], variants: [{}], image_url: '' };
+  const isNew = !p; p = p || { scents: [], variants: [{}], image_url: '', usage: adminDefaults.usage, safety: adminDefaults.safety, hidden: true };
+  const multi = p.variants.length > 1 || !!p.option_name;
+  const field = (id, label, hint, control) => `<div class="field"><label for="${id}">${label}${hint ? ` <span class="hint">${hint}</span>` : ''}</label>${control}</div>`;
   editor.innerHTML = `<form id="product-form"><h2 id="editor-title">${isNew ? 'Add product' : 'Edit product'}</h2><div class="form-msg"></div>
-    <div class="field"><label for="p-name">Name</label><input id="p-name" type="text" value="${esc(p.name)}" required></div>
-    <div class="row-2"><div class="field"><label for="p-cat">Category</label><select id="p-cat">${CATEGORIES.map(([id, n]) => `<option value="${id}"${id === p.category ? ' selected' : ''}>${n}</option>`).join('')}</select></div>
-      <div class="field"><label for="p-sort">Position <span class="hint">Lower numbers show first</span></label><input id="p-sort" type="number" step="1" value="${p.sort ?? 0}"></div></div>
-    <fieldset class="field" style="border:0;padding:0"><legend>Scent filters</legend><div class="checks">${SCENTS.map((s) => `<label><input type="checkbox" name="scent" value="${s}"${p.scents.includes(s) ? ' checked' : ''}>${s[0].toUpperCase() + s.slice(1)}</label>`).join('')}</div></fieldset>
-    <div class="field"><label>Image</label><div class="img-pick"><img id="p-img" src="${esc(p.image_url || '/assets/ph/blank.svg')}" alt="Current image">
-      <div><input type="file" id="p-file" accept="image/jpeg,image/png,image/webp"><span class="hint" id="p-file-note">Photos are resized and compressed automatically before upload.</span></div></div><input type="hidden" id="p-image-url" value="${esc(p.image_url)}"></div>
-    <div class="field"><label for="p-short">Short scent description <span class="hint">Shown on product cards</span></label><input id="p-short" type="text" maxlength="200" value="${esc(p.short_desc)}"></div>
-    <div class="field"><label for="p-desc">Full description</label><textarea id="p-desc">${esc(p.description)}</textarea></div>
-    <fieldset class="field" style="border:0;padding:0"><legend>Price and stock</legend>
-      <div class="field"><label for="p-option">What customers choose between <span class="hint">Only needed with more than one option, e.g. Size or Scent</span></label><input id="p-option" type="text" value="${esc(p.option_name)}"></div>
-      <div id="variants">${p.variants.map(variantRow).join('')}</div><button type="button" class="btn btn-ghost btn-sm" id="add-variant">Add another option</button></fieldset>
-    <div class="field"><label for="p-weight">Weight or size</label><input id="p-weight" type="text" value="${esc(p.weight)}"></div>
-    <div class="field"><label for="p-usage">Usage instructions</label><textarea id="p-usage">${esc(p.usage)}</textarea></div>
-    <div class="field"><label for="p-safety">Product-specific safety information</label><textarea id="p-safety">${esc(p.safety)}</textarea></div>
-    <div class="checks field"><label><input type="checkbox" id="p-featured"${p.featured ? ' checked' : ''}>Feature on homepage</label><label><input type="checkbox" id="p-soldout"${p.sold_out ? ' checked' : ''}>Mark as sold out</label><label><input type="checkbox" id="p-hidden"${p.hidden ? ' checked' : ''}>Hide from shop</label></div>
+    <details class="help" style="margin-bottom:1.25rem"><summary>Quick guide: what each box does</summary><ol>
+      <li><strong>Name, category and photo</strong> are what customers see first. Square photos on a plain background look best.</li>
+      <li><strong>Price and stock</strong>: type the price in pounds (3.50, not £3.50). Stock counts down as people buy, and the product shows as sold out at 0.</li>
+      <li><strong>Short description</strong> is one line under the name on the shop page. <strong>Full description</strong> is the “About this scent” text on the product page.</li>
+      <li><strong>More details</strong> holds the scent filters, weight, and the usage and safety text. The usage and safety text is already filled in with our standard wording. Add anything specific to this scent from its CLP label.</li>
+      <li>A new product starts <strong>hidden</strong>. Untick “Hide from shop” when it is ready to sell.</li></ol></details>
+
+    <h3 class="form-section">1. The basics</h3>
+    ${field('p-name', 'Product name', '', `<input id="p-name" type="text" value="${esc(p.name)}" required placeholder="e.g. Cherry Vanilla Snap Bar">`)}
+    ${field('p-cat', 'Category', 'Which shop section it appears in', `<select id="p-cat">${CATEGORIES.map(([id, n]) => `<option value="${id}"${id === p.category ? ' selected' : ''}>${n}</option>`).join('')}</select>`)}
+    <div class="field"><label>Photo</label><div class="img-pick"><img id="p-img" src="${esc(p.image_url || '/assets/ph/blank.svg')}" alt="Current image">
+      <div><input type="file" id="p-file" accept="image/jpeg,image/png,image/webp"><span class="hint" id="p-file-note">Choose a photo from your phone or computer. It is resized automatically.</span></div></div><input type="hidden" id="p-image-url" value="${esc(p.image_url)}"></div>
+
+    <h3 class="form-section">2. Price and stock</h3>
+    <div class="checks field"><label><input type="checkbox" id="p-multi"${multi ? ' checked' : ''}>This product comes in more than one size or option</label></div>
+    <div id="multi-wrap"${multi ? '' : ' hidden'}>${field('p-option', 'What the customer chooses between', 'e.g. Size, Scent, Bag size', `<input id="p-option" type="text" value="${esc(p.option_name)}" placeholder="Size">`)}</div>
+    <div id="variants">${p.variants.map((v) => variantRow(v, multi)).join('')}</div>
+    <button type="button" class="btn btn-ghost btn-sm" id="add-variant"${multi ? '' : ' hidden'}>Add another option</button>
+
+    <h3 class="form-section">3. Descriptions</h3>
+    ${field('p-short', 'Short description', 'One line, shown under the name on the shop page', `<input id="p-short" type="text" maxlength="200" value="${esc(p.short_desc)}" placeholder="e.g. Sweet cherries with a creamy vanilla finish.">`)}
+    ${field('p-desc', 'Full description', 'Shown on the product page under “About this scent”', `<textarea id="p-desc" placeholder="A few sentences about the scent, when it suits, and what makes it special.">${esc(p.description)}</textarea>`)}
+
+    <details class="help" id="more-details"><summary>4. More details (scent filters, weight, usage and safety)</summary>
+      <fieldset class="field" style="border:0;padding:0;margin-top:.75rem"><legend>Scent filters <span class="hint">Tick all that apply. Customers use these to filter the shop.</span></legend><div class="checks">${SCENTS.map((s) => `<label><input type="checkbox" name="scent" value="${s}"${p.scents.includes(s) ? ' checked' : ''}>${s[0].toUpperCase() + s.slice(1)}</label>`).join('')}</div></fieldset>
+      ${field('p-weight', 'Weight or size', 'Shown on the product page, e.g. 50g snap bar or Bag of 6 hearts, 45g', `<input id="p-weight" type="text" value="${esc(p.weight)}">`)}
+      ${field('p-usage', 'Usage instructions', 'Standard wording is filled in. Change it only if this product is used differently.', `<textarea id="p-usage">${esc(p.usage)}</textarea>`)}
+      ${field('p-safety', 'Safety information', 'Standard wording is filled in. Add any warnings or allergens specific to this scent from its CLP label.', `<textarea id="p-safety">${esc(p.safety)}</textarea>`)}
+      ${field('p-sort', 'Position in lists', 'Lower numbers show first. Leave as is unless you want to move it.', `<input id="p-sort" type="number" step="1" value="${p.sort ?? 0}">`)}
+    </details>
+
+    <h3 class="form-section">5. Visibility</h3>
+    <div class="checks field" style="flex-direction:column;align-items:flex-start;gap:.25rem">
+      <label><input type="checkbox" id="p-hidden"${p.hidden ? ' checked' : ''}>Hide from shop <span class="hint">Customers cannot see it at all</span></label>
+      <label><input type="checkbox" id="p-soldout"${p.sold_out ? ' checked' : ''}>Mark as sold out <span class="hint">Stays visible with a Sold out label</span></label>
+      <label><input type="checkbox" id="p-featured"${p.featured ? ' checked' : ''}>Feature on homepage <span class="hint">Shows in “A few scents to start with”</span></label>
+    </div>
     <div class="editor-actions"><button class="btn btn-primary" type="submit">Save product</button><button class="btn btn-ghost" type="button" data-close>Cancel</button>${isNew ? '' : '<button class="link-btn" type="button" id="p-delete" style="margin-left:auto;color:var(--danger)">Delete product</button>'}</div></form>`;
   editor.showModal();
   const form = $('#product-form');
-  $('#add-variant').onclick = () => $('#variants').insertAdjacentHTML('beforeend', variantRow());
+  const setMulti = (on) => { $('#multi-wrap').hidden = !on; $('#add-variant').hidden = !on; $('#variants').classList.toggle('is-multi', on); form.querySelectorAll('.variant').forEach((r) => r.classList.toggle('single', !on)); };
+  $('#p-multi').onchange = (e) => { setMulti(e.target.checked); if (e.target.checked && $('#variants').children.length === 1) $('#variants').insertAdjacentHTML('beforeend', variantRow({}, true)); };
+  $('#add-variant').onclick = () => $('#variants').insertAdjacentHTML('beforeend', variantRow({}, true));
   $('#variants').onclick = (e) => { if (e.target.closest('[data-remove-variant]') && $('#variants').children.length > 1) e.target.closest('.variant').remove(); };
+  if (!p.usage && !p.safety && !isNew) $('#more-details').open = true;
   $('#p-file').onchange = async (e) => {
     const file = e.target.files[0]; if (!file) return;
     const note = $('#p-file-note'); note.textContent = 'Uploading…';
-    try { const blob = await shrink(file); const { url } = await api('/images', { method: 'POST', body: blob, raw: true, type: blob.type }); $('#p-image-url').value = url; $('#p-img').src = url; note.textContent = `Uploaded (${Math.round(blob.size / 1024)} KB). Save the product to keep it.`; }
+    try { const blob = await shrink(file); const { url } = await api('/images', { method: 'POST', body: blob, raw: true, type: blob.type }); $('#p-image-url').value = url; $('#p-img').src = url; note.textContent = `Uploaded. Click Save product to keep it.`; }
     catch (err) { note.textContent = err.message; }
   };
   if (!isNew) $('#p-delete').onclick = async () => { if (!confirm(`Delete “${p.name}”? This cannot be undone. Past orders keep their record of it.`)) return; try { await api(`/products/${p.id}`, { method: 'DELETE' }); editor.close(); flash('Product deleted'); showProducts(); } catch (err) { fieldErrors(form, err); } };
   form.onsubmit = async (e) => {
     e.preventDefault();
+    const isMulti = $('#p-multi').checked;
+    const rows = [...$('#variants').children];
     const body = {
       name: $('#p-name').value, category: $('#p-cat').value, sort: parseInt($('#p-sort').value, 10) || 0,
       scents: [...form.querySelectorAll('[name=scent]:checked')].map((c) => c.value), image_url: $('#p-image-url').value,
-      short_desc: $('#p-short').value, description: $('#p-desc').value, option_name: $('#p-option').value, weight: $('#p-weight').value,
+      short_desc: $('#p-short').value, description: $('#p-desc').value, option_name: isMulti ? $('#p-option').value : '', weight: $('#p-weight').value,
       usage: $('#p-usage').value, safety: $('#p-safety').value, featured: $('#p-featured').checked, sold_out: $('#p-soldout').checked, hidden: $('#p-hidden').checked,
-      variants: [...$('#variants').children].map((row) => ({ id: row.dataset.vid || undefined, label: $('[data-v=label]', row).value, price_pence: toPence($('[data-v=price]', row).value), stock: parseInt($('[data-v=stock]', row).value, 10) })),
+      variants: (isMulti ? rows : rows.slice(0, 1)).map((row) => ({ id: row.dataset.vid || undefined, label: isMulti ? $('[data-v=label]', row).value : 'Default', price_pence: toPence($('[data-v=price]', row).value), stock: parseInt($('[data-v=stock]', row).value, 10) })),
     };
     try { await api(isNew ? '/products' : `/products/${p.id}`, { method: isNew ? 'POST' : 'PUT', body }); editor.close(); flash('Product saved'); showProducts(); }
     catch (err) { fieldErrors(form, err); }
@@ -257,7 +287,16 @@ function showHelp() {
   </div>
   <div class="panel-card"><h2>Orders</h2>
   ${step('When an order comes in', ['You get an email headed <em>New paid order</em>. The customer gets a confirmation at the same time.', 'Open the <strong>Orders</strong> tab. Paid orders are listed newest first. Click <strong>Open</strong> to see what was bought and the delivery address.', 'Pack it, then change <strong>Fulfilment status</strong> to <em>dispatched</em> and click <strong>Save order</strong>. Use the Private note for tracking numbers or anything to remember.', 'Only orders marked <strong>paid</strong> should be sent. Anything under “Unpaid, expired and demo” was never paid for.'])}
-  ${step('Refund a customer', ['Refunds are done in Stripe, not here: open the order, copy the <strong>Stripe ref</strong>, find that payment in Stripe → Payments and click Refund.', 'Then set the order’s fulfilment status to <em>cancelled</em> here so it is not sent.'])}
+  ${step('Refund a customer', [
+    'Refunds are made in Stripe, the company that takes the card payments. The money goes back to the card the customer paid with; you cannot refund to a different card or by bank transfer.',
+    'In the <strong>Orders</strong> tab, click <strong>Open</strong> on the order and click the <strong>Open payment in Stripe</strong> button. It takes you straight to that payment. If Stripe asks you to log in, use the Stripe account details (<a href="https://dashboard.stripe.com/login" target="_blank" rel="noopener">dashboard.stripe.com/login</a>).',
+    'On the payment page click <strong>Refund</strong> at the top right. For a full refund leave the amount as it is. For a partial refund, for example one item out of three, change the amount to what you are giving back.',
+    'Pick a reason (<em>Requested by customer</em> is the usual one) and click <strong>Refund</strong>. Stripe shows the payment as Refunded or Partially refunded within a few seconds.',
+    'Back in this admin area, set the order’s <strong>Fulfilment status</strong> to <em>cancelled</em> if it is not being sent, and write what you refunded and why in the <strong>Private note</strong>. Click <strong>Save order</strong>.',
+    'Tell the customer by email. Refunds take 5 to 10 working days to show on their statement, and Stripe’s card fees are not returned to you, so a refund costs you a small amount even when the item comes back.',
+    'If you cannot find the payment, search Stripe for the order number (OTR-…) or the customer’s email address: <a href="https://dashboard.stripe.com/payments" target="_blank" rel="noopener">dashboard.stripe.com/payments</a>. Test-mode orders are under <a href="https://dashboard.stripe.com/test/payments" target="_blank" rel="noopener">dashboard.stripe.com/test/payments</a>.',
+  ])}
+  ${step('Cancel an order before it is sent', ['Refund it in Stripe as above, then set the fulfilment status to <em>cancelled</em> here. Stock is not put back automatically, so add the items back to stock in the Products tab if they are going back on the shelf.'])}
   </div>
   <div class="panel-card"><h2>Wording and pages</h2>
   ${step('Change the homepage wording, delivery charge or business details', ['Open <strong>Delivery &amp; settings</strong>. Each section has a “Where does this appear on the shop?” link showing exactly what each box changes.', 'Edit the boxes and click <strong>Save settings</strong> at the bottom.', 'The announcement bar is handy for “Christmas orders by 18 December” type notices. Leave it blank to hide it.'])}
@@ -265,7 +304,7 @@ function showHelp() {
   ${step('Write a blog post', ['Open <strong>Blog</strong> → <strong>Add post</strong>.', 'Add a title, a one-line summary, a photo and the post itself (same formatting rules as pages).', 'Untick <strong>Published</strong> to save it as a draft and come back later.'])}
   </div>
   <div class="panel-card"><h2>Signing in</h2>
-  ${step('Getting in and out', ['Go to <strong>${location.origin}/admin/</strong>. Sign in with Google, or ask for a code to be emailed to you.', 'You stay signed in for 24 hours on that device. Click <strong>Sign out</strong> at the top right if you are on a shared computer.', 'Only email addresses on the allowed list can get in. Adding someone new is done in Cloudflare, not here.'])}
+  ${step('Getting in and out', ['Go to <strong>https://www.overtherainbowwaxmelts.co.uk/admin/</strong>. Sign in with Google, or ask for a code to be emailed to you.', 'You stay signed in for 24 hours on that device. Click <strong>Sign out</strong> at the top right if you are on a shared computer.', 'Only email addresses on the allowed list can get in. Adding someone new is done in Cloudflare, not here.'])}
   </div>`;
   return Promise.resolve();
 }
@@ -290,4 +329,4 @@ document.addEventListener('click', (e) => {
   else if (t.closest('[data-new-post]')) openPost(null);
   else if (t.closest('[data-delete-samples]')) { if (confirm('Delete every product still tagged Sample?')) api('/sample', { method: 'DELETE' }).then((r) => { flash(`${r.deleted} sample products deleted`); showProducts(); }).catch(fail); }
 });
-api('/me').then((me) => { $('#who').textContent = `Signed in as ${me.email}`; go(TABS[location.hash.slice(1)] ? location.hash.slice(1) : 'orders'); }).catch(fail);
+api('/me').then((me) => { adminDefaults = me.defaults || adminDefaults; $('#who').textContent = `Signed in as ${me.email}`; go(TABS[location.hash.slice(1)] ? location.hash.slice(1) : 'orders'); }).catch(fail);
