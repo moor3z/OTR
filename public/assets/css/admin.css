@@ -1,6 +1,6 @@
 body.admin { background: #faf7fb; }
 .admin-head { background: var(--plum); color: #fff; position: sticky; top: 0; z-index: 10; }
-.admin-top { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; padding: .875rem 0 .5rem; } .admin-top a { color: #fff; margin-left: auto; } .admin-top span { color: #d6c3de; }
+.admin-top { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; padding: .875rem 0 .5rem; } .admin-top a { color: #fff; } .admin-top a:first-of-type { margin-left: auto; } .admin-top a + a { margin-left: 1rem; } .admin-top span { color: #d6c3de; }
 .admin-tabs { display: flex; gap: .25rem; overflow-x: auto; }
 .admin-tabs button { flex: none; min-height: 48px; padding: 0 1.125rem; border: 0; background: transparent; color: #fff; font: 600 1rem var(--body); border-radius: 12px 12px 0 0; cursor: pointer; }
 .admin-tabs button[aria-selected='true'] { background: #faf7fb; color: var(--plum); }
