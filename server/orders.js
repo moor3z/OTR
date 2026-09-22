@@ -40,11 +40,15 @@ export async function sendConfirmationOnce(env, db, orderId) {
   if (!emailConfigured(env)) return;
   const claim = await db.prepare(`UPDATE orders SET email_sent=1 WHERE id=? AND email_sent=0 AND status='paid'`).bind(orderId).run();
   if (claim.meta.changes !== 1) return;
+  let problems;
   try {
     const order = await db.prepare(`SELECT * FROM orders WHERE id=?`).bind(orderId).first();
-    await sendOrderEmails(env, order, await getSettings(db));
-  } catch (err) {
-    console.error('Confirmation email failed', err.message);
-    await db.prepare(`UPDATE orders SET email_sent=0 WHERE id=?`).bind(orderId).run();
+    problems = await sendOrderEmails(env, order, await getSettings(db));
+  } catch (err) { problems = [err.message]; }
+  if (problems.length) {
+    // Make the failure visible in Admin → Orders rather than only in server logs.
+    console.error('Confirmation email problems', problems);
+    await db.prepare(`UPDATE orders SET email_sent=0, admin_note = admin_note || ? WHERE id=?`)
+      .bind(`Email not sent (${new Date().toISOString().slice(0, 16).replace('T', ' ')}): ${problems.join('; ')}\n`, orderId).run();
   }
 }
