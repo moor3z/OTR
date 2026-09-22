@@ -1,16 +1,13 @@
-import { postCard } from './blog.js?v=26';
-import { format } from './page.js?v=26';
-import { api, getConfig, productCard, wireAddButtons, gbp, $ } from './site.js?v=26';
+import { postCard } from './blog.js?v=27';
+import { format } from './page.js?v=27';
+import { api, getConfig, productCard, wireAddButtons, gbp, esc, $ } from './site.js?v=27';
 
 getConfig().then((c) => {
-  if (c.hero_headline) $('#hero-headline').textContent = c.hero_headline;
+  if (c.hero_headline) $('#hero-headline').innerHTML = c.hero_headline.split(/\s*\|\s*|\n/).map(esc).join('<br>'); // "|" or a new line = line break
   if (c.hero_sub) $('#hero-sub').textContent = c.hero_sub;
   if (c.intro_title) $('#intro-title').textContent = c.intro_title;
   $('#intro-text').textContent = c.intro_text || '';
-  const bits = [];
-  if (c.free_delivery_threshold_pence) bits.push(`Free UK delivery over ${gbp(c.free_delivery_threshold_pence)}`);
-  else if (c.delivery_pence) bits.push(`UK delivery ${gbp(c.delivery_pence)}`);
-  $('#hero-note').textContent = bits.join('');
+  $('#hero-note span').textContent = c.free_delivery_threshold_pence ? `UK delivery, free over ${gbp(c.free_delivery_threshold_pence).replace(/\.00$/, '')}` : c.delivery_pence ? `UK delivery ${gbp(c.delivery_pence)}` : 'UK delivery';
 }).catch(() => {});
 
 const root = $('#featured');

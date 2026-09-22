@@ -102,6 +102,8 @@ Every page loads its CSS and JS with a version number (`site.css?v=5`). When any
 
 The Seasonal tile and menu link open `/shop?category=seasonal`, a virtual category on the shop page that lists products tagged Halloween & Autumn and Christmas & Winter. The homepage shows the first five FAQ questions under the blog.
 
+The homepage hero photo is `public/assets/img/hero.webp` (with a `hero-640.webp` phone version); replace both to change it. The headline in Admin → Delivery & settings uses `|` for a line break.
+
 Category tile photos live in `public/assets/img/cat/` (`snap-bars.webp`, `wax-melt-shapes.webp`, `sample-boxes.webp`, `gift-sets.webp`, `accessories.webp`, `seasonal.webp`). Replace a file with the same name to swap a photo.
 
 ## What was tested, and what was not

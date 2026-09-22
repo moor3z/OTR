@@ -92,8 +92,8 @@ export const DEFAULT_SETTINGS = {
   dispatch_estimate: 'Sample estimate: dispatched within 2–3 working days',
   // Homepage copy
   announcement: '',
-  hero_headline: 'Find your next favourite scent',
-  hero_sub: 'Wax melts in bright, happy scents. Pick one, pop it in your burner, enjoy.',
+  hero_headline: 'A little melt. | A lot of happiness.',
+  hero_sub: 'Discover colourful wax melts and find your next favourite scent.',
   intro_title: 'Hello from Over The Rainbow',
   intro_text:
     'PLACEHOLDER COPY — replace in Admin → Delivery & settings. A couple of sentences about who makes the melts, where you are based and what makes your scents worth trying.',

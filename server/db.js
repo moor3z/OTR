@@ -69,7 +69,7 @@ async function init(db) {
 async function migrateContent(db) {
   const row = await db.prepare(`SELECT value FROM settings WHERE key='content_version'`).first();
   const have = Number(row?.value || 0);
-  if (have >= 7) return;
+  if (have >= 8) return;
   const now = new Date();
   const stmts = [];
   if (have < 2) { // FAQ page and starter blog posts
@@ -117,7 +117,11 @@ async function migrateContent(db) {
     stmts.push(db.prepare(`UPDATE products SET usage=? WHERE usage='' OR substr(usage,1,12)='TO COMPLETE:' OR substr(usage,1,11)='PLACEHOLDER'`).bind(DEFAULT_USAGE));
     stmts.push(db.prepare(`UPDATE products SET safety=? WHERE safety='' OR substr(safety,1,12)='TO COMPLETE:' OR substr(safety,1,11)='PLACEHOLDER'`).bind(DEFAULT_SAFETY));
   }
-  stmts.push(db.prepare(`INSERT INTO settings(key,value) VALUES('content_version','7') ON CONFLICT(key) DO UPDATE SET value='7'`));
+  if (have < 8) { // new homepage design: refresh the headline and strapline only if they are still the originals
+    stmts.push(db.prepare(`UPDATE settings SET value='A little melt. | A lot of happiness.' WHERE key='hero_headline' AND value='Find your next favourite scent'`));
+    stmts.push(db.prepare(`UPDATE settings SET value='Discover colourful wax melts and find your next favourite scent.' WHERE key='hero_sub' AND value='Wax melts in bright, happy scents. Pick one, pop it in your burner, enjoy.'`));
+  }
+  stmts.push(db.prepare(`INSERT INTO settings(key,value) VALUES('content_version','8') ON CONFLICT(key) DO UPDATE SET value='8'`));
   await db.batch(stmts);
 }
 

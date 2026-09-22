@@ -163,7 +163,8 @@ function renderChrome() {
   window.addEventListener('storage', (e) => { if (e.key === KEY) updateCount(); });
 
   getConfig().then((c) => {
-    if (c.announcement) $('#announce').innerHTML = `<div class="announce">${esc(c.announcement)}</div>`;
+    const offer = c.announcement || (c.free_delivery_threshold_pence ? `Free UK delivery over ${gbp(c.free_delivery_threshold_pence).replace(/\.00$/, '')}` : '');
+    if (offer) $('#announce').innerHTML = `<div class="announce"><span aria-hidden="true">♥</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg>${esc(offer)}<span aria-hidden="true">♥</span></div>`;
     if (c.payment_mode === 'demo') { // no Stripe keys at all: warn shoppers. Test mode shows only in the admin Status box.
       const b = document.createElement('div'); b.className = 'test-banner';
       b.textContent = 'Demo mode: payments are not connected. No orders will be taken.';

@@ -13,19 +13,25 @@
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="apple-touch-icon" href="/assets/img/icon-192.png">
 <link rel="preload" href="/assets/fonts/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/css/site.css?v=26">
+<link rel="stylesheet" href="/assets/css/site.css?v=27">
 </head>
 <body>
 <main id="main">
-<section class="hero on-plum"><div class="wrap hero-grid">
-  <img class="hero-logo" src="/assets/img/logo-360.webp" srcset="/assets/img/logo-360.webp 360w, /assets/img/logo-720.webp 720w" sizes="(min-width: 800px) 400px, 64vw" width="720" height="815" alt="Over The Rainbow Wax Melts" fetchpriority="high">
-  <div>
-    <h1 id="hero-headline">Find your next favourite scent</h1>
-    <p id="hero-sub">Wax melts in bright, happy scents. Pick one, pop it in your burner, enjoy.</p>
-    <a class="btn btn-primary" href="/shop">Shop Wax Melts</a>
-    <p class="hero-note" id="hero-note"></p>
+<section class="hero"><div class="wrap"><div class="hero-card">
+  <div class="hero-copy">
+    <span class="doodle doodle-heart" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/></svg></span>
+    <span class="doodle doodle-spark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 6.6L21 11l-6.8 2.4L12 20l-2.2-6.6L3 11l6.8-2.4Z"/></svg></span>
+    <h1 id="hero-headline">A little melt.<br>A lot of happiness.</h1>
+    <p id="hero-sub">Discover colourful wax melts and find your next favourite scent.</p>
+    <a class="btn btn-primary" href="/shop">Shop Wax Melts <span aria-hidden="true">→</span></a>
+    <ul class="hero-badges">
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20c0-8 5-13 14-14-1 9-6 14-14 14Z"/><path d="M5 20c3-5 6-8 10-10"/></svg>Beautiful scents</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/></svg>Small business</li>
+      <li id="hero-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg><span>UK delivery</span></li>
+    </ul>
   </div>
-</div></section>
+  <div class="hero-photo"><img src="/assets/img/hero.webp" srcset="/assets/img/hero-640.webp 640w, /assets/img/hero.webp 954w" sizes="(min-width: 800px) 60vw, 100vw" width="954" height="425" alt="" fetchpriority="high"><p class="hero-script" aria-hidden="true">Bright Scents<br>Happier Days <span>♡</span></p></div>
+</div></div></section>
 
 <section class="section wrap" aria-labelledby="cat-title">
   <div class="section-head"><h2 id="cat-title">Shop by type</h2></div>
@@ -40,7 +46,7 @@
 </section>
 
 <section class="section wrap" aria-labelledby="feat-title" style="padding-top:0">
-  <div class="section-head"><h2 id="feat-title">A few scents to start with</h2><a href="/shop">See all products</a></div>
+  <div class="section-head"><h2 id="feat-title">Find your new favourite</h2><a class="view-all" href="/shop">View all <span aria-hidden="true">→</span></a></div>
   <div id="featured"><ul class="grid" aria-hidden="true"><li class="skeleton"></li><li class="skeleton"></li><li class="skeleton"></li><li class="skeleton"></li></ul></div>
 </section>
 
@@ -57,6 +63,6 @@
 </section>
 </main>
 <noscript><p style="padding:2rem;text-align:center">This shop needs JavaScript switched on to show products and take orders.</p></noscript>
-<script type="module" src="/assets/js/home.js?v=26"></script>
+<script type="module" src="/assets/js/home.js?v=27"></script>
 </body>
 </html>
