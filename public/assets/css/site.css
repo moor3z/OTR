@@ -57,8 +57,8 @@ a { color: var(--pink-text); text-underline-offset: 3px; }
 .announce svg { width: 22px; height: 22px; } .announce > span { color: var(--plum-soft); font-size: .8rem; }
 .site-header { background: var(--paper); color: var(--plum); position: sticky; top: 0; z-index: 40; border-bottom: 1px solid var(--line); }
 .header-main { display: flex; align-items: center; gap: .5rem; min-height: 72px; }
-.brand { display: inline-flex; align-items: center; margin-right: auto; padding: 4px 0; }
-.brand img { height: 64px; width: auto; filter: drop-shadow(0 0 .7px rgba(46, 20, 55, .9)); }
+.brand { display: inline-flex; align-items: center; margin-right: auto; padding: 5px 9px; background: var(--plum); border-radius: 18px; }
+.brand img { height: 58px; width: auto; }
 .icon-btn { position: relative; display: inline-grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; border: 0; background: transparent; color: var(--plum); cursor: pointer; }
 .icon-btn:hover { background: var(--blush); }
 .icon-btn svg { width: 26px; height: 26px; }
@@ -84,12 +84,12 @@ a { color: var(--pink-text); text-underline-offset: 3px; }
 .nav-more a { flex: 1 1 45%; min-height: 44px; display: flex; align-items: center; padding: 0 .75rem; border-radius: var(--r-sm); font-size: 1rem; }
 .nav-more a:hover { background: var(--blush); }
 @media (min-width: 480px) { .nav-grid { grid-template-columns: repeat(6, 1fr); } .nav-tile img { height: 56px; } }
-@media (min-width: 900px) { .header-main { min-height: 96px; } .brand img { height: 84px; } }
+@media (min-width: 900px) { .header-main { min-height: 96px; } .brand img { height: 76px; } .brand { padding: 7px 12px; border-radius: 22px; } }
 /* Wide screens: one header row — logo, menu, basket */
 @media (min-width: 1100px) {
   .site-header .wrap { display: flex; align-items: center; gap: .75rem; min-height: 108px; }
   .header-main, .site-menu, .site-menu.is-open, .nav-grid { display: contents; }
-  .brand { order: 1; margin-right: 0; } .brand img { height: 96px; }
+  .brand { order: 1; margin-right: 0; } .brand img { height: 84px; }
   .menu-toggle, .nav-more, .nav-tile img { display: none; }
   .site-nav { order: 2; flex: 1; display: flex; flex-direction: row; justify-content: center; align-items: center; gap: .125rem; }
   .site-nav a, .nav-home, .nav-tile { display: inline-flex; flex-direction: row; align-items: center; padding: .5rem .875rem; min-height: 44px; font: 600 1.0625rem var(--body); white-space: nowrap; border: 0; border-radius: 999px; background: transparent !important; margin: 0; outline: 0; }
