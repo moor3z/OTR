@@ -100,11 +100,6 @@ const ICON = {
   menu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
   close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
 };
-const searchForm = (id) => `<form class="search-form" action="/shop" method="get" role="search">
-  <label class="visually-hidden" for="${id}">Search products</label>
-  <input id="${id}" type="search" name="q" placeholder="Search scents" autocomplete="off" enterkeyhint="search">
-  <button type="submit">Search</button></form>`;
-
 function renderChrome() {
   const here = location.pathname.replace(/\/$/, '') || '/';
   const cat = new URLSearchParams(location.search).get('category');
@@ -118,20 +113,24 @@ function renderChrome() {
       <a class="brand" href="/" aria-label="Over The Rainbow Wax Melts – home">
         <img src="/assets/img/logo-180.webp" srcset="/assets/img/logo-180.webp 1x, /assets/img/logo-360.webp 2x" width="180" height="204" alt="Over The Rainbow Wax Melts">
       </a>
-      <div class="header-search desktop">${searchForm('q-desktop')}</div>
       <button class="icon-btn basket-btn" type="button" id="basket-btn" aria-haspopup="dialog">
         ${ICON.basket}<span class="basket-count" data-n="0" aria-hidden="true">0</span><span class="visually-hidden" id="basket-label">Basket, 0 items</span>
       </button>
       <button class="icon-btn menu-toggle" type="button" aria-expanded="false" aria-controls="site-menu"><span class="menu-icon when-closed">${ICON.menu}</span><span class="menu-icon when-open">${ICON.close}</span><span class="visually-hidden">Menu</span></button>
     </div>
     <div class="site-menu" id="site-menu">
-      <div class="header-search mobile">${searchForm('q-mobile')}</div>
-      <nav class="site-nav" aria-label="Shop categories">
-        ${nav.map(([href, label, c]) => `<a href="${href}"${(c === 'home' ? here === '/' : c === 'seasonal' ? here === '/seasonal' : here === '/shop' && cat === c) ? ' aria-current="page"' : ''}>${label}</a>`).join('')}
-        <a class="nav-extra" href="/blog">Blog</a>
-        <a class="nav-extra" href="/faq">FAQs</a>
-        <a class="nav-extra" href="/delivery-returns">Delivery &amp; returns</a>
-        <a class="nav-extra" href="/contact">Contact</a>
+      <nav class="site-nav" aria-label="Shop">
+        <a class="nav-home" href="/"${here === '/' ? ' aria-current="page"' : ''}>Home</a>
+        <div class="nav-grid">
+          ${nav.slice(1).map(([href, label, c]) => `<a class="nav-tile" href="${href}"${(c === 'seasonal' ? here === '/seasonal' : here === '/shop' && cat === c) ? ' aria-current="page"' : ''}><img src="/assets/img/cat/${c}.webp" alt="" loading="lazy" decoding="async"><span>${label}</span></a>`).join('')}
+        </div>
+        <div class="nav-more">
+          <a href="/shop"${here === '/shop' && !cat ? ' aria-current="page"' : ''}>All products</a>
+          <a href="/blog">Blog</a>
+          <a href="/faq">FAQs</a>
+          <a href="/delivery-returns">Delivery &amp; returns</a>
+          <a href="/contact">Contact</a>
+        </div>
       </nav>
     </div>
   </div></header>`;
@@ -156,10 +155,7 @@ function renderChrome() {
   toggle.addEventListener('click', () => setMenu(!menu.classList.contains('is-open')));
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && menu.classList.contains('is-open')) { setMenu(false); toggle.focus(); } });
   document.addEventListener('click', (e) => { if (menu.classList.contains('is-open') && !e.composedPath().includes($('.site-header'))) setMenu(false); });
-  menu.addEventListener('submit', () => setMenu(false));
   menu.addEventListener('click', (e) => { if (e.target.closest('a')) setMenu(false); });
-  const q = new URLSearchParams(location.search).get('q');
-  if (q) document.querySelectorAll('.search-form input').forEach((i) => (i.value = q));
 
   $('#basket-btn').addEventListener('click', () => openDrawer());
   updateCount();
