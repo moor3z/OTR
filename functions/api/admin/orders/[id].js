@@ -22,3 +22,9 @@ export const onRequestPut = handle(async ({ env, request, params }) => {
   const o = await db.prepare(`SELECT * FROM orders WHERE id=?`).bind(String(params.id)).first();
   return json({ order: shape(o) });
 });
+
+export const onRequestDelete = handle(async ({ env, params }) => {
+  const db = await getDb(env);
+  const res = await db.prepare(`DELETE FROM orders WHERE id=?`).bind(String(params.id)).run();
+  return res.meta.changes ? json({ deleted: true }) : fail(404, 'Order not found.');
+});
