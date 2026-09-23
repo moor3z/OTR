@@ -1,10 +1,10 @@
-import { api, esc, $ } from './site.js?v=28';
+import { api, esc, $ } from './site.js?v=29';
 
 const TINTS = ['var(--lilac)', 'var(--yellow)', 'var(--peach)', 'var(--pink)', 'var(--mint)'];
 export const postDate = (iso) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
 export function postCard(p, i = 0) {
-  const href = `/blog-post?slug=${encodeURIComponent(p.slug)}`;
+  const href = `/blog/${encodeURIComponent(p.slug)}`;
   return `<li><article class="post-card">
     <a class="post-media" href="${href}" tabindex="-1" aria-hidden="true" style="background:${TINTS[i % TINTS.length]}">
       ${p.image_url ? `<img src="${esc(p.image_url)}" alt="" decoding="async">` : ''}</a>

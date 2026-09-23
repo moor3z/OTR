@@ -6,3 +6,5 @@ Disallow: /checkout
 Disallow: /success
 Disallow: /cancelled
 Disallow: /demo-checkout
+
+Sitemap: https://www.overtherainbowwaxmelts.co.uk/sitemap.xml

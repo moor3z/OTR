@@ -28,7 +28,7 @@ async def main():
         await pg.goto(B + '/shop?q=lavender'); await pg.wait_for_selector('.card')
         check('search by URL finds Lavender Dreams', await pg.locator('.card').count() == 1)
         # product with variants
-        await pg.goto(B + '/product?id=strawberry-sugar-hearts'); await pg.wait_for_selector('#add')
+        await pg.goto(B + '/products/strawberry-sugar-hearts'); await pg.wait_for_selector('#add')
         await pg.click('text=Bag of 12'); await pg.click('#plus')
         check('variant changes price', (await pg.inner_text('#price')) == '£7.00')
         await pg.click('#add'); await pg.wait_for_selector('dialog.drawer[open]')
@@ -80,7 +80,7 @@ async def main():
         for path, fn in [('/', 'home'), ('/shop', 'shop'), ('/checkout', 'checkout')]:
             await dp.goto(B + path); await dp.wait_for_timeout(800); await dp.screenshot(path=f'/tmp/{fn}-d.png', full_page=True)
             check(f'no horizontal overflow on desktop {path}', await dp.evaluate('document.documentElement.scrollWidth<=innerWidth'))
-        for path in ['/', '/shop', '/product?id=mini-melt-gift-set', '/basket', '/checkout', '/contact']:
+        for path in ['/', '/shop', '/products/mini-melt-gift-set', '/basket', '/checkout', '/contact']:
             await pg.goto(B + path); await pg.wait_for_timeout(600)
             check(f'no horizontal overflow on mobile {path}', await pg.evaluate('document.documentElement.scrollWidth<=innerWidth'))
         check('no console errors: ' + json.dumps(errs[:3]), not errs)

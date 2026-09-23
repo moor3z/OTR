@@ -14,13 +14,38 @@
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="apple-touch-icon" href="/assets/img/icon-192.png">
 <link rel="preload" href="/assets/fonts/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/css/site.css?v=28">
+<link rel="stylesheet" href="/assets/css/site.css?v=29">
 </head>
 <body>
+<!-- chrome:start -->
+<a class="skip" href="#main">Skip to content</a>
+<div id="announce"></div>
+<header class="site-header"><div class="wrap">
+  <div class="header-main">
+    <a class="brand" href="/" aria-label="Over The Rainbow Wax Melts – home"><img src="/assets/img/logo-180.webp" srcset="/assets/img/logo-180.webp 1x, /assets/img/logo-360.webp 2x" width="180" height="204" alt="Over The Rainbow Wax Melts"></a>
+    <button class="icon-btn basket-btn" type="button" id="basket-btn" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9h14l-1.4 10.2a2 2 0 0 1-2 1.8H8.4a2 2 0 0 1-2-1.8L5 9Z"/><path d="M9 9V7a3 3 0 0 1 6 0v2"/></svg><span class="basket-count" data-n="0" aria-hidden="true">0</span><span class="visually-hidden" id="basket-label">Basket, 0 items</span></button>
+    <button class="icon-btn menu-toggle" type="button" aria-expanded="false" aria-controls="site-menu"><span class="menu-icon when-closed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="menu-icon when-open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></span><span class="visually-hidden">Menu</span></button>
+  </div>
+  <div class="site-menu" id="site-menu">
+    <nav class="site-nav" aria-label="Shop">
+      <a class="nav-home" href="/">Home</a>
+      <div class="nav-grid"><a class="nav-tile" href="/shop?category=snap-bars"><img src="/assets/img/cat/snap-bars.webp" alt="" loading="lazy" decoding="async"><span>Snap Bars</span></a><a class="nav-tile" href="/shop?category=wax-melt-shapes"><img src="/assets/img/cat/wax-melt-shapes.webp" alt="" loading="lazy" decoding="async"><span>Melt Shapes</span></a><a class="nav-tile" href="/shop?category=sample-boxes"><img src="/assets/img/cat/sample-boxes.webp" alt="" loading="lazy" decoding="async"><span>Sample Boxes</span></a><a class="nav-tile" href="/shop?category=gift-sets"><img src="/assets/img/cat/gift-sets.webp" alt="" loading="lazy" decoding="async"><span>Gift Sets</span></a><a class="nav-tile" href="/shop?category=accessories"><img src="/assets/img/cat/accessories.webp" alt="" loading="lazy" decoding="async"><span>Accessories</span></a><a class="nav-tile" href="/shop?category=seasonal"><img src="/assets/img/cat/seasonal.webp" alt="" loading="lazy" decoding="async"><span>Seasonal</span></a></div>
+      <div class="nav-more"><a href="/shop">All products</a><a href="/blog">Blog</a><a href="/faq">FAQs</a><a href="/delivery-returns">Delivery &amp; returns</a><a href="/contact">Contact</a></div>
+    </nav>
+  </div>
+</div></header>
+<!-- chrome:end -->
 <main id="main">
 <div class="wrap"><div class="status" id="status-root" data-view="demo-checkout" aria-live="polite"><div class="skeleton" style="aspect-ratio:auto;height:260px"></div></div></div>
 </main>
-<noscript><p style="padding:2rem;text-align:center">This shop needs JavaScript switched on to show products and take orders.</p></noscript>
-<script type="module" src="/assets/js/status.js?v=28"></script>
+<!-- footer:start -->
+<footer class="site-footer"><div class="wrap"><div class="footer-grid">
+  <div><h2>Over The Rainbow</h2><p>Handmade wax melts, delivered across the UK.</p><p id="footer-contact"></p></div>
+  <div><h2>Shop</h2><ul><li><a href="/shop">All products</a></li><li><a href="/shop?category=sample-boxes">Sample boxes</a></li><li><a href="/shop?category=gift-sets">Gift sets</a></li><li><a href="/shop?category=seasonal">Seasonal scents</a></li><li><a href="/blog">Blog</a></li><li><a href="/basket">Your basket</a></li></ul></div>
+  <div><h2>Help</h2><ul><li><a href="/faq">FAQs</a></li><li><a href="/contact">Contact</a></li><li><a href="/delivery-returns">Delivery &amp; returns</a></li><li><a href="/privacy">Privacy policy</a></li><li><a href="/terms">Terms &amp; conditions</a></li></ul></div>
+</div><p class="footer-base">© <span id="year"></span> Over The Rainbow. Prices in GBP. UK delivery only.</p></div></footer>
+<!-- footer:end -->
+<noscript><p style="padding:2rem;text-align:center">This shop needs JavaScript switched on to add items to your basket and check out.</p></noscript>
+<script type="module" src="/assets/js/status.js?v=29"></script>
 </body>
 </html>

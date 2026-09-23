@@ -1,6 +1,6 @@
-import { api, getConfig, productCard, wireAddButtons, addToBasket, gbp, esc, $ } from './site.js?v=28';
+import { api, getConfig, productCard, wireAddButtons, addToBasket, gbp, esc, $ } from './site.js?v=29';
 
-const id = new URLSearchParams(location.search).get('id') || '';
+const id = decodeURIComponent(location.pathname.split('/')[2] || '') || new URLSearchParams(location.search).get('id') || '';
 const root = $('#product-root');
 const info = (title, text, open) => text ? `<details class="info"${open ? ' open' : ''}><summary>${title}</summary><div>${esc(text)}</div></details>` : '';
 

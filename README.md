@@ -96,6 +96,18 @@ Photos are resized to 1200px WebP in the browser before upload and stored in the
 
 Categories and scent filters (Fresh, Floral, Fruity, Sweet, Halloween, Christmas) are defined once in `server/db.js` (`CATEGORIES`, `SCENTS`) and mirrored at the top of `public/assets/js/admin.js`.
 
+## Search engines, social sharing and AI assistants (SEO)
+
+Every public page is filled in on the server before it is sent (`server/seo.js` plus the files in `functions/` named after each page), so Google, Bing, Facebook link previews and AI crawlers see the real title, description, products and text without running JavaScript. What this gives you:
+
+- Clean addresses: `/products/<id>` and `/blog/<slug>` (the old `?id=` and `?slug=` addresses redirect permanently).
+- Per-page title, meta description, canonical link, Open Graph and Twitter cards. Pages without a photo use `public/assets/img/og-default.png` (remake it with `python3 tools/make_og.py`).
+- Structured data (JSON-LD): Organization/OnlineStore and WebSite on every page, Product with prices and stock on product pages, BreadcrumbList, ItemList on shop and blog pages, BlogPosting on posts and FAQPage on `/faq`.
+- `/sitemap.xml` (built from the live products and posts; `robots.txt` points to it) and `/llms.txt` (a plain-text summary for AI assistants).
+- The header and footer are written into every HTML page by `python3 tools/build_chrome.py`; edit the menu there, run it, and re-upload the HTML files.
+
+After the site is live: add the domain in Google Search Console, submit `https://www.overtherainbowwaxmelts.co.uk/sitemap.xml`, and check a product page with Google's Rich Results Test.
+
 ## Updating design files (cache-busting)
 
 Every page loads its CSS and JS with a version number (`site.css?v=5`). When any file in `public/assets/css` or `public/assets/js` changes, raise the number so browsers fetch the new files straight away: `python3 tools/bump_version.py 6`. Updates supplied as zips already have this done.

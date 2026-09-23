@@ -1,8 +1,8 @@
-import { api, esc, $ } from './site.js?v=28';
-import { format } from './page.js?v=28';
-import { postCard, postDate } from './blog.js?v=28';
+import { api, esc, $ } from './site.js?v=29';
+import { format } from './page.js?v=29';
+import { postCard, postDate } from './blog.js?v=29';
 
-const slug = new URLSearchParams(location.search).get('slug') || '';
+const slug = decodeURIComponent(location.pathname.split('/')[2] || '') || new URLSearchParams(location.search).get('slug') || '';
 const root = $('#post-root');
 
 Promise.all([api(`/api/posts/${encodeURIComponent(slug)}`), api('/api/posts')]).then(([{ post }, { posts }]) => {
