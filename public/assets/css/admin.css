@@ -1,7 +1,15 @@
 body.admin { background: #faf7fb; }
 .admin-head { background: var(--plum); color: #fff; position: sticky; top: 0; z-index: 10; }
 .admin-top { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; padding: .875rem 0 .5rem; } .admin-top a { color: #fff; } .admin-top a:first-of-type { margin-left: auto; } .admin-top a + a { margin-left: 1rem; } .admin-top span { color: #d6c3de; }
-.admin-tabs { display: flex; gap: .25rem; overflow-x: auto; }
+.admin-tabs-wrap { position: relative; }
+.admin-tabs { display: flex; gap: .25rem; overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; } .admin-tabs::-webkit-scrollbar { display: none; }
+/* Fade + arrow on the right while there are more tabs off-screen (set by admin.js) */
+.admin-tabs-wrap::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 5.5rem; background: linear-gradient(90deg, transparent, var(--plum) 55%); pointer-events: none; opacity: 0; transition: opacity .2s; }
+.admin-tabs-wrap[data-more='true']::after { opacity: 1; }
+.tabs-more { position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; border-radius: 50%; border: 0; background: #fff; color: var(--plum); display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 1; box-shadow: 0 2px 8px rgba(0,0,0,.25); animation: nudge 1.6s ease-in-out 3; } .tabs-more svg { width: 20px; height: 20px; }
+.admin-tabs-wrap[data-more='true'] .tabs-more { display: flex; }
+@keyframes nudge { 0%, 100% { transform: translateY(-50%) translateX(0); } 50% { transform: translateY(-50%) translateX(4px); } }
+@media (min-width: 900px) { .admin-tabs-wrap::after, .tabs-more { display: none !important; } }
 .admin-tabs button { flex: none; min-height: 48px; padding: 0 1.125rem; border: 0; background: transparent; color: #fff; font: 600 1rem var(--body); border-radius: 12px 12px 0 0; cursor: pointer; }
 .admin-tabs button[aria-selected='true'] { background: #faf7fb; color: var(--plum); }
 .admin main { padding-block: 1.5rem 4rem; } .admin h1 { font-size: 1.75rem; }

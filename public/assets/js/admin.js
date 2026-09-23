@@ -405,8 +405,17 @@ function showHelp() {
 
 /* ── Wiring ─────────────────────────────────────────────────────────────── */
 const TABS = { orders: showOrders, products: showProducts, settings: showSettings, pages: showPages, blog: showBlog, help: showHelp };
+// On phones the tab bar scrolls sideways; show a fade + arrow while there is more to the right.
+const tabStrip = $('.admin-tabs'), tabWrap = $('.admin-tabs-wrap');
+function tabHint() { if (tabStrip) tabWrap.dataset.more = String(tabStrip.scrollWidth - tabStrip.clientWidth - tabStrip.scrollLeft > 8); }
+if (tabStrip) {
+  tabStrip.addEventListener('scroll', tabHint, { passive: true }); addEventListener('resize', tabHint); addEventListener('load', tabHint); tabHint();
+  $('.tabs-more').addEventListener('click', () => tabStrip.scrollBy({ left: tabStrip.clientWidth * 0.7, behavior: 'smooth' }));
+}
 function go(tab) {
   document.querySelectorAll('[role=tab]').forEach((t) => t.setAttribute('aria-selected', String(t.dataset.tab === tab)));
+  const sel = $(`#tab-${tab}`);
+  if (sel && tabStrip) tabStrip.scrollTo({ left: Math.max(0, sel.offsetLeft - 16), behavior: 'smooth' });
   panel.setAttribute('aria-labelledby', `tab-${tab}`);
   history.replaceState(null, '', `#${tab}`);
   TABS[tab]().catch(fail);
