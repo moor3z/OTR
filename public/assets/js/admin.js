@@ -327,37 +327,79 @@ function openPost(p) {
 
 /* ── Help ───────────────────────────────────────────────────────────────── */
 function showHelp() {
-  const step = (title, items) => `<details class="help"><summary>${title}</summary><ol>${items.map((i) => `<li>${i}</li>`).join('')}</ol></details>`;
+  const step = (title, items, id = '') => `<details class="help"${id ? ` id="${id}"` : ''}><summary>${title}</summary><ol>${items.map((i) => `<li>${i}</li>`).join('')}</ol></details>`;
+  const tab = (name) => `<button type="button" class="linklike" data-tab="${name}"><strong>${name === 'settings' ? 'Delivery &amp; settings' : name[0].toUpperCase() + name.slice(1)}</strong></button>`;
   panel.innerHTML = `<div class="bar"><h1>How to run the shop</h1></div>
-  <p class="muted">Everything here is done in this admin area. Changes go live as soon as you click Save, so there is nothing else to publish. If something looks wrong on the shop after a change, reload the page first.</p>
+  <p class="muted">Everything is done in this admin area. When you click <strong>Save</strong> it is live on the shop straight away. There is no separate “publish” step.</p>
+
+  <div class="panel-card">
+    <h2>Your routine when an order comes in</h2>
+    <ol class="routine">
+      <li><span>1</span><div><strong>You get an email: “New paid order”.</strong><br>The customer gets their confirmation at the same time. Nothing to do yet.</div></li>
+      <li><span>2</span><div><strong>Open ${tab('orders')} and click <em>Open</em> on the order.</strong><br>It shows what they bought and where to send it.</div></li>
+      <li><span>3</span><div><strong>Click <em>Print packing slip</em> and <em>Print address label</em>.</strong><br>Packing slip goes in the parcel. The label is 6×4 inch, or print on plain paper and cut it out.</div></li>
+      <li><span>4</span><div><strong>Post it, then set <em>Fulfilment status</em> to “dispatched” and click <em>Save order</em>.</strong><br>Pop the tracking number in the <em>Private note</em> if there is one. That’s it.</div></li>
+    </ol>
+    <p class="muted small">Only send orders that say <strong>paid</strong>. Anything under “Unpaid, expired and demo” was never paid for. Stock goes down by itself when someone buys.</p>
+  </div>
+
+  <div class="panel-card">
+    <h2>I want to…</h2>
+    <ul class="want">
+      <li><a href="#h-price">change a price or stock number</a></li>
+      <li><a href="#h-photo">add a photo or put a new scent on sale</a></li>
+      <li><a href="#h-new">add a brand-new product</a></li>
+      <li><a href="#h-soldout">mark something sold out or hide it</a></li>
+      <li><a href="#h-refund">refund or cancel an order</a></li>
+      <li><a href="#h-notice">put a notice on the shop (e.g. Christmas last order date)</a></li>
+      <li><a href="#h-pages">change the wording on a page or the FAQ</a></li>
+      <li><a href="#h-blog">write a blog post</a></li>
+      <li><a href="#h-signin">sign in without problems</a></li>
+      <li><a href="#h-wrong">fix something that looks wrong</a></li>
+    </ul>
+  </div>
+
   <div class="panel-card"><h2>Products</h2>
-  ${step('Put a new scent on sale', ['Open the <strong>Products</strong> tab and use the filters to find it (the <em>Needs price or photo</em> button lists everything not yet finished).', 'Click <strong>Edit</strong>. Type the price in pounds (for example 3.50) and how many you have in stock.', 'Click <strong>Choose File</strong> under Image and pick a photo from your phone or computer. Square photos look best.', 'Fill in the short description (shown on the shop page), the full description, and the usage and safety text from the CLP label.', 'Untick <strong>Hide from shop</strong>, then click <strong>Save product</strong>.'])}
-  ${step('Add a brand-new product', ['Products tab → <strong>Add product</strong>.', 'Give it a name, choose the category (Snap Bars, Wax Melt Shapes, Sample Boxes, Gift Sets or Accessories) and tick the scent filters that apply.', 'If it comes in sizes or scents, type what the customer chooses between (for example <em>Size</em>) and click <strong>Add another option</strong> for each one, with its own price and stock.', 'Add a photo, price, stock and descriptions, then Save.'])}
-  ${step('Change a price or stock level', ['Products tab → search for the product → <strong>Edit</strong>.', 'Change the price or stock number and click <strong>Save product</strong>. Stock goes down by itself when customers buy.'])}
-  ${step('Mark something as sold out, or take it off the shop', ['Edit the product.', '<strong>Mark as sold out</strong> keeps it visible with a Sold out label. <strong>Hide from shop</strong> removes it completely.', 'Untick the box again when it is back.'])}
-  ${step('Feature a product on the homepage', ['Edit the product and tick <strong>Feature on homepage</strong>. The first eight featured products show in the “A few scents to start with” section.', 'The <strong>Position</strong> number decides the order everywhere. Lower numbers show first.'])}
+  ${step('Change a price or stock number', ['' + tab('products') + ' → find the product (type its name in the search box) → <strong>Edit</strong>.', 'Change the number. Prices are in pounds, so 3.50 is £3.50.', 'Click <strong>Save product</strong>.'], 'h-price')}
+  ${step('Add a photo, or put a new scent on sale', ['' + tab('products') + ' → click the <strong>Needs price or photo</strong> filter. It lists everything not finished yet.', 'Click <strong>Edit</strong> on one.', 'Under Image click <strong>Choose file</strong> and pick a photo. Square photos look best. It resizes itself, so any phone photo is fine.', 'Type the price and how many you have.', 'Check the short description (one line, shown on the shop page) and the full description.', 'Untick <strong>Hide from shop</strong>. Click <strong>Save product</strong>. Done: it is on the shop now.'], 'h-photo')}
+  ${step('Add a brand-new product', ['' + tab('products') + ' → <strong>Add product</strong>.', 'Name, then choose the category (Snap Bars, Wax Melt Shapes, Sample Boxes, Gift Sets or Accessories).', 'Tick the scent filters that fit (Fresh, Floral, Fruity, Sweet, Halloween, Christmas). Halloween and Christmas also put it in the Seasonal section.', 'Only if it comes in sizes or scents: type what the customer picks (for example <em>Size</em>) and click <strong>Add another option</strong> for each one, each with its own price and stock.', 'Add a photo, price, stock and descriptions, then <strong>Save product</strong>.'], 'h-new')}
+  ${step('Mark something sold out, or take it off the shop', ['<strong>Edit</strong> the product.', 'Tick <strong>Mark as sold out</strong> to keep it on the shop with a Sold out label (good for “back soon”). Tick <strong>Hide from shop</strong> to remove it completely.', 'Untick the box when it is back. <strong>Save product</strong>.'], 'h-soldout')}
+  ${step('Choose what shows on the homepage', ['<strong>Edit</strong> a product and tick <strong>Feature on homepage</strong>. The first eight featured products show on the front page.', 'The <strong>Position</strong> number sets the order everywhere. Lower numbers come first, so 1 is the top.'])}
   </div>
+
   <div class="panel-card"><h2>Orders</h2>
-  ${step('When an order comes in', ['You get an email headed <em>New paid order</em>. The customer gets a confirmation at the same time.', 'Open the <strong>Orders</strong> tab. Paid orders are listed newest first. Click <strong>Open</strong> to see what was bought and the delivery address.', 'Click <strong>Print packing slip</strong> to print a note to go in the parcel, and <strong>Print address label</strong> for a 6×4 inch label (or plain paper). Both open in a new window with a Print button; if nothing opens, allow pop-ups for this site.', 'Pack it, then change <strong>Fulfilment status</strong> to <em>dispatched</em> and click <strong>Save order</strong>. Use the Private note for tracking numbers or anything to remember.', 'Only orders marked <strong>paid</strong> should be sent. Anything under “Unpaid, expired and demo” was never paid for.', 'To remove an order completely, open it and click <strong>Delete order</strong>. Use this for test orders and abandoned checkouts. Keep real paid orders, even cancelled ones, because sales records normally have to be kept for tax.'])}
-  ${step('Refund a customer', [
-    'Refunds are made in Stripe, the company that takes the card payments. The money goes back to the card the customer paid with; you cannot refund to a different card or by bank transfer.',
-    'In the <strong>Orders</strong> tab, click <strong>Open</strong> on the order and click the <strong>Open payment in Stripe</strong> button. It takes you straight to that payment. If Stripe asks you to log in, use the Stripe account details (<a href="https://dashboard.stripe.com/login" target="_blank" rel="noopener">dashboard.stripe.com/login</a>).',
-    'On the payment page click <strong>Refund</strong> at the top right. For a full refund leave the amount as it is. For a partial refund, for example one item out of three, change the amount to what you are giving back.',
-    'Pick a reason (<em>Requested by customer</em> is the usual one) and click <strong>Refund</strong>. Stripe shows the payment as Refunded or Partially refunded within a few seconds.',
-    'Back in this admin area, set the order’s <strong>Fulfilment status</strong> to <em>cancelled</em> if it is not being sent, and write what you refunded and why in the <strong>Private note</strong>. Click <strong>Save order</strong>.',
-    'Tell the customer by email. Refunds take 5 to 10 working days to show on their statement, and Stripe’s card fees are not returned to you, so a refund costs you a small amount even when the item comes back.',
-    'If you cannot find the payment, search Stripe for the order number (OTR-…) or the customer’s email address: <a href="https://dashboard.stripe.com/payments" target="_blank" rel="noopener">dashboard.stripe.com/payments</a>. Test-mode orders are under <a href="https://dashboard.stripe.com/test/payments" target="_blank" rel="noopener">dashboard.stripe.com/test/payments</a>.',
-  ])}
-  ${step('Cancel an order before it is sent', ['Refund it in Stripe as above, then set the fulfilment status to <em>cancelled</em> here. Stock is not put back automatically, so add the items back to stock in the Products tab if they are going back on the shelf.'])}
+  ${step('Refund or cancel an order', [
+    'Refunds happen in <strong>Stripe</strong> (the company that takes the card payments), not here. The money goes back to the card they paid with.',
+    '' + tab('orders') + ' → <strong>Open</strong> the order → click <strong>Open payment in Stripe</strong>. It takes you straight to that payment.',
+    'In Stripe click <strong>Refund</strong> (top right). Leave the amount as it is for a full refund, or change it for a partial one. Reason: <em>Requested by customer</em>. Click <strong>Refund</strong>.',
+    'Back here, set <strong>Fulfilment status</strong> to <em>cancelled</em> if it is not being sent, write what you refunded in the <strong>Private note</strong>, and <strong>Save order</strong>.',
+    'Email the customer. Refunds take 5–10 working days to appear on their statement.',
+    'If the items are going back on the shelf, add them back to stock in ' + tab('products') + ' (stock is not put back automatically).',
+  ], 'h-refund')}
+  ${step('Delete an order', ['<strong>Open</strong> the order → <strong>Delete order</strong>. Use this for test orders and abandoned checkouts.', 'Keep real paid orders, even cancelled ones. Sales records normally have to be kept for tax.'])}
+  ${step('Find a payment in Stripe', ['Search Stripe for the order number (OTR-…) or the customer’s email: <a href="https://dashboard.stripe.com/payments" target="_blank" rel="noopener">dashboard.stripe.com/payments</a>.', 'Payouts to your bank are under <a href="https://dashboard.stripe.com/balance" target="_blank" rel="noopener">dashboard.stripe.com/balance</a>. The <strong>Stripe Dashboard</strong> app on your phone shows the same without logging in through a browser.'])}
   </div>
+
   <div class="panel-card"><h2>Wording and pages</h2>
-  ${step('Change the homepage wording, delivery charge or business details', ['Open <strong>Delivery &amp; settings</strong>. Each section has a “Where does this appear on the shop?” link showing exactly what each box changes.', 'Edit the boxes and click <strong>Save settings</strong> at the bottom.', 'The announcement bar is handy for “Christmas orders by 18 December” type notices. Leave it blank to hide it.'])}
-  ${step('Edit the Contact, Delivery, Privacy, Terms or FAQ pages', ['Open <strong>Pages</strong> and click <strong>Edit</strong>.', 'Leave a blank line between paragraphs. Start a line with <code>## </code> for a heading, <code>- </code> for a bullet, or <code>Q: </code> for an FAQ question (answer on the next line).', 'Untick <strong>Still a placeholder</strong> once the page is finished, then Save.'])}
-  ${step('Write a blog post', ['Open <strong>Blog</strong> → <strong>Add post</strong>.', 'Add a title, a one-line summary, a photo and the post itself (same formatting rules as pages).', 'Untick <strong>Published</strong> to save it as a draft and come back later.'])}
+  ${step('Put a notice on the shop', ['' + tab('settings') + ' → <strong>Announcement bar</strong>. Type the message, for example “Last Christmas orders: 18 December”.', 'Click <strong>Save settings</strong>. It shows in the pink bar at the top of every page. Clear the box and Save to remove it.'], 'h-notice')}
+  ${step('Change the delivery charge, homepage wording or business details', ['' + tab('settings') + '. Each section has a “Where does this appear on the shop?” link with a picture showing exactly what each box changes.', 'Edit, then <strong>Save settings</strong> at the bottom.'])}
+  ${step('Edit the Contact, Delivery, Privacy, Terms or FAQ pages', ['' + tab('pages') + ' → <strong>Edit</strong>.', 'Leave a blank line between paragraphs.', 'Start a line with <code>## </code> for a heading, <code>- </code> for a bullet point.', 'On the FAQ page: <code>Q: </code> then the question, answer on the next line. The first five questions also show on the homepage.', 'Untick <strong>Still a placeholder</strong> once the page is finished. <strong>Save</strong>.'], 'h-pages')}
+  ${step('Write a blog post', ['' + tab('blog') + ' → <strong>Add post</strong>.', 'Title, a one-line summary, a photo, and the post itself (same formatting as pages).', 'Untick <strong>Published</strong> to keep it as a draft and come back later. Tick it when it is ready.'], 'h-blog')}
   </div>
+
   <div class="panel-card"><h2>Signing in</h2>
-  ${step('Getting in and out', ['Go to <strong>https://www.overtherainbowwaxmelts.co.uk/admin/</strong>. Sign in with Google, or ask for a code to be emailed to you.', 'You stay signed in for 24 hours on that device. Click <strong>Sign out</strong> at the top right if you are on a shared computer.', 'Only email addresses on the allowed list can get in. Adding someone new is done in Cloudflare, not here.'])}
+  ${step('The easy way (do this once on your phone)', ['Open <strong>Chrome</strong> (not a link from a message or an app) and go to <strong>www.overtherainbowwaxmelts.co.uk/admin</strong>.', 'Tap the ⋮ menu → <strong>Add to Home screen</strong>. Use that icon from now on.', 'When asked to sign in, type your email and you will be sent a code. Type the code in. You stay signed in for 24 hours on that device.'], 'h-signin')}
+  ${step('Getting a Google “401” or “error” page when signing in', ['This happens when the link was opened inside another app (Messages, WhatsApp, Facebook, Gmail). Google refuses to sign in from there.', 'Close it, open Chrome yourself and use the home-screen icon instead.', 'Still stuck? Choose <strong>email me a code</strong> instead of Google. It always works.'])}
+  ${step('Who can sign in', ['Only the email addresses on the allowed list. Adding someone is done in Cloudflare (ask Steven), not here.', 'Click <strong>Sign out</strong> (top right) if you are on someone else’s computer.'])}
+  </div>
+
+  <div class="panel-card"><h2>Something looks wrong?</h2>
+  ${step('My change is not showing on the shop', ['Did you click Save? A green “Saved” message appears at the top when it worked.', 'Reload the shop page (pull down on your phone, or F5 on a computer). Changes can take up to a minute to appear.', 'For products: check <strong>Hide from shop</strong> is unticked and the stock is not 0.'], 'h-wrong')}
+  ${step('A print window did not open', ['Your browser blocked a pop-up. Look for a small icon in the address bar and choose “always allow” for this site, then click Print again.'])}
+  ${step('A customer says they paid but there is no order', ['Check ' + tab('orders') + ' under “Unpaid, expired and demo”: if it is there, the payment did not go through.', 'Search Stripe for their email address. If Stripe shows the payment as succeeded, tell Steven.'])}
+  ${step('Anything else', ['Nothing you do here can break the shop. Products, pages and settings can all be changed back. Orders you delete are gone though.', 'If in doubt, send Steven a screenshot.'])}
   </div>`;
+  panel.querySelectorAll('.want a').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); const d = $(a.getAttribute('href')); if (d) { d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }));
   return Promise.resolve();
 }
 

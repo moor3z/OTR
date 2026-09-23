@@ -35,4 +35,11 @@ details.where img { width: 100%; border-radius: var(--r-sm); border: 1px solid v
 .where-legend li { counter-increment: n; display: flex; gap: .625rem; align-items: baseline; margin-bottom: .375rem; }
 .where-legend li::before { content: counter(n); flex: none; width: 26px; height: 26px; border-radius: 50%; background: #ff2d8f; color: #fff; font-weight: 700; text-align: center; line-height: 26px; font-size: .9375rem; }
 details.help ol { margin: 0 0 1rem; padding-left: 1.25rem; } details.help li { margin-bottom: .5rem; } details.help code { background: var(--line); padding: 0 .3rem; border-radius: 4px; }
+ol.routine { list-style: none; padding: 0; margin: 0 0 1rem; display: grid; gap: .75rem; }
+ol.routine li { display: flex; gap: .875rem; align-items: flex-start; background: #faf7fb; border: 1px solid var(--line); border-radius: var(--r-sm); padding: .875rem 1rem; }
+ol.routine li > span { flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--plum); color: #fff; font-weight: 700; text-align: center; line-height: 32px; }
+ol.routine em { font-style: normal; background: var(--line); padding: 0 .3rem; border-radius: 4px; }
+ul.want { columns: 2; column-gap: 2rem; padding-left: 1.25rem; margin: 0; } ul.want li { margin-bottom: .4rem; break-inside: avoid; } ul.want a { color: var(--pink-text); font-weight: 600; }
+@media (max-width: 640px) { ul.want { columns: 1; } }
+button.linklike { background: none; border: 0; padding: 0; color: var(--pink-text); font: inherit; cursor: pointer; text-decoration: underline; min-height: 0; }
 [hidden] { display: none !important; }

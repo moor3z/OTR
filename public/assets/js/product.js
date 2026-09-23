@@ -1,4 +1,4 @@
-import { api, getConfig, productCard, wireAddButtons, addToBasket, gbp, esc, $ } from './site.js?v=29';
+import { api, getConfig, productCard, wireAddButtons, addToBasket, gbp, esc, $ } from './site.js?v=30';
 
 const id = decodeURIComponent(location.pathname.split('/')[2] || '') || new URLSearchParams(location.search).get('id') || '';
 const root = $('#product-root');
