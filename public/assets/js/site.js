@@ -60,7 +60,7 @@ export function toast(message) {
 export function productCard(p) {
   const single = p.variants.length === 1;
   const price = single ? gbp(p.from_pence) : `From ${gbp(p.from_pence)}`;
-  const href = `/product?id=${encodeURIComponent(p.id)}`;
+  const href = `/products/${encodeURIComponent(p.id)}`;
   let action;
   if (!p.available) action = `<button class="btn" disabled>Sold out</button>`;
   else if (single) action = `<button class="btn btn-primary" data-add="${esc(p.id)}">Add to Basket</button>`;
@@ -95,54 +95,17 @@ export function addToBasket(p, v, qty) {
 
 /* ── Header and footer ────────────────────────────────────────────────────── */
 const ICON = {
-  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
-  basket: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9h14l-1.4 10.2a2 2 0 0 1-2 1.8H8.4a2 2 0 0 1-2-1.8L5 9Z"/><path d="M9 9V7a3 3 0 0 1 6 0v2"/></svg>',
-  menu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
   close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
 };
-const searchForm = (id) => `<form class="search-form" action="/shop" method="get" role="search">
-  <label class="visually-hidden" for="${id}">Search products</label>
-  <input id="${id}" type="search" name="q" placeholder="Search scents" autocomplete="off" enterkeyhint="search">
-  <button type="submit">Search</button></form>`;
-
 function renderChrome() {
+  // Header and footer are in the HTML (tools/build_chrome.py); this only marks the current page and wires behaviour.
   const here = location.pathname.replace(/\/$/, '') || '/';
   const cat = new URLSearchParams(location.search).get('category');
-  const nav = [['/', 'Home', 'home'], ['/shop?category=snap-bars', 'Snap Bars', 'snap-bars'], ['/shop?category=wax-melt-shapes', 'Melt Shapes', 'wax-melt-shapes'],
-    ['/shop?category=sample-boxes', 'Sample Boxes', 'sample-boxes'], ['/shop?category=gift-sets', 'Gift Sets', 'gift-sets'], ['/shop?category=accessories', 'Accessories', 'accessories']];
-  const header = document.createElement('div');
-  header.innerHTML = `<a class="skip" href="#main">Skip to content</a>
-  <div id="announce"></div>
-  <header class="site-header"><div class="wrap">
-    <div class="header-main">
-      <a class="brand" href="/" aria-label="Over The Rainbow Wax Melts – home">
-        <img src="/assets/img/logo-180.webp" srcset="/assets/img/logo-180.webp 1x, /assets/img/logo-360.webp 2x" width="180" height="204" alt="Over The Rainbow Wax Melts">
-      </a>
-      <div class="header-search desktop">${searchForm('q-desktop')}</div>
-      <button class="icon-btn basket-btn" type="button" id="basket-btn" aria-haspopup="dialog">
-        ${ICON.basket}<span class="basket-count" data-n="0" aria-hidden="true">0</span><span class="visually-hidden" id="basket-label">Basket, 0 items</span>
-      </button>
-      <button class="icon-btn menu-toggle" type="button" aria-expanded="false" aria-controls="site-menu"><span class="menu-icon when-closed">${ICON.menu}</span><span class="menu-icon when-open">${ICON.close}</span><span class="visually-hidden">Menu</span></button>
-    </div>
-    <div class="site-menu" id="site-menu">
-      <div class="header-search mobile">${searchForm('q-mobile')}</div>
-      <nav class="site-nav" aria-label="Shop categories">
-        ${nav.map(([href, label, c]) => `<a href="${href}"${(c === 'home' ? here === '/' : here === '/shop' && cat === c) ? ' aria-current="page"' : ''}>${label}</a>`).join('')}
-        <a class="nav-extra" href="/delivery-returns">Delivery &amp; returns</a>
-        <a class="nav-extra" href="/contact">Contact</a>
-      </nav>
-    </div>
-  </div></header>`;
-  document.body.prepend(...header.childNodes);
-
-  const footer = document.createElement('footer');
-  footer.className = 'site-footer';
-  footer.innerHTML = `<div class="wrap"><div class="footer-grid">
-    <div><h2>Over The Rainbow</h2><p>Wax melts, delivered across the UK.</p><p id="footer-contact"></p></div>
-    <div><h2>Shop</h2><ul><li><a href="/shop">All products</a></li><li><a href="/shop?category=sample-boxes">Sample boxes</a></li><li><a href="/shop?category=gift-sets">Gift sets</a></li><li><a href="/basket">Your basket</a></li></ul></div>
-    <div><h2>Help</h2><ul><li><a href="/contact">Contact</a></li><li><a href="/delivery-returns">Delivery &amp; returns</a></li><li><a href="/privacy">Privacy policy</a></li><li><a href="/terms">Terms &amp; conditions</a></li></ul></div>
-  </div><p class="footer-base">© <span id="year"></span> Over The Rainbow. Prices in GBP. UK delivery only.</p></div>`;
-  document.body.append(footer);
+  document.querySelectorAll('.site-nav a').forEach((a) => {
+    const u = new URL(a.href), c = u.searchParams.get('category');
+    const current = u.pathname === '/' ? here === '/' : u.pathname === '/shop' ? here === '/shop' && (c || null) === cat : here === u.pathname;
+    if (current) a.setAttribute('aria-current', 'page');
+  });
   $('#year').textContent = new Date().getFullYear();
 
   // Phone/tablet menu: one button opens search + all links
@@ -154,10 +117,7 @@ function renderChrome() {
   toggle.addEventListener('click', () => setMenu(!menu.classList.contains('is-open')));
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && menu.classList.contains('is-open')) { setMenu(false); toggle.focus(); } });
   document.addEventListener('click', (e) => { if (menu.classList.contains('is-open') && !e.composedPath().includes($('.site-header'))) setMenu(false); });
-  menu.addEventListener('submit', () => setMenu(false));
   menu.addEventListener('click', (e) => { if (e.target.closest('a')) setMenu(false); });
-  const q = new URLSearchParams(location.search).get('q');
-  if (q) document.querySelectorAll('.search-form input').forEach((i) => (i.value = q));
 
   $('#basket-btn').addEventListener('click', () => openDrawer());
   updateCount();
@@ -165,10 +125,11 @@ function renderChrome() {
   window.addEventListener('storage', (e) => { if (e.key === KEY) updateCount(); });
 
   getConfig().then((c) => {
-    if (c.announcement) $('#announce').innerHTML = `<div class="announce">${esc(c.announcement)}</div>`;
-    if (c.payment_mode !== 'live') {
+    const offer = c.announcement || (c.free_delivery_threshold_pence ? `Free UK delivery over ${gbp(c.free_delivery_threshold_pence).replace(/\.00$/, '')}` : '');
+    if (offer) $('#announce').innerHTML = `<div class="announce"><span aria-hidden="true">♥</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg>${esc(offer)}<span aria-hidden="true">♥</span></div>`;
+    if (c.payment_mode === 'demo') { // no Stripe keys at all: warn shoppers. Test mode shows only in the admin Status box.
       const b = document.createElement('div'); b.className = 'test-banner';
-      b.textContent = c.payment_mode === 'demo' ? 'Demo mode: payments are not connected. No orders will be taken.' : 'Test mode: Stripe test payments only. No real money is taken.';
+      b.textContent = 'Demo mode: payments are not connected. No orders will be taken.';
       document.body.prepend(b);
     }
     if (c.contact_email) $('#footer-contact').innerHTML = `<a href="mailto:${esc(c.contact_email)}">${esc(c.contact_email)}</a>`;
@@ -190,7 +151,7 @@ export function lineHtml(l, { problem } = {}) {
     <img src="${esc(l.image_url || '/assets/ph/blank.svg')}" alt="" width="76" height="76" loading="lazy">
     <div>
       <div class="line-top">
-        <div><a class="line-name" href="/product?id=${encodeURIComponent(l.product_id || '')}">${esc(l.name || 'Unavailable item')}</a>
+        <div><a class="line-name" href="/products/${encodeURIComponent(l.product_id || '')}">${esc(l.name || 'Unavailable item')}</a>
           ${l.label ? `<p class="line-meta">${esc(l.label)}</p>` : ''}</div>
         <strong>${l.unit_pence != null ? gbp(l.unit_pence * l.qty) : ''}</strong>
       </div>
