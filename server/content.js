@@ -441,3 +441,185 @@ export const DEFAULT_SAFETY = `For home fragrance only. Not for eating. Keep mel
 Never leave a lit burner unattended. Place it on a flat, heat-resistant surface, away from draughts, curtains and anything that could catch fire, and always follow the instructions that came with your burner. The dish and the melted wax get hot, so let them cool before handling.
 
 Read the CLP label on the packaging before use. It lists the allergens in this particular scent and any warnings that apply to it. If you or anyone in your home has allergies or sensitivities, check the label first.`;
+
+// Scents added from the September fragrance-oil order. Hidden until Michelle adds a photo.
+// [name, category, scent tags, short description, full description]
+export const MORE_SCENTS = [
+ [
+  "Vanilla Blossom",
+  "snap-bars",
+  [
+   "sweet",
+   "floral"
+  ],
+  "Soft vanilla with a light floral lift.",
+  "Creamy vanilla softened with white flowers, so it is warm without being sugary. A gentle everyday scent for a bedroom or living room."
+ ],
+ [
+  "Watermelon",
+  "snap-bars",
+  [
+   "fruity"
+  ],
+  "Juicy watermelon, cool and refreshing.",
+  "Fresh-cut watermelon: sweet, watery and clean. Lovely through spring and summer, and in a kitchen or bathroom all year round."
+ ],
+ [
+  "Sweet Orange",
+  "snap-bars",
+  [
+   "fruity",
+   "fresh"
+  ],
+  "Bright, zesty orange peel.",
+  "Freshly peeled oranges, sharp and sunny with a soft sweetness underneath. A good pick-me-up for mornings and kitchens."
+ ],
+ [
+  "Juicy Strawberry",
+  "snap-bars",
+  [
+   "fruity"
+  ],
+  "Ripe strawberries, sweet and fresh.",
+  "Sun-warmed strawberries picked at their best. Fruity and juicy rather than sugary, and a real favourite with children."
+ ],
+ [
+  "Pineapple",
+  "snap-bars",
+  [
+   "fruity"
+  ],
+  "Sharp, tropical pineapple.",
+  "Golden pineapple with a tangy edge and a sweet finish. Fresh and tropical, perfect for brightening a dull day."
+ ],
+ [
+  "Strawberry Bon Bon",
+  "snap-bars",
+  [
+   "fruity",
+   "sweet"
+  ],
+  "Old-fashioned strawberry sweet-shop.",
+  "Chewy strawberry bon bons dusted with sugar. Proper sweet-shop nostalgia, sweeter and more sugary than our fresh strawberry."
+ ],
+ [
+  "Bubblegum",
+  "snap-bars",
+  [
+   "sweet"
+  ],
+  "Pink bubblegum, straight from the sweet shop.",
+  "Sugary pink bubblegum with a fruity fizz. Playful and unmistakable, and always popular with younger noses."
+ ],
+ [
+  "Lime, Basil & Mandarin",
+  "snap-bars",
+  [
+   "fresh",
+   "fruity"
+  ],
+  "Zesty lime and mandarin over garden herbs.",
+  "Sharp lime and juicy mandarin lifted with peppery basil. Crisp, smart and fresh, and a firm favourite in hallways and living rooms."
+ ],
+ [
+  "Vanilla Spice",
+  "snap-bars",
+  [
+   "sweet"
+  ],
+  "Warm vanilla with cinnamon and orange blossom.",
+  "Sweet vanilla wrapped in cinnamon and soft orange blossom, finished with amber. Cosy and grown-up, lovely on a cold evening."
+ ],
+ [
+  "Pear & Orchid",
+  "snap-bars",
+  [
+   "floral",
+   "fruity"
+  ],
+  "Ripe pear, orchid and a toffee finish.",
+  "Juicy pear over creamy orchid, with toffee and soft patchouli underneath. A modern, perfume-style scent for a bedroom or hallway."
+ ],
+ [
+  "Violet & Leather",
+  "snap-bars",
+  [
+   "floral"
+  ],
+  "Violet leaf over soft leather and woods.",
+  "Green violet leaf against warm leather and cedar. Smart and slightly smoky, a departure from the usual sweet melts."
+ ],
+ [
+  "Timeless Florals",
+  "snap-bars",
+  [
+   "floral"
+  ],
+  "A classic bouquet of rose, jasmine and ylang.",
+  "Rose, jasmine and ylang-ylang over a powdery, sandalwood base. The elegant, old-fashioned perfume scent, warm and comforting."
+ ],
+ [
+  "Amber & Spice",
+  "snap-bars",
+  [
+   "sweet"
+  ],
+  "Rich amber with warm spice and vanilla.",
+  "Deep amber and spice softened with vanilla and a hint of orange. Warm and luxurious, made for autumn and winter evenings."
+ ],
+ [
+  "Rose & Patchouli",
+  "snap-bars",
+  [
+   "floral"
+  ],
+  "Fresh rose with orange and earthy patchouli.",
+  "Bright orange and rose over patchouli and musk. Feminine and modern, and it fills a room beautifully."
+ ],
+ [
+  "Blackcurrant & Birch",
+  "snap-bars",
+  [
+   "fruity"
+  ],
+  "Blackcurrant and pineapple over smoky birch.",
+  "Fruity blackcurrant and pineapple with birch and oakmoss underneath. Fresh and confident, one of our most grown-up fruity scents."
+ ],
+ [
+  "Grapefruit & Sea Salt",
+  "snap-bars",
+  [
+   "fresh"
+  ],
+  "Pink grapefruit with a salty sea breeze.",
+  "Sharp grapefruit and bay leaf over a clean marine base. Crisp, sporty and refreshing, ideal for bathrooms and kitchens."
+ ],
+ [
+  "Wild Violet & Jasmine",
+  "snap-bars",
+  [
+   "floral"
+  ],
+  "Violet, jasmine and a touch of strawberry.",
+  "Soft violet and jasmine brightened with wild strawberry, on a base of pale woods. Light, pretty and easy to live with."
+ ],
+ [
+  "Washing Day",
+  "snap-bars",
+  [
+   "fresh"
+  ],
+  "Clean laundry, just off the line.",
+  "That unmistakable fresh-washing smell: soap, cotton and a hint of citrus. Makes the whole house smell freshly cleaned."
+ ],
+ [
+  "Mandarin & Amber",
+  "snap-bars",
+  [
+   "fruity",
+   "sweet"
+  ],
+  "Blood mandarin with cinnamon, leather and amber.",
+  "Juicy mandarin and cinnamon over leather and warm amber. Bold and long-lasting, a proper statement scent."
+ ]
+];

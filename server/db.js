@@ -1,7 +1,7 @@
 // Database access (Cloudflare D1 / SQLite). The schema is created automatically
 // on first request, and sample content is seeded if the database is empty.
 import { SAMPLE_PRODUCTS, DEFAULT_SETTINGS, DEFAULT_PAGES } from './seed.js';
-import { FAQ_PAGE, BLOG_POSTS, ABOUT_COPY, POLICY_PAGES, SHOP_EMAIL, SCENT_PRODUCTS, DEFAULT_USAGE, DEFAULT_SAFETY } from './content.js';
+import { FAQ_PAGE, BLOG_POSTS, ABOUT_COPY, POLICY_PAGES, SHOP_EMAIL, SCENT_PRODUCTS, MORE_SCENTS, DEFAULT_USAGE, DEFAULT_SAFETY } from './content.js';
 
 const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)`,
@@ -69,7 +69,7 @@ async function init(db) {
 async function migrateContent(db) {
   const row = await db.prepare(`SELECT value FROM settings WHERE key='content_version'`).first();
   const have = Number(row?.value || 0);
-  if (have >= 8) return;
+  if (have >= 9) return;
   const now = new Date();
   const stmts = [];
   if (have < 2) { // FAQ page and starter blog posts
@@ -121,7 +121,17 @@ async function migrateContent(db) {
     stmts.push(db.prepare(`UPDATE settings SET value='A little melt. | A lot of happiness.' WHERE key='hero_headline' AND value='Find your next favourite scent'`));
     stmts.push(db.prepare(`UPDATE settings SET value='Discover colourful wax melts and find your next favourite scent.' WHERE key='hero_sub' AND value='Wax melts in bright, happy scents. Pick one, pop it in your burner, enjoy.'`));
   }
-  stmts.push(db.prepare(`INSERT INTO settings(key,value) VALUES('content_version','8') ON CONFLICT(key) DO UPDATE SET value='8'`));
+  if (have < 9) { // scents from the September fragrance-oil order, hidden until a photo is added
+    MORE_SCENTS.forEach(([name, category, tags, short, desc], i) => {
+      const id = name.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      stmts.push(db.prepare(
+        `INSERT OR IGNORE INTO products(id,name,category,scents,short_desc,description,weight,usage,safety,image_url,option_name,hidden,sold_out,featured,is_sample,sort,created_at)
+         VALUES(?,?,?,?,?,?,'',?,?,'','',1,0,0,0,?,?)`)
+        .bind(id, name, category, tags.join(','), short, desc, DEFAULT_USAGE, DEFAULT_SAFETY, 200 + i, now.toISOString()));
+      stmts.push(db.prepare(`INSERT OR IGNORE INTO variants(id,product_id,label,price_pence,stock,sort) VALUES(?,?,'Default',150,20,0)`).bind(`${id}--1`, id));
+    });
+  }
+  stmts.push(db.prepare(`INSERT INTO settings(key,value) VALUES('content_version','9') ON CONFLICT(key) DO UPDATE SET value='9'`));
   await db.batch(stmts);
 }
 
