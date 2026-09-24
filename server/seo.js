@@ -6,6 +6,15 @@
 import { getDb, getSettings, loadProducts, CATEGORIES } from './db.js';
 
 export const SITE = 'https://www.overtherainbowwaxmelts.co.uk';
+// Google Business Profile. Place ID from the profile; used for the map, the "leave a review" link
+// and to tell Google that this website and that listing are the same business.
+export const GOOGLE = {
+  placeId: 'ChIJUShLVxqHkqUR5CCTCbkYW0Y',
+  lat: 53.2778293, lng: -2.9132642,
+  profile: 'https://www.google.com/maps/place/?q=place_id:ChIJUShLVxqHkqUR5CCTCbkYW0Y',
+  review: 'https://search.google.com/local/writereview?placeid=ChIJUShLVxqHkqUR5CCTCbkYW0Y',
+  directions: 'https://www.google.com/maps/dir/?api=1&destination_place_id=ChIJUShLVxqHkqUR5CCTCbkYW0Y&destination=Over+The+Rainbow+Wax+Melts',
+};
 const SITE_NAME = 'Over The Rainbow Wax Melts';
 const DEFAULT_OG = `${SITE}/assets/img/og-default.png`;
 
@@ -78,6 +87,9 @@ export function orgSchema(s) {
     description: 'Handmade wax melts, snap bars, sample boxes and gift sets, poured in small batches in Cheshire and delivered across the UK.',
     areaServed: { '@type': 'Country', name: 'United Kingdom' }, currenciesAccepted: 'GBP', paymentAccepted: 'Card, Apple Pay, Google Pay',
   };
+  org.sameAs = [GOOGLE.profile];
+  org.hasMap = GOOGLE.profile;
+  org.geo = { '@type': 'GeoCoordinates', latitude: GOOGLE.lat, longitude: GOOGLE.lng };
   if (s.contact_email) org.email = s.contact_email;
   if (s.contact_phone) org.telephone = s.contact_phone;
   if (lines.length) {
