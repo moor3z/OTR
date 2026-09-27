@@ -58,9 +58,10 @@ export async function onRequestGet(ctx) {
   const gmap = `<section class="gmap">
     <h2>Find us on Google</h2>
     <p>We post and deliver across the UK, so there is no shop to visit, but you can find our Google listing here.</p>
-    <div class="gmap-frame" data-map="${GOOGLE.lat},${GOOGLE.lng}">
-      <button class="btn btn-ghost" type="button">Show map</button>
-      <p class="small muted">The map comes from Google and loads only when you tap it.</p>
+    <div class="gmap-frame" data-embed="${GOOGLE.embed}" data-embed-title="Map showing where Over The Rainbow Wax Melts is based">
+      <div class="gmap-ask"><p class="small">The map is provided by Google, which sets its own cookies, so we only load it if you are happy for us to.</p>
+      <p><button class="btn btn-ghost btn-sm" type="button" data-consent="yes">Show the map</button></p>
+      <p class="small muted" style="margin:0">Or <a href="${GOOGLE.profile}" target="_blank" rel="noopener">open our listing on Google Maps</a>.</p></div>
     </div>
     <p class="gmap-links"><a class="btn btn-ghost" href="${GOOGLE.profile}" target="_blank" rel="noopener">Our Google listing</a>
     <a class="btn btn-ghost" href="${GOOGLE.directions}" target="_blank" rel="noopener">Directions</a>
