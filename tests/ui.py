@@ -77,6 +77,18 @@ async def main():
         # desktop pass
         d = await b.new_context(viewport={'width': 1280, 'height': 900}); dp = await d.new_page()
         dp.on('pageerror', lambda e: errs.append(str(e)))
+        # Cookie choices: the bar shows on every page, and the Google map waits for a yes
+        await pg.goto(B + '/'); await pg.wait_for_timeout(1000)
+        check('cookie bar appears on the home page', await pg.locator('#cookie-bar').count() == 1)
+        await pg.goto(B + '/contact'); await pg.wait_for_timeout(1200)
+        check('cookie bar appears on the contact page', await pg.locator('#cookie-bar').count() == 1)
+        check('map does not load before consent', await pg.locator('.gmap-frame iframe').count() == 0)
+        await pg.click('[data-consent=yes]'); await pg.wait_for_timeout(600)
+        check('map loads once accepted', await pg.locator('.gmap-frame iframe').count() == 1)
+        await pg.reload(); await pg.wait_for_timeout(1000)
+        check('choice is remembered', await pg.locator('#cookie-bar').count() == 0)
+        await pg.evaluate("localStorage.removeItem('otr-consent')")
+
         for path, fn in [('/', 'home'), ('/shop', 'shop'), ('/checkout', 'checkout')]:
             await dp.goto(B + path); await dp.wait_for_timeout(800); await dp.screenshot(path=f'/tmp/{fn}-d.png', full_page=True)
             check(f'no horizontal overflow on desktop {path}', await dp.evaluate('document.documentElement.scrollWidth<=innerWidth'))

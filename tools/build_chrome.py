@@ -30,7 +30,7 @@ FOOTER = '''<!-- footer:start -->
 <footer class="site-footer"><div class="wrap"><div class="footer-grid">
   <div><h2>Over The Rainbow</h2><p>Handmade wax melts, delivered across the UK.</p><p id="footer-contact"></p></div>
   <div><h2>Shop</h2><ul><li><a href="/shop">All products</a></li><li><a href="/shop?category=sample-boxes">Sample boxes</a></li><li><a href="/shop?category=gift-sets">Gift sets</a></li><li><a href="/shop?category=seasonal">Seasonal scents</a></li><li><a href="/blog">Blog</a></li><li><a href="/basket">Your basket</a></li></ul></div>
-  <div><h2>Help</h2><ul><li><a href="/faq">FAQs</a></li><li><a href="/contact">Contact</a></li><li><a href="/delivery-returns">Delivery &amp; returns</a></li><li><a href="/privacy">Privacy policy</a></li><li><a href="/terms">Terms &amp; conditions</a></li></ul></div>
+  <div><h2>Help</h2><ul><li><a href="/faq">FAQs</a></li><li><a href="/contact">Contact</a></li><li><a href="/delivery-returns">Delivery &amp; returns</a></li><li><a href="/privacy">Privacy policy</a></li><li><a href="/terms">Terms &amp; conditions</a></li><li><button class="footer-cookies" type="button">Cookie choices</button></li></ul></div>
 </div><p class="footer-base">© <span id="year"></span> Over The Rainbow. Prices in GBP. UK delivery only.</p></div></footer>
 <!-- footer:end -->'''
 for f in sorted(glob.glob(os.path.join(ROOT, '*.html'))):

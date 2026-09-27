@@ -1,7 +1,10 @@
 // End-to-end API tests. Run against `wrangler pages dev` started with:
-//   -b STRIPE_SECRET_KEY=sk_test_mock -b STRIPE_WEBHOOK_SECRET=whsec_mock -b STRIPE_API_BASE=http://localhost:8799 -b ADMIN_DEV_BYPASS=true
+//   -b STRIPE_SECRET_KEY=sk_test_mock -b STRIPE_WEBHOOK_SECRET=whsec_mock -b STRIPE_API_BASE=http://localhost:8799
+//   -b RESEND_API_KEY=re_mock -b "EMAIL_FROM=Shop <test@local>" -b RESEND_API_BASE=http://localhost:8798 -b ADMIN_DEV_BYPASS=true
+// The stand-in Stripe and Resend servers are started by this file, so nothing else needs running.
 import { createHmac } from 'node:crypto';
 import './mock-stripe.mjs';
+import './mock-resend.mjs';
 import { sessions } from './mock-stripe.mjs';
 
 const BASE = process.env.BASE || 'http://localhost:8788', SECRET = 'whsec_mock';
@@ -73,7 +76,8 @@ ok('repeated and parallel webhooks do not deduct stock again', (await stock(V)) 
 ok('contact form rejects a bad email', (await post('/api/contact', { name: 'Jo Smith', email: 'nope', message: 'Hello there, is this in stock?' })).status === 422);
 ok('contact form rejects a short message', (await post('/api/contact', { name: 'Jo Smith', email: 'jo@example.com', message: 'hi' })).status === 422);
 ok('contact form swallows the honeypot', (await post('/api/contact', { name: 'Bot', email: 'b@b.com', message: 'cheap watches for sale here', website: 'http://spam' })).status === 200);
-ok('contact form accepts a real message', (await post('/api/contact', { name: 'Jo Smith', email: 'jo@example.com', topic: 'Delivery', message: 'Do you post to the Isle of Man?' })).status === 200);
+const sent = await post('/api/contact', { name: 'Jo Smith', email: 'jo@example.com', topic: 'Delivery', message: 'Do you post to the Isle of Man?' });
+ok('contact form accepts a real message', sent.status === 200, sent.status === 503 ? 'email not configured: add the RESEND_* bindings above' : `status=${sent.status}`);
 
 const paid = (await j('/api/admin/orders?view=paid')).body.orders.filter((o) => o.ref);
 ok('exactly one paid order exists for the payment', paid.length === 1, `count=${paid.length}`);

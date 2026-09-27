@@ -1,4 +1,4 @@
-import { api, esc, $ } from './site.js?v=32';
+import { api, esc, $ } from './site.js?v=36';
 
 // Tiny safe formatter for the editable pages: "## Heading", "- list item",
 // blank line = new paragraph. Everything is escaped first; no HTML is allowed in.
@@ -27,19 +27,6 @@ if (root) api(`/api/page/${root.dataset.slug}`).then(({ page }) => {
     ${page.needs_review ? `<div class="notice notice-demo"><p><strong>Placeholder page.</strong> This content still needs completing before launch. Edit it in Admin → Pages.</p></div>` : ''}
     ${format(page.body)}`;
 }).catch((e) => { root.innerHTML = `<h1>Page unavailable</h1><div class="notice notice-error" role="alert"><p>${esc(e.message)}</p></div>`; });
-
-// Contact page: the map is only fetched from Google when the visitor asks for it, so no
-// Google cookies are set on people who never tap it.
-document.addEventListener('click', (e) => {
-  const btn = e.target.closest('.gmap-frame button');
-  if (!btn) return;
-  const box = btn.closest('.gmap-frame');
-  const f = document.createElement('iframe');
-  f.src = `https://maps.google.com/maps?q=${encodeURIComponent(box.dataset.map)}&z=14&hl=en-GB&output=embed`;
-  f.title = 'Map showing where Over The Rainbow Wax Melts is based';
-  f.loading = 'lazy'; f.referrerPolicy = 'no-referrer-when-downgrade';
-  box.replaceChildren(f);
-});
 
 // Contact form: send it in the background so the person stays on the page.
 // Without JavaScript the form posts normally and still works.

@@ -14,6 +14,8 @@ export const GOOGLE = {
   profile: 'https://www.google.com/maps/place/?q=place_id:ChIJUShLVxqHkqUR5CCTCbkYW0Y',
   review: 'https://search.google.com/local/writereview?placeid=ChIJUShLVxqHkqUR5CCTCbkYW0Y',
   directions: 'https://www.google.com/maps/dir/?api=1&destination_place_id=ChIJUShLVxqHkqUR5CCTCbkYW0Y&destination=Over+The+Rainbow+Wax+Melts',
+  // Embed address copied from the Google Business Profile "Share or embed map" panel.
+  embed: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2385.653416542401!2d-2.9132642!3d53.2778293!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xa592871a574b2851%3A0x465b18b9099320e4!2sOver%20The%20Rainbow%20Wax%20Melts!5e0!3m2!1sen!2suk!4v1790523711154!5m2!1sen!2suk',
 };
 const SITE_NAME = 'Over The Rainbow Wax Melts';
 const DEFAULT_OG = `${SITE}/assets/img/og-default.png`;

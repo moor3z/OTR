@@ -213,4 +213,56 @@ export function openDrawer(note) {
 
 renderChrome();
 
+/* Cookies.
+   The shop itself only stores your basket and your cookie choice, which it cannot
+   work without, so those need no permission. The one extra is the Google map on the
+   contact page: Google sets cookies of its own, so the map only loads once someone
+   has said yes. Saying no is one click, same as saying yes, and the choice can be
+   changed from the footer at any time. */
+const CONSENT = 'otr-consent';
+const readConsent = () => { try { return localStorage.getItem(CONSENT); } catch { return null; } };
+const writeConsent = (v) => { try { localStorage.setItem(CONSENT, v); } catch {} };
+
+function loadEmbeds() {
+  document.querySelectorAll('[data-embed]').forEach((box) => {
+    if (box.querySelector('iframe')) return;
+    const f = document.createElement('iframe');
+    f.src = box.dataset.embed; f.title = box.dataset.embedTitle || 'Map';
+    f.loading = 'lazy'; f.referrerPolicy = 'strict-origin-when-cross-origin'; f.allowFullscreen = true;
+    box.replaceChildren(f);
+  });
+}
+
+function showConsentBar() {
+  if ($('#cookie-bar')) return;
+  const bar = document.createElement('div');
+  bar.id = 'cookie-bar'; bar.className = 'cookie-bar'; bar.setAttribute('role', 'dialog');
+  bar.setAttribute('aria-label', 'Cookie choices'); bar.setAttribute('aria-live', 'polite');
+  bar.innerHTML = `<div class="wrap cookie-inner">
+    <p>We use cookies to keep your basket working. We would also like to show a Google map on our contact page, which sets cookies from Google &mdash; that part is up to you, and you can change it any time.
+    <a href="/privacy">Privacy policy</a></p>
+    <div class="cookie-btns">
+      <button class="btn btn-primary btn-sm" type="button" data-consent="yes">Accept the map</button>
+      <button class="btn btn-ghost btn-sm" type="button" data-consent="no">No thanks</button>
+    </div></div>`;
+  document.body.append(bar);
+  bar.querySelector('[data-consent=yes]').focus();
+}
+
+document.addEventListener('click', (e) => {
+  const choice = e.target.closest('[data-consent]');
+  if (choice) {
+    writeConsent(choice.dataset.consent);
+    $('#cookie-bar')?.remove();
+    if (choice.dataset.consent === 'yes') loadEmbeds();
+    else document.querySelectorAll('[data-embed]').forEach((b) => b.querySelector('iframe')?.remove());
+    document.dispatchEvent(new CustomEvent('otr:consent', { detail: choice.dataset.consent }));
+    return;
+  }
+  if (e.target.closest('.footer-cookies')) showConsentBar();
+});
+
+if (readConsent() === 'yes') loadEmbeds();
+else if (readConsent() === null) showConsentBar();
+
 document.addEventListener('click', (e) => { if (e.target.closest('[data-reload]')) location.reload(); });
