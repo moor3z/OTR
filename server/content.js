@@ -623,3 +623,12 @@ export const MORE_SCENTS = [
   "Juicy mandarin and cinnamon over leather and warm amber. Bold and long-lasting, a proper statement scent."
  ]
 ];
+
+// Contact page wording, replacing the launch placeholder. Business details are shown
+// automatically from Delivery & settings, so they are not repeated in the text.
+export const CONTACT_COPY = {
+  stillPlaceholder: 'TO COMPLETE BEFORE LAUNCH',
+  body: `Questions about an order, a scent, or anything else? Send us a message using the form below and we will come straight back to you.
+
+We are a small handmade business, so your message is read and answered by Michelle herself, usually within one working day (Monday to Friday). If you are asking about an order, pop the order number in and it saves us both an email.`,
+};

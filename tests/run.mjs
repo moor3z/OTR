@@ -69,6 +69,12 @@ ok('order is now paid', (await j(`/api/order-status?token=${token}`)).body.statu
 ok('stock deducted once', (await stock(V)) === before - 2);
 await Promise.all([webhook(paidEvent('evt_1', s)), webhook(paidEvent('evt_1', s)), webhook(paidEvent('evt_2', s)), webhook({ ...paidEvent('evt_3', s), type: 'checkout.session.async_payment_succeeded' })]);
 ok('repeated and parallel webhooks do not deduct stock again', (await stock(V)) === before - 2, `stock=${await stock(V)}`);
+// Contact form
+ok('contact form rejects a bad email', (await post('/api/contact', { name: 'Jo Smith', email: 'nope', message: 'Hello there, is this in stock?' })).status === 422);
+ok('contact form rejects a short message', (await post('/api/contact', { name: 'Jo Smith', email: 'jo@example.com', message: 'hi' })).status === 422);
+ok('contact form swallows the honeypot', (await post('/api/contact', { name: 'Bot', email: 'b@b.com', message: 'cheap watches for sale here', website: 'http://spam' })).status === 200);
+ok('contact form accepts a real message', (await post('/api/contact', { name: 'Jo Smith', email: 'jo@example.com', topic: 'Delivery', message: 'Do you post to the Isle of Man?' })).status === 200);
+
 const paid = (await j('/api/admin/orders?view=paid')).body.orders.filter((o) => o.ref);
 ok('exactly one paid order exists for the payment', paid.length === 1, `count=${paid.length}`);
 const full = await orderByRef(paid[0].id);

@@ -1,7 +1,7 @@
 // Database access (Cloudflare D1 / SQLite). The schema is created automatically
 // on first request, and sample content is seeded if the database is empty.
 import { SAMPLE_PRODUCTS, DEFAULT_SETTINGS, DEFAULT_PAGES } from './seed.js';
-import { FAQ_PAGE, BLOG_POSTS, ABOUT_COPY, POLICY_PAGES, SHOP_EMAIL, SCENT_PRODUCTS, MORE_SCENTS, DEFAULT_USAGE, DEFAULT_SAFETY } from './content.js';
+import { FAQ_PAGE, BLOG_POSTS, ABOUT_COPY, POLICY_PAGES, SHOP_EMAIL, SCENT_PRODUCTS, MORE_SCENTS, CONTACT_COPY, DEFAULT_USAGE, DEFAULT_SAFETY } from './content.js';
 
 const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)`,
@@ -69,7 +69,7 @@ async function init(db) {
 async function migrateContent(db) {
   const row = await db.prepare(`SELECT value FROM settings WHERE key='content_version'`).first();
   const have = Number(row?.value || 0);
-  if (have >= 9) return;
+  if (have >= 10) return;
   const now = new Date();
   const stmts = [];
   if (have < 2) { // FAQ page and starter blog posts
@@ -131,7 +131,11 @@ async function migrateContent(db) {
       stmts.push(db.prepare(`INSERT OR IGNORE INTO variants(id,product_id,label,price_pence,stock,sort) VALUES(?,?,'Default',150,20,0)`).bind(`${id}--1`, id));
     });
   }
-  stmts.push(db.prepare(`INSERT INTO settings(key,value) VALUES('content_version','9') ON CONFLICT(key) DO UPDATE SET value='9'`));
+  if (have < 10) { // contact page: proper wording now the page has a message form
+    stmts.push(db.prepare(`UPDATE pages SET body=?, needs_review=0, updated_at=? WHERE slug='contact' AND instr(body, ?) > 0`)
+      .bind(CONTACT_COPY.body, now.toISOString(), CONTACT_COPY.stillPlaceholder));
+  }
+  stmts.push(db.prepare(`INSERT INTO settings(key,value) VALUES('content_version','10') ON CONFLICT(key) DO UPDATE SET value='10'`));
   await db.batch(stmts);
 }
 

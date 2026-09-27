@@ -82,3 +82,18 @@ export async function sendOrderEmails(env, order, settings) {
   }
   return problems;
 }
+
+// Message from the contact form. Goes to the shop's own address, with reply-to set
+// to the customer so Michelle can just hit reply.
+export async function sendContactEmail(env, msg, settings) {
+  const to = settings.contact_email || settings.order_notify_email;
+  if (!to) throw new Error('No contact email address is set.');
+  const rows = [['From', `${msg.name} <${msg.email}>`], ['About', msg.topic], ...(msg.order ? [['Order number', msg.order]] : [])];
+  const html = `<div style="font-family:system-ui,sans-serif;font-size:15px;color:#2a2230">
+    <h2 style="font-family:Georgia,serif;color:#2e1437">Message from the website</h2>
+    <table style="border-collapse:collapse;margin-bottom:16px">${rows.map(([k, v]) => `<tr><td style="padding:4px 16px 4px 0;color:#675b6f">${escapeHtml(k)}</td><td style="padding:4px 0"><strong>${escapeHtml(v)}</strong></td></tr>`).join('')}</table>
+    <div style="white-space:pre-wrap;border-left:4px solid #ff89cd;padding:8px 0 8px 14px">${escapeHtml(msg.message)}</div>
+    <p style="color:#675b6f;font-size:13px;margin-top:20px">Reply to this email and it goes straight back to them.</p></div>`;
+  const text = `${rows.map(([k, v]) => `${k}: ${v}`).join('\n')}\n\n${msg.message}\n`;
+  return sendOne(env, { from: env.EMAIL_FROM, to: [to], reply_to: msg.email, subject: `Website enquiry: ${msg.topic}${msg.order ? ` (${msg.order})` : ''}`, html, text });
+}

@@ -1,4 +1,4 @@
-import { api, getConfig, esc, $ } from './site.js?v=31';
+import { api, esc, $ } from './site.js?v=32';
 
 // Tiny safe formatter for the editable pages: "## Heading", "- list item",
 // blank line = new paragraph. Everything is escaped first; no HTML is allowed in.
@@ -21,19 +21,11 @@ export function format(body) {
 }
 
 const root = $('#page-root');
-if (root) Promise.all([api(`/api/page/${root.dataset.slug}`), getConfig()]).then(([{ page }, cfg]) => {
+if (root) api(`/api/page/${root.dataset.slug}`).then(({ page }) => {
   document.title = `${page.title} | Over The Rainbow`;
-  let extra = '';
-  if (root.dataset.slug === 'contact') {
-    const rows = [];
-    if (cfg.contact_email) rows.push(`<p><strong>Email</strong><br><a href="mailto:${esc(cfg.contact_email)}">${esc(cfg.contact_email)}</a></p>`);
-    if (cfg.contact_phone) rows.push(`<p><strong>Phone</strong><br><a href="tel:${esc(cfg.contact_phone.replace(/\s/g, ''))}">${esc(cfg.contact_phone)}</a></p>`);
-    if (cfg.business_address) rows.push(`<p><strong>Address</strong><br>${esc(cfg.business_address).replace(/\n/g, '<br>')}</p>`);
-    extra = rows.length ? `<div class="intro" style="margin-top:1.5rem">${rows.join('')}</div>` : '';
-  }
   root.innerHTML = `<h1>${esc(page.title)}</h1>
     ${page.needs_review ? `<div class="notice notice-demo"><p><strong>Placeholder page.</strong> This content still needs completing before launch. Edit it in Admin → Pages.</p></div>` : ''}
-    ${format(page.body)}${extra}`;
+    ${format(page.body)}`;
 }).catch((e) => { root.innerHTML = `<h1>Page unavailable</h1><div class="notice notice-error" role="alert"><p>${esc(e.message)}</p></div>`; });
 
 // Contact page: the map is only fetched from Google when the visitor asks for it, so no
@@ -48,3 +40,43 @@ document.addEventListener('click', (e) => {
   f.loading = 'lazy'; f.referrerPolicy = 'no-referrer-when-downgrade';
   box.replaceChildren(f);
 });
+
+// Contact form: send it in the background so the person stays on the page.
+// Without JavaScript the form posts normally and still works.
+const cform = document.querySelector('#contact-form');
+if (cform) {
+  cform.querySelector('[name=started]').value = String(Date.now());
+  cform.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = cform.querySelector('button[type=submit]');
+    cform.querySelectorAll('.field-error').forEach((n) => n.remove());
+    cform.querySelectorAll('[aria-invalid]').forEach((n) => n.removeAttribute('aria-invalid'));
+    btn.classList.add('is-loading'); btn.disabled = true;
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(Object.fromEntries(new FormData(cform))),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (data.errors) {
+          for (const [field, msg] of Object.entries(data.errors)) {
+            const input = cform.querySelector(`[name=${field}]`);
+            if (!input) continue;
+            input.setAttribute('aria-invalid', 'true');
+            input.insertAdjacentHTML('afterend', `<p class="field-error">${esc(msg)}</p>`);
+          }
+          cform.querySelector('[aria-invalid]')?.focus();
+          throw new Error('');
+        }
+        throw new Error(data.error || 'Sorry, that did not send. Please email us instead.');
+      }
+      cform.closest('.contact-form-box').innerHTML = `<div class="form-done">
+        <div class="status-icon" aria-hidden="true">✓</div>
+        <h2>Thank you, we have got it</h2>
+        <p>We will reply to the email address you gave us, usually within one working day. Do check your spam folder if you do not hear from us.</p></div>`;
+    } catch (err) {
+      if (err.message) cform.insertAdjacentHTML('afterbegin', `<div class="notice notice-error" role="alert"><p>${esc(err.message)}</p></div>`);
+    } finally { btn.classList.remove('is-loading'); btn.disabled = false; }
+  });
+}

@@ -306,3 +306,27 @@ details.faq + details.faq { border-top: 0; } details.faq { border-bottom: 2px so
 .gmap-frame iframe { width: 100%; height: 100%; border: 0; display: block; }
 .gmap-frame p { margin: 0; max-width: 24rem; }
 .gmap-links { display: flex; flex-wrap: wrap; gap: .625rem; }
+
+/* Contact page */
+.contact-grid { display: grid; gap: 2rem; margin-top: 2rem; }
+.contact-grid > * { min-width: 0; }
+.contact-direct a, .business-details dd, .contact-form-box a { overflow-wrap: anywhere; }
+@media (min-width: 900px) { .contact-grid { grid-template-columns: 1.35fr 1fr; gap: 3rem; align-items: start; } }
+.contact-form-box { background: var(--blush); border-radius: var(--r-lg); padding: clamp(1.25rem, 4vw, 2rem); }
+.contact-form-box h2, .contact-side h2 { margin-bottom: .25rem; }
+.contact-form-box p.small { margin-bottom: 1.25rem; }
+.hp { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.contact-links { list-style: none; margin: 1rem 0 1.5rem; padding: 0; display: grid; gap: .625rem; }
+.contact-links a { display: block; padding: .875rem 1rem; border: 2px solid var(--line); border-radius: var(--r-md); text-decoration: none; color: var(--plum); }
+.contact-links a:hover { border-color: var(--plum); background: var(--blush); }
+.contact-links strong { display: block; }
+.contact-links span { display: block; font-size: .9375rem; color: var(--muted); }
+.contact-direct { background: var(--yellow); border-radius: var(--r-md); padding: 1rem 1.25rem; font-weight: 500; }
+.contact-direct a { color: var(--plum); }
+.form-done { text-align: center; padding: 2rem 1rem; }
+.form-done .status-icon { margin-bottom: 1rem; }
+.business-details { margin-top: 2.5rem; border-top: 1px solid var(--line); padding-top: 1.75rem; }
+.business-details dl { display: grid; gap: 1rem 2rem; margin: 1rem 0 0; }
+@media (min-width: 720px) { .business-details dl { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); } }
+.business-details dt { font-weight: 600; color: var(--muted); font-size: .9375rem; }
+.business-details dd { margin: .125rem 0 0; color: var(--plum); font-weight: 500; }
