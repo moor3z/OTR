@@ -1,9 +1,9 @@
-OTR - COMPLETE CURRENT PROJECT (version 37)
+OTR - COMPLETE CURRENT PROJECT (version 38)
 
-New in this one: two notices on every product page and on the FAQ page -
-"Handmade, so not perfect" and "About our fragrance names". Both are
-editable in Admin > Delivery & settings > Product notices.
-Everything from version 36 is included.
+Fixes v37: the two product notices were not showing on the FAQ page, because
+the page's own script rewrites that part of the page after it loads. They now
+sit in their own section underneath, like the Google block on the contact page.
+Everything from version 37 is included.
 
 WHAT TO DO
 Upload all of these to GitHub, replacing what is there:
@@ -13,6 +13,6 @@ Make sure public/seasonal.html is NOT in the repo.
 No Cloudflare settings, environment variables or database changes.
 
 CHECK AFTER DEPLOY
-  any product page - two new drop-down sections at the bottom
-  /faq             - both notices appear at the end
-  admin settings   - "Product notices" section, both editable
+  /faq             - both notices at the very bottom of the page
+  any product page - two drop-down sections under "Safety information"
+  admin settings   - "Product notices", both editable

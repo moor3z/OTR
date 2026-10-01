@@ -77,6 +77,12 @@ async def main():
         # desktop pass
         d = await b.new_context(viewport={'width': 1280, 'height': 900}); dp = await d.new_page()
         dp.on('pageerror', lambda e: errs.append(str(e)))
+        # Product notices must survive the client-side page render
+        await pg.goto(B + '/faq'); await pg.wait_for_timeout(1200)
+        body = await pg.locator('body').inner_text()
+        check('FAQ page keeps the handmade notice', 'Handmade, so not perfect' in body)
+        check('FAQ page keeps the fragrance notice', 'About our fragrance names' in body)
+
         # Cookie choices: the bar shows on every page, and the Google map waits for a yes
         await pg.goto(B + '/'); await pg.wait_for_timeout(1000)
         check('cookie bar appears on the home page', await pg.locator('#cookie-bar').count() == 1)
