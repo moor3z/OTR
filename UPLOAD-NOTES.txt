@@ -1,0 +1,18 @@
+OTR - COMPLETE CURRENT PROJECT (version 37)
+
+New in this one: two notices on every product page and on the FAQ page -
+"Handmade, so not perfect" and "About our fragrance names". Both are
+editable in Admin > Delivery & settings > Product notices.
+Everything from version 36 is included.
+
+WHAT TO DO
+Upload all of these to GitHub, replacing what is there:
+  public/   functions/   server/   tools/   tests/   README.md
+
+Make sure public/seasonal.html is NOT in the repo.
+No Cloudflare settings, environment variables or database changes.
+
+CHECK AFTER DEPLOY
+  any product page - two new drop-down sections at the bottom
+  /faq             - both notices appear at the end
+  admin settings   - "Product notices" section, both editable

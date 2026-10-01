@@ -17,7 +17,7 @@ export async function onRequestGet(ctx) {
     <div><h1>${esc(p.name)}</h1><p class="price">${price}</p><p>${esc(p.short_desc)}</p>
       ${p.variants.length > 1 ? `<p class="small muted">${esc(p.option_name || 'Options')}: ${p.variants.map((v) => `${esc(v.label)} ${gbp(v.price_pence)}${v.available ? '' : ' (sold out)'}`).join(', ')}</p>` : ''}
       <p class="small muted">${p.available ? esc(settings.dispatch_estimate || '') : 'Sold out'}</p>
-      <div style="margin-top:1.5rem">${info('About this scent', p.description, true)}${info('Weight and size', p.weight)}${info('How to use', p.usage)}${info('Safety information', p.safety)}</div>
+      <div style="margin-top:1.5rem">${info('About this scent', p.description, true)}${info('Weight and size', p.weight)}${info('How to use', p.usage)}${info('Safety information', p.safety)}${info('Handmade, so not perfect', settings.handmade_note)}${info('About our fragrance names', settings.fragrance_note)}</div>
     </div></div>`;
   return render('product.html', {
     title: p.name, description: p.short_desc || p.description, path: `/products/${encodeURIComponent(p.id)}`, type: 'product',
