@@ -103,6 +103,21 @@ export const DEFAULT_SETTINGS = {
   contact_phone: '',
   business_address: '',
   order_notify_email: '',
+  // Notices shown on every product page and on the FAQ page. Editable in
+  // Admin → Delivery & settings.
+  handmade_note:
+    'Every melt is poured, cut and packed by hand in small batches, so no two are identical. '
+    + 'Colours vary a little between batches, shapes are not machine-perfect, and you may find a '
+    + 'small amount of wax on the edge of the plastic casing or a slightly uneven surface. '
+    + 'That is normal for handmade wax and does not affect the scent or how it burns. If '
+    + 'something arrives damaged or is not what you ordered, contact us and we will put it right.',
+  fragrance_note:
+    'All our melts are made with original fragrance oils blended for us. Where a designer brand '
+    + 'or product name is mentioned anywhere on this site, it is used only to describe the style '
+    + 'and character of a fragrance, so you know roughly what to expect. It does not mean the '
+    + 'scents are the same, equivalent or connected in any way. Over The Rainbow is not '
+    + 'affiliated with, endorsed by or associated with any of the brands named. All trademarks '
+    + 'and brand names remain the property of their owners.',
 };
 
 const TODO = (what) => `[TO COMPLETE BEFORE LAUNCH: ${what}]`;

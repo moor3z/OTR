@@ -1,4 +1,4 @@
-import { api, getConfig, productCard, wireAddButtons, addToBasket, gbp, esc, $ } from './site.js?v=36';
+import { api, getConfig, productCard, wireAddButtons, addToBasket, gbp, esc, $ } from './site.js?v=37';
 
 const id = decodeURIComponent(location.pathname.split('/')[2] || '') || new URLSearchParams(location.search).get('id') || '';
 const root = $('#product-root');
@@ -31,7 +31,7 @@ function render(p, cfg) {
       <p class="small muted" id="stock-note"></p>
       <p class="small muted">${esc(cfg.dispatch_estimate || '')}</p>
       <div style="margin-top:1.5rem">
-        ${info('About this scent', p.description, true)}${info('Weight and size', p.weight)}${info('How to use', p.usage)}${info('Safety information', p.safety)}
+        ${info('About this scent', p.description, true)}${info('Weight and size', p.weight)}${info('How to use', p.usage)}${info('Safety information', p.safety)}${info('Handmade, so not perfect', cfg.handmade_note)}${info('About our fragrance names', cfg.fragrance_note)}
       </div>
     </div></div>`;
 
