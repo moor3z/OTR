@@ -1,18 +1,45 @@
-OTR - COMPLETE CURRENT PROJECT (version 38)
+OTR - COMPLETE CURRENT PROJECT (version 39)
 
-Fixes v37: the two product notices were not showing on the FAQ page, because
-the page's own script rewrites that part of the page after it loads. They now
-sit in their own section underneath, like the Google block on the contact page.
-Everything from version 37 is included.
+New in v39: the CLP label maker is now part of the shop admin, at
+Admin -> CLP labels. It lays out the safety labels that legally have to go on
+each melt and prints them a sheet at a time. All 59 fragrances are already in
+it, taken from FizzyWhiz's own CLP sheets for each oil at 10% in a
+non-hazardous base. Everything from version 38 is included.
+
+It sits behind the same Cloudflare Access sign-in as the rest of the admin
+area, and saves to the shop's own database, so Michelle sees the same list on
+her phone and on the computer.
 
 WHAT TO DO
 Upload all of these to GitHub, replacing what is there:
   public/   functions/   server/   tools/   tests/   README.md
 
 Make sure public/seasonal.html is NOT in the repo.
-No Cloudflare settings, environment variables or database changes.
+No Cloudflare settings or environment variables to change.
+No database work either - the two new tables create themselves and fill
+themselves on the first page load after deploy.
 
 CHECK AFTER DEPLOY
-  /faq             - both notices at the very bottom of the page
-  any product page - two drop-down sections under "Safety information"
-  admin settings   - "Product notices", both editable
+  /admin                   - "CLP labels" at the end of the tab row
+  /admin/labels.html       - 59 fragrances listed, "59 fragrances loaded"
+                             bottom right
+  pick any fragrance       - change the net quantity, reload the page, the
+                             change is still there
+  Print sheet tab          - put a number against a fragrance, labels appear
+
+STILL TO DO, AND IT MATTERS
+  A telephone number. GB CLP requires one on the label and an email address
+  does not count, so as things stand every one of the 59 labels is
+  non-compliant. Put Michelle's mobile in under Business details and the red
+  warning clears on all of them.
+
+  Confirm the melts really are poured at 10% in a non-hazardous base. The
+  wording is specific to that percentage - if it is different, every label
+  needs redoing from the right sheets.
+
+  Trick Or Treat (oil 333) is not in the list. FizzyWhiz have not published a
+  wax melt label for it; ask them for one.
+
+  Five fragrances are still loaded under trademarked oil names (Black Opium,
+  Savage, Angels, Lenora Blue, Detol) and will print that way. Rename them on
+  the CLP labels page to whatever the shop calls them.

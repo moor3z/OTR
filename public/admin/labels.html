@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CLP label maker | Over The Rainbow shop admin</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/favicon.ico">
+<style>
+@font-face{font-family:'Bricolage Grotesque';src:url('/assets/fonts/bricolage-grotesque-latin-wght-normal.woff2') format('woff2');font-weight:200 800;font-display:swap}
+@font-face{font-family:'DM Sans';src:url('/assets/fonts/dm-sans-latin-wght-normal.woff2') format('woff2');font-weight:100 1000;font-display:swap}
+</style>
+<style>
+/* Layout: a branded workbench on the left, a true-size paper label on the right.
+   The chrome follows the Over The Rainbow palette; the label itself is always
+   black ink on white paper, because that is what comes out of the printer. */
+:root{
+  --plum:#2e1437; --plum-2:#4a2559;
+  --pink:#ff89cd; --pink-ink:#a5165f;
+  --blush:#fff4fa;
+  --bg:#fcf8fb; --surface:#ffffff; --sunk:#f7f0f8;
+  --ink:#241a29; --muted:#6d5e75; --line:#ead9ef; --line-2:#d6c2de;
+  --hazard:#e2001a;
+  --ok:#0f6336; --ok-bg:#e4f5ea; --ok-line:#a9ddbd;
+  --warn:#7d5200; --warn-bg:#fff3d4; --warn-line:#ecca7c;
+  --stop:#9c111c; --stop-bg:#fdeae9; --stop-line:#f0b4b0;
+  /* Printed artefact — identical in both themes on purpose. */
+  --paper:#ffffff; --paper-ink:#121212;
+  --display:'Bricolage Grotesque','Trebuchet MS',system-ui,sans-serif;
+  --ui:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --r:14px; --r-s:9px;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --plum:#f0e2f5; --plum-2:#cbb0d6;
+  --pink:#ff9ed6; --pink-ink:#ffa9da;
+  --blush:#2b1832;
+  --bg:#160c1a; --surface:#221429; --sunk:#1c1021;
+  --ink:#f3e9f6; --muted:#b1a0b9; --line:#3b2743; --line-2:#523659;
+  --hazard:#ff5d60;
+  --ok:#7ddba2; --ok-bg:#12301f; --ok-line:#2c5c3e;
+  --warn:#f3c969; --warn-bg:#33260a; --warn-line:#6b5118;
+  --stop:#ff9c96; --stop-bg:#38161a; --stop-line:#6e2a2c;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --plum:#f0e2f5; --plum-2:#cbb0d6;
+  --pink:#ff9ed6; --pink-ink:#ffa9da;
+  --blush:#2b1832;
+  --bg:#160c1a; --surface:#221429; --sunk:#1c1021;
+  --ink:#f3e9f6; --muted:#b1a0b9; --line:#3b2743; --line-2:#523659;
+  --hazard:#ff5d60;
+  --ok:#7ddba2; --ok-bg:#12301f; --ok-line:#2c5c3e;
+  --warn:#f3c969; --warn-bg:#33260a; --warn-line:#6b5118;
+  --stop:#ff9c96; --stop-bg:#38161a; --stop-line:#6e2a2c;
+  color-scheme:dark;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.5 var(--ui);-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--display);color:var(--plum);line-height:1.1;margin:0;font-weight:700;letter-spacing:-.015em;text-wrap:balance}
+p{margin:0}
+a{color:var(--pink-ink)}
+:focus-visible{outline:3px solid var(--pink-ink);outline-offset:2px;border-radius:5px}
+.wrap{width:min(100% - 32px,1240px);margin-inline:auto}
+
+/* ---------- header + tabs ---------- */
+.top{background:var(--plum);color:#fff;padding-block:22px 18px}
+:root[data-theme="dark"] .top,
+:root:not([data-theme="light"]) .top{background:#2e1437}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .top{background:var(--plum)}}
+.top h1{color:#fff;font-size:clamp(1.5rem,4vw,2.1rem)}
+.eyebrow{display:flex;align-items:center;gap:9px;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:#f0b9dd;font-weight:600;margin-bottom:8px}
+.eyebrow::before{content:"";width:26px;height:3px;border-radius:2px;background:var(--pink)}
+.top p.lede{color:#e5d2ec;max-width:62ch;margin-top:8px;font-size:.95rem}
+nav.tabs{background:var(--plum);position:sticky;top:env(safe-area-inset-top,0px);z-index:20;border-bottom:1px solid rgba(255,255,255,.14)}
+:root[data-theme="dark"] nav.tabs,:root:not([data-theme="light"]) nav.tabs{background:#2e1437}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) nav.tabs{background:var(--plum)}}
+.tabrow{display:flex;gap:3px;overflow-x:auto;scrollbar-width:none}
+.tabrow::-webkit-scrollbar{display:none}
+.tabrow button{flex:none;appearance:none;background:none;border:0;border-bottom:3px solid transparent;color:#dcc6e5;font:600 .92rem var(--ui);padding:13px 15px;cursor:pointer;white-space:nowrap}
+.tabrow button:hover{color:#fff}
+.tabrow button[aria-selected="true"]{color:#fff;border-bottom-color:var(--pink)}
+
+main{padding-block:22px 56px}
+.panel[hidden]{display:none}
+
+/* ---------- workbench ---------- */
+.bench{display:grid;gap:20px}
+@media (min-width:1000px){.bench{grid-template-columns:minmax(0,1fr) 404px;align-items:start}}
+.bench>*{min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.card+.card{margin-top:16px}
+.card>h2{font-size:1.06rem;margin-bottom:3px}
+.card>h2+.sub{color:var(--muted);font-size:.86rem;margin-bottom:13px}
+
+/* scent list */
+.scentbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.scentbar input[type=search]{flex:1 1 170px;min-width:0}
+.scents{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;max-height:258px;overflow-y:auto}
+.scents li{display:flex;align-items:center;gap:8px}
+.scents button.pick{flex:1;min-width:0;text-align:left;appearance:none;background:var(--sunk);border:1px solid transparent;border-radius:var(--r-s);padding:9px 11px;font:500 .93rem var(--ui);color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:9px}
+.scents button.pick:hover{border-color:var(--line-2)}
+.scents button.pick[aria-current="true"]{background:var(--blush);border-color:var(--pink);color:var(--pink-ink);font-weight:600}
+.scents .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dot{flex:none;width:9px;height:9px;border-radius:50%;background:var(--ok)}
+.dot.bad{background:var(--hazard)}
+.dot.part{background:#e8a200}
+.empty-list{color:var(--muted);font-size:.9rem;padding:16px;text-align:center;background:var(--sunk);border-radius:var(--r-s)}
+
+/* forms */
+label.f{display:block;font-weight:600;color:var(--plum);font-size:.86rem;margin-bottom:4px}
+label.f .opt{font-weight:400;color:var(--muted)}
+input[type=text],input[type=search],input[type=tel],input[type=email],input[type=number],select,textarea{
+  width:100%;font:400 .95rem var(--ui);color:var(--ink);background:var(--surface);
+  border:1.5px solid var(--line-2);border-radius:var(--r-s);padding:9px 11px;min-height:42px}
+textarea{min-height:76px;resize:vertical;line-height:1.45}
+input:focus-visible,select:focus-visible,textarea:focus-visible{border-color:var(--pink-ink)}
+.field{margin-bottom:14px}
+.grid2{display:grid;gap:0 14px}
+@media (min-width:600px){.grid2{grid-template-columns:1fr 1fr}}
+.hintline{font-size:.82rem;color:var(--muted);margin-top:5px}
+.btn{appearance:none;border:1.5px solid transparent;border-radius:999px;font:600 .9rem var(--ui);padding:9px 17px;min-height:42px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.btn-pri{background:var(--pink);color:#2e1437}
+.btn-pri:hover{background:#ff6fc1}
+.btn-ghost{background:transparent;border-color:var(--line-2);color:var(--ink)}
+.btn-ghost:hover{border-color:var(--plum-2)}
+.btn-danger{background:transparent;border-color:var(--stop-line);color:var(--stop)}
+.btn-danger:hover{background:var(--stop-bg)}
+.btn-sm{min-height:36px;padding:5px 13px;font-size:.84rem}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.icon-x{appearance:none;border:0;background:none;color:var(--muted);cursor:pointer;font-size:1.1rem;line-height:1;padding:7px;border-radius:7px}
+.icon-x:hover{color:var(--stop);background:var(--stop-bg)}
+
+/* phrase pickers */
+.phrases{border:1px solid var(--line);border-radius:var(--r-s);max-height:186px;overflow-y:auto;padding:5px;background:var(--sunk)}
+.phrases label{display:flex;gap:9px;align-items:flex-start;padding:6px 8px;border-radius:7px;cursor:pointer;font-size:.86rem;line-height:1.35}
+.phrases label:hover{background:var(--surface)}
+.phrases input{margin:2px 0 0;flex:none;width:17px;height:17px;accent-color:var(--pink-ink)}
+.phrases code{font:600 .8rem var(--ui);color:var(--pink-ink);flex:none;font-variant-numeric:tabular-nums}
+.pictos{display:flex;gap:8px;flex-wrap:wrap}
+.pictos label{display:flex;flex-direction:column;align-items:center;gap:5px;width:84px;padding:9px 4px;border:1.5px solid var(--line);border-radius:var(--r-s);cursor:pointer;text-align:center;background:var(--sunk)}
+.pictos label:hover{border-color:var(--line-2)}
+.pictos label:has(input:checked){border-color:var(--pink);background:var(--blush)}
+.pictos input{position:absolute;opacity:0;pointer-events:none}
+.pictos svg{width:42px;height:42px}
+.pictos .cap{font-size:.7rem;font-weight:600;color:var(--muted);line-height:1.2}
+.pictos label:has(input:checked) .cap{color:var(--pink-ink)}
+.seg{display:inline-flex;border:1.5px solid var(--line-2);border-radius:999px;overflow:hidden}
+.seg label{position:relative}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg span{display:block;padding:8px 15px;font:600 .87rem var(--ui);cursor:pointer;color:var(--muted);min-height:40px;display:flex;align-items:center}
+.seg label:has(input:checked) span{background:var(--plum);color:#fff}
+:root[data-theme="dark"] .seg label:has(input:checked) span,
+:root:not([data-theme="light"]) .seg label:has(input:checked) span{background:var(--pink);color:#2e1437}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .seg label:has(input:checked) span{background:var(--plum);color:#fff}}
+
+/* ---------- preview column ---------- */
+.sticky{position:sticky;top:calc(env(safe-area-inset-top,0px) + 62px)}
+@media (max-width:999px){.sticky{position:static}}
+.stage{background:repeating-linear-gradient(45deg,var(--sunk) 0 9px,transparent 9px 18px);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;justify-content:center;overflow-x:auto}
+.ctrlrow{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:13px}
+.ctrlrow .field{margin:0;flex:1 1 120px;min-width:0}
+.swatch{display:flex;align-items:center;gap:8px;font-size:.87rem;font-weight:600;color:var(--plum);cursor:pointer}
+.swatch input{width:17px;height:17px;accent-color:var(--pink-ink)}
+
+/* ---------- the label itself ---------- */
+.lbl{
+  width:var(--w);height:var(--h);background:var(--paper);color:var(--paper-ink);
+  font-family:'DM Sans',Arial,sans-serif;
+  font-size:var(--fs);line-height:1.22;
+  padding:2.2mm 2.1mm;display:flex;flex-direction:column;gap:.8mm;
+  overflow:hidden;position:relative;flex:none;text-align:center;
+  box-shadow:0 2px 10px rgba(46,20,55,.22)
+}
+.lbl *{min-width:0}
+.lbl .l-name{font-weight:700;font-size:1.3em;line-height:1.06;letter-spacing:.005em;text-transform:uppercase;font-stretch:90%}
+.lbl .l-name.red{color:var(--hazard)}
+.lbl .l-contains{font-size:.88em;line-height:1.15;margin-top:-.3mm}
+.lbl .l-signal{font-weight:700;font-size:1.12em;text-transform:uppercase;letter-spacing:.07em;line-height:1.1}
+.lbl .l-body b{font-weight:700}
+.lbl .l-foot{margin-top:auto;display:flex;align-items:center;justify-content:center;gap:1.6mm;flex:none}
+.lbl .l-foot .sup{font-weight:600;line-height:1.24;flex:1}
+.lbl .l-foot .sup .addr{font-weight:400}
+.lbl .l-pics{display:flex;gap:1.2mm;justify-content:center;flex:none}
+.lbl .l-pics svg{width:var(--pic);height:var(--pic);flex:none;display:block}
+.lbl .l-qty{font-weight:600;border-top:.22mm solid var(--paper-ink);padding-top:.7mm;flex:none;line-height:1.2}
+.demoflag{background:var(--hazard);color:#fff;font:700 .72rem/1 var(--ui);letter-spacing:.07em;text-align:center;padding:7px 8px;border-radius:var(--r-s) var(--r-s) 0 0;margin-bottom:-1px}
+.overflowing{outline:2px solid var(--hazard);outline-offset:3px}
+
+/* ---------- checks ---------- */
+.checks{list-style:none;margin:13px 0 0;padding:0;display:flex;flex-direction:column;gap:5px}
+.checks li{display:flex;gap:9px;align-items:flex-start;font-size:.85rem;line-height:1.4;padding:7px 10px;border-radius:var(--r-s);border:1px solid transparent}
+.checks li .mk{flex:none;font-weight:700;width:15px;text-align:center}
+.checks li.ok{color:var(--ok);background:var(--ok-bg);border-color:var(--ok-line)}
+.checks li.warn{color:var(--warn);background:var(--warn-bg);border-color:var(--warn-line)}
+.checks li.bad{color:var(--stop);background:var(--stop-bg);border-color:var(--stop-line)}
+
+.note{border-left:4px solid var(--pink);background:var(--blush);border-radius:0 var(--r-s) var(--r-s) 0;padding:12px 15px;font-size:.89rem;line-height:1.5}
+.note.alert{border-left-color:var(--hazard);background:var(--stop-bg);color:var(--stop)}
+.note strong{color:inherit}
+
+/* ---------- sheet ---------- */
+.sheetctrls{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
+.sheetctrls .field{margin:0;flex:1 1 140px}
+.qtytable{width:100%;border-collapse:collapse;font-size:.9rem;margin-top:12px}
+.qtytable th,.qtytable td{text-align:left;padding:8px 9px;border-bottom:1px solid var(--line)}
+.qtytable th{font-size:.76rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.qtytable td.n{width:104px}
+.qtytable input{min-height:36px;padding:5px 9px;text-align:center;font-variant-numeric:tabular-nums}
+.sheetwrap{margin-top:16px;overflow-x:auto}
+#sheet-out{display:none;background:#fff;padding:7mm;width:210mm;margin:0 auto}
+body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20,55,.2)}
+.sheetgrid{display:grid;gap:var(--gap);justify-content:start}
+.sheetgrid .lbl{box-shadow:none;outline:.2mm dashed #bbb;outline-offset:0}
+
+/* ---------- guide ---------- */
+.prose{max-width:68ch}
+.prose h3{font-size:1rem;margin:22px 0 6px}
+.prose p,.prose li{font-size:.93rem;line-height:1.6;color:var(--ink)}
+.prose p{margin-bottom:10px}
+.prose ul,.prose ol{padding-left:19px;margin:0 0 12px}
+.prose li{margin-bottom:5px}
+.steps{list-style:none;padding:0;counter-reset:s;max-width:68ch}
+.steps li{counter-increment:s;display:flex;gap:13px;padding:11px 0;border-top:1px solid var(--line)}
+.steps li::before{content:counter(s);flex:none;width:27px;height:27px;border-radius:50%;background:var(--blush);color:var(--pink-ink);font-weight:700;font-size:.84rem;display:grid;place-items:center}
+.steps li:first-child{border-top:0}
+.io{width:100%;font:400 .78rem/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;min-height:124px}
+
+@media print{
+  body>header,body>nav,body>main{display:none!important}
+  #sheet-out{display:block!important;box-shadow:none!important;padding:0!important;width:auto!important;background:#fff!important}
+  .sheetgrid .lbl{outline:none}
+  .lbl{box-shadow:none;break-inside:avoid}
+  @page{size:A4;margin:7mm}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* Link back to the rest of the admin area. */
+.backbar{margin:0;padding:9px 20px;background:var(--plum);color:#fff;font:600 .85rem/1.3 var(--ui)}
+.backbar a{color:#ffd6ef;text-decoration:none}
+.backbar a:hover,.backbar a:focus-visible{color:#fff;text-decoration:underline}
+
+/* Saving happens in the background, so say plainly whether it worked. */
+#saveState{position:fixed;right:14px;bottom:14px;z-index:40;max-width:min(26rem,calc(100vw - 28px));
+  padding:9px 14px;border-radius:999px;border:1px solid var(--line-2);background:var(--surface);
+  color:var(--muted);font:600 .84rem/1.35 var(--ui);box-shadow:0 6px 18px rgba(46,20,55,.14);
+  opacity:0;transform:translateY(6px);transition:opacity .2s,transform .2s;pointer-events:none}
+#saveState:not(:empty){opacity:1;transform:none}
+#saveState[data-kind=ok]{color:var(--ok);background:var(--ok-bg);border-color:var(--ok-line)}
+#saveState[data-kind=bad]{color:var(--stop);background:var(--stop-bg);border-color:var(--stop-line);
+  border-radius:12px;font-weight:700;pointer-events:auto}
+@media print{.backbar,#saveState{display:none!important}}
+</style>
+</head>
+<body>
+<p class="backbar"><a href="/admin/#help">&larr; Back to shop admin</a></p>
+<header class="top">
+  <div class="wrap">
+    <div class="eyebrow">Over The Rainbow Wax Melts</div>
+    <h1>CLP label maker</h1>
+    <p class="lede">Put in the CLP wording your fragrance oil supplier gives you, and this lays it out as a label that meets the GB rules, with your business details already on it.</p>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Sections">
+  <div class="wrap"><div class="tabrow" role="tablist">
+    <button role="tab" id="t-labels" aria-controls="p-labels" aria-selected="true" data-tab="labels">Fragrances</button>
+    <button role="tab" id="t-sheet" aria-controls="p-sheet" aria-selected="false" data-tab="sheet">Print sheet</button>
+    <button role="tab" id="t-biz" aria-controls="p-biz" aria-selected="false" data-tab="biz">Business details</button>
+    <button role="tab" id="t-guide" aria-controls="p-guide" aria-selected="false" data-tab="guide">How to fill this in</button>
+  </div></div>
+</nav>
+
+<main>
+  <div class="wrap">
+
+    <!-- ============ FRAGRANCES ============ -->
+    <section class="panel" id="p-labels" role="tabpanel" aria-labelledby="t-labels">
+      <div class="bench">
+        <div>
+          <div class="card">
+            <h2>Your fragrances</h2>
+            <p class="sub">One entry per fragrance oil. The green dot means every required part of the label is filled in.</p>
+            <div class="scentbar">
+              <input type="search" id="scentSearch" placeholder="Search fragrances" aria-label="Search fragrances">
+              <button class="btn btn-pri" id="addScent" type="button">+ Add fragrance</button>
+            </div>
+            <ul class="scents" id="scentList"></ul>
+          </div>
+
+          <div class="card" id="editorCard">
+            <h2 id="editorTitle">Fragrance details</h2>
+            <p class="sub" id="editorSub">Copy each part from your supplier's CLP data sheet for this oil, at the percentage you actually use.</p>
+            <div id="editorBody"></div>
+          </div>
+        </div>
+
+        <aside>
+          <div class="sticky">
+            <div class="card">
+              <h2>Label preview</h2>
+              <p class="sub" id="previewSub">Shown at roughly life size.</p>
+              <div class="ctrlrow">
+                <div class="field">
+                  <label class="f" for="sizePreset">Label size</label>
+                  <select id="sizePreset"></select>
+                </div>
+                <div class="field" style="flex:0 0 72px">
+                  <label class="f" for="fsize">Text</label>
+                  <select id="fsize">
+                    <option value="6">6 pt</option>
+                    <option value="6.5">6.5 pt</option>
+                    <option value="7" selected>7 pt</option>
+                    <option value="7.5">7.5 pt</option>
+                    <option value="8">8 pt</option>
+                    <option value="9">9 pt</option>
+                  </select>
+                </div>
+              </div>
+              <div class="ctrlrow" style="margin-top:-4px">
+                <label class="swatch"><input type="checkbox" id="redName"> Fragrance name in red</label>
+              </div>
+              <div class="stage" id="stage"></div>
+              <p class="hintline" id="fitCount" style="margin-top:10px"></p>
+              <ul class="checks" id="checks"></ul>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ============ SHEET ============ -->
+    <section class="panel" id="p-sheet" role="tabpanel" aria-labelledby="t-sheet" hidden>
+      <div class="card">
+        <h2>Print sheet</h2>
+        <p class="sub">Set how many of each you need, then print this page from your browser onto A4.</p>
+        <div class="note"><strong>To print:</strong> open this page on its own (the link Claude gave you), then press <strong>Ctrl&nbsp;+&nbsp;P</strong> on Windows or <strong>⌘&nbsp;+&nbsp;P</strong> on a Mac. In the print box set <strong>Scale to 100%</strong> and turn <strong>off</strong> "fit to page", or the labels come out the wrong size. Turn off headers and footers too.</p>
+        <div class="sheetctrls" style="margin-top:14px">
+          <div class="field">
+            <label class="f" for="sheetSize">Label size</label>
+            <select id="sheetSize"></select>
+          </div>
+          <div class="field" style="flex:0 0 118px">
+            <label class="f" for="sheetGap">Gap between</label>
+            <select id="sheetGap">
+              <option value="0">None</option>
+              <option value="2" selected>2 mm</option>
+              <option value="4">4 mm</option>
+            </select>
+          </div>
+          <button class="btn btn-ghost" id="clearQty" type="button">Clear all</button>
+        </div>
+        <div id="sheetFit" class="hintline" style="margin-top:10px"></div>
+        <table class="qtytable"><thead><tr><th>Fragrance</th><th class="n">How many</th></tr></thead><tbody id="qtyBody"></tbody></table>
+      </div>
+      <div class="sheetwrap"></div>
+    </section>
+
+    <!-- ============ BUSINESS ============ -->
+    <section class="panel" id="p-biz" role="tabpanel" aria-labelledby="t-biz" hidden>
+      <div class="card" style="max-width:720px">
+        <h2>Business details</h2>
+        <p class="sub">These go on every label. GB CLP requires the supplier's name, address <em>and</em> a telephone number.</p>
+        <div id="bizBody"></div>
+      </div>
+    </section>
+
+    <!-- ============ GUIDE ============ -->
+    <section class="panel" id="p-guide" role="tabpanel" aria-labelledby="t-guide" hidden>
+      <div class="card">
+        <h2>Where the wording comes from</h2>
+        <div class="prose">
+          <div class="note"><strong>Your 59 fragrances are already loaded.</strong> Each one was taken from FizzyWhiz's own <em>"10% Non Hazardous Base Wax Melt CLP Label"</em> for that oil — their document for melts poured at 10% in a non-hazardous base. Nothing was written by hand. If Michelle pours at a different strength, or in a different wax, these are the wrong documents and they all need redoing from the matching sheets.</div>
+          <p>Every fragrance oil supplier publishes a <strong>CLP data sheet</strong> (sometimes called a CLP calculation or allergen sheet) for each oil. It tells you the exact hazard wording for that oil <em>at the percentage you use it</em> — 6% in wax gives different wording from 10%.</p>
+          <p>That sheet is the only valid source. Wording from another maker's label, from another oil, or from a different percentage is not transferable, and the labels are legally your responsibility as the supplier.</p>
+          <ol class="steps">
+            <li><div><strong>Download the CLP sheet for the oil</strong><br>From the supplier you bought it from, at the percentage you pour at.</div></li>
+            <li><div><strong>Add the fragrance here</strong><br>Copy across the signal word, pictograms, hazard statements, precautionary statements and the "Contains…" allergen line.</div></li>
+            <li><div><strong>Check the list on the right</strong><br>It flags anything missing before you print.</div></li>
+            <li><div><strong>Print the sheet onto A4 labels</strong><br>At 100% scale, with "fit to page" turned off.</div></li>
+          </ol>
+
+          <h3>What a GB CLP label has to carry</h3>
+          <ul>
+            <li>Your business name, full address <strong>and telephone number</strong> — an email address on its own is not enough</li>
+            <li>The product identifier (the fragrance name)</li>
+            <li>The signal word, <strong>Warning</strong> or <strong>Danger</strong>, where one applies</li>
+            <li>Hazard pictograms, where the classification calls for any</li>
+            <li>Hazard statements (the H phrases, written out in words)</li>
+            <li>Precautionary statements (the P phrases)</li>
+            <li>Allergens, as "Contains … May produce an allergic reaction."</li>
+            <li>The net quantity, if it isn't shown elsewhere on the pack</li>
+          </ul>
+          <p>A batch number isn't required by CLP, but it is worth adding — if a pour ever goes wrong it tells you which one.</p>
+
+          <h3>Size</h3>
+          <p>For packs up to 3 litres the label must be at least <strong>52 × 74 mm</strong>, with each pictogram at least <strong>16 × 16 mm</strong>. The text has to be easy to read — keep it at 7 pt or above. Smaller labels are only acceptable on very small packs where the full information appears on the outer packaging.</p>
+          <p>The minimum is not big enough for your range. Of your 59 fragrances, 38 fit 52 × 74 mm; the other 21 are the ones that can cause an allergic skin reaction, and they carry a signal word, a pictogram, the sensitiser name and six or seven precautionary statements. <strong>76 × 95 mm fits all 59</strong>, and 70 × 90 mm fits all but Clean Cotton. The line under the preview counts it for whatever size you pick, so you can check before buying a box of labels.</p>
+          <p>The label has to be visible when the customer is buying, so on a sealed bag it goes on the outside, not tucked in with the melts.</p>
+
+          <h3>Pictograms</h3>
+          <p>These are the official United Nations GHS symbols, not redrawn copies, so they are the right shape and the right red. Each one prints at 16 × 16 mm, which is the minimum for a label of this size.</p>
+          <p><strong>Most of your melts need no pictogram, and that is correct.</strong> The pictogram and the signal word both follow from the hazard statements, and not every hazard statement calls for one. "Harmful to aquatic life with long lasting effects" carries neither; nor does an allergen declaration on its own. Of your 59, twenty-one carry the exclamation mark with <em>Warning</em>, seven carry the environment symbol, and the remaining thirty-six are correctly bare.</p>
+          <p>Adding a symbol a fragrance doesn't need is over-labelling. It is not a safe default — it makes the symbols that do matter easier to ignore, and enforcement treats an inaccurate label as a non-compliant one. The checklist under the preview compares what you have ticked against the hazard statements, so it tells you when a symbol is missing <em>and</em> when one is spare. The "Set from the hazard statements" button in the editor fills them in for you.</p>
+
+          <h3>Not sure?</h3>
+          <p>The HSE publishes the GB CLP guidance, and most fragrance suppliers will answer questions about their own sheets. If a sheet says something this page has no box for, put it in the "Anything else" field and it prints at the bottom.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Back up or move your fragrance list</h2>
+        <p class="sub">Copy this text somewhere safe, or paste someone else's in to load it.</p>
+        <textarea class="io" id="ioBox" spellcheck="false" aria-label="Fragrance data"></textarea>
+        <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:10px">
+          <button class="btn btn-ghost btn-sm" id="ioCopy" type="button">Copy</button>
+          <button class="btn btn-ghost btn-sm" id="ioLoad" type="button">Load what's in the box</button>
+          <span class="hintline" id="ioMsg" style="align-self:center"></span>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<div id="saveState" role="status" aria-live="polite"></div>
+
+<div id="sheet-out"><div class="sheetgrid" id="sheetGrid"></div></div>
+
+<script type="module" src="/assets/js/clp.js?v=39"></script>
+</body>
+</html>

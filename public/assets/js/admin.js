@@ -358,6 +358,7 @@ function showHelp() {
       <li><a href="#h-blog">write a blog post</a></li>
       <li><a href="#h-signin">sign in without problems</a></li>
       <li><a href="#h-wrong">fix something that looks wrong</a></li>
+      <li><a href="/admin/labels.html">print the CLP safety labels for my melts</a></li>
     </ul>
   </div>
 
@@ -389,6 +390,13 @@ function showHelp() {
   ${step('Write a blog post', ['' + tab('blog') + ' → <strong>Add post</strong>.', 'Title, a one-line summary, a photo, and the post itself (same formatting as pages).', 'Untick <strong>Published</strong> to keep it as a draft and come back later. Tick it when it is ready.'], 'h-blog')}
   </div>
 
+  <div class="panel-card"><h2>CLP safety labels</h2>
+  <p class="muted">Every melt you sell has to carry a CLP label. It is a legal requirement, not a nicety. The <a href="/admin/labels.html"><strong>CLP labels</strong></a> page (top right) has all 59 of your fragrances already in it, taken from FizzyWhiz's own sheets, and prints them a sheet at a time.</p>
+  ${step('Printing a batch of labels', ['Open <strong>CLP labels</strong> → <strong>Print sheet</strong>.', 'Put in how many you need of each fragrance, then click Print.', 'Use the 76 × 95 mm size unless you have a reason not to — it is the only one every fragrance fits.'], 'h-clp')}
+  ${step('A fragrance has no warning symbol on it', ['That is correct for most of them. The symbol and the word “Warning” are only required for certain hazards, and 36 of your 59 do not have one.', 'Adding a symbol that is not required is itself a labelling fault, so do not tick one to be safe.', 'The checklist beside the label tells you if anything really is missing.'])}
+  ${step('A new fragrance oil, or a supplier sends a new sheet', ['Click <strong>Add a fragrance</strong> and copy the wording from the supplier’s CLP sheet for that oil, word for word.', 'It must be the sheet for the percentage you actually pour (10% in a non-hazardous base). The wording changes with the percentage.', 'Never copy the wording from a different fragrance or off someone else’s label. Use <strong>Set from the hazard statements</strong> for the symbol and signal word.'])}
+  </div>
+
   <div class="panel-card"><h2>Signing in</h2>
   ${step('The easy way (do this once on your phone)', ['Open <strong>Chrome</strong> (not a link from a message or an app) and go to <strong>www.overtherainbowwaxmelts.co.uk/admin</strong>.', 'Tap the ⋮ menu → <strong>Add to Home screen</strong>. Use that icon from now on.', 'When asked to sign in, type your email and you will be sent a code. Type the code in. You stay signed in for 24 hours on that device.'], 'h-signin')}
   ${step('Getting a Google “401” or “error” page when signing in', ['This happens when the link was opened inside another app (Messages, WhatsApp, Facebook, Gmail). Google refuses to sign in from there.', 'Close it, open Chrome yourself and use the home-screen icon instead.', 'Still stuck? Choose <strong>email me a code</strong> instead of Google. It always works.'])}
@@ -401,7 +409,8 @@ function showHelp() {
   ${step('A customer says they paid but there is no order', ['Check ' + tab('orders') + ' under “Unpaid, expired and demo”: if it is there, the payment did not go through.', 'Search Stripe for their email address. If Stripe shows the payment as succeeded, tell Steven.'])}
   ${step('Anything else', ['Nothing you do here can break the shop. Products, pages and settings can all be changed back. Orders you delete are gone though.', 'If in doubt, send Steven a screenshot.'])}
   </div>`;
-  panel.querySelectorAll('.want a').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); const d = $(a.getAttribute('href')); if (d) { d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }));
+  // In-page links open the matching section; a real URL (the CLP label maker) navigates as normal.
+  panel.querySelectorAll('.want a[href^="#"]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); const d = $(a.getAttribute('href')); if (d) { d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }));
   return Promise.resolve();
 }
 

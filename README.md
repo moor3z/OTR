@@ -96,6 +96,18 @@ Photos are resized to 1200px WebP in the browser before upload and stored in the
 
 Categories and scent filters (Fresh, Floral, Fruity, Sweet, Halloween, Christmas) are defined once in `server/db.js` (`CATEGORIES`, `SCENTS`) and mirrored at the top of `public/assets/js/admin.js`.
 
+## CLP labels
+
+Admin → **CLP labels** (`/admin/labels.html`) lays out the safety labels that legally have to go on each melt, and prints them a sheet at a time. It sits behind the same Cloudflare Access sign-in as the rest of the admin area and saves to `/api/admin/clp` (tables `clp_labels` and `clp_settings`).
+
+All 59 fragrances are seeded from `server/clp-data.js`, transcribed from the "10% Non Hazardous Base Wax Melt CLP Label" that FizzyWhiz publish per oil. Seeding uses `INSERT OR IGNORE`, so nothing edited in the admin area is ever overwritten by a later deploy.
+
+Three things are worth knowing before touching this:
+
+- **The wording is legally binding.** It belongs to one oil at one percentage. Never copy a statement between fragrances, from another maker's label, or from a sheet for a different load. If the pour strength changes, every label has to be redone from the right sheets.
+- **No pictogram is usually the correct answer.** The symbol and the signal word follow from the hazard statements; 36 of the 59 require neither. Adding one "to be safe" is itself a labelling fault. The page derives what is required and flags both a missing symbol and a spare one.
+- **A telephone number is required** on the label by GB CLP, and an email address does not satisfy it. It is blank until someone fills it in under Business details, and every label is flagged until then.
+
 ## Search engines, social sharing and AI assistants (SEO)
 
 Every public page is filled in on the server before it is sent (`server/seo.js` plus the files in `functions/` named after each page), so Google, Bing, Facebook link previews and AI crawlers see the real title, description, products and text without running JavaScript. What this gives you:
@@ -147,7 +159,7 @@ To re-run locally: `npx wrangler pages dev public --d1 DB -b ADMIN_DEV_BYPASS=tr
 
 1. **Real products**: names, descriptions, photos, prices, stock, weights.
 2. **Per-product usage and safety text**, including any hazard/allergen labelling your scents require. All current text is a marked placeholder; nothing has been claimed about ingredients.
-3. **Business details**: trading/legal name, geographic address, contact email (and phone if wanted).
+3. **Business details**: trading/legal name, geographic address, contact email, and **a telephone number** — GB CLP requires one on every melt label and will not accept an email address in its place. Add it under Admin → CLP labels → Business details.
 4. **Delivery**: real charge, free-delivery threshold (or none), courier, dispatch times.
 5. **Policies**: returns and cancellations, privacy policy, terms. Each page lists what it needs and shows a "placeholder" notice until you untick it in Admin → Pages.
 6. **VAT position**: the site says nothing about VAT until you add it to Terms.

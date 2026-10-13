@@ -1,4 +1,4 @@
-import { api, basket, lineHtml, wireLines, gbp, esc, $ } from './site.js?v=38';
+import { api, basket, lineHtml, wireLines, gbp, esc, $ } from './site.js?v=39';
 
 const root = $('#basket-root');
 let seq = 0;

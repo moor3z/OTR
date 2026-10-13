@@ -110,5 +110,28 @@ await j('/api/admin/products/rose-garden-melts', { method: 'PUT', body: JSON.str
 
 r = await j(`/api/admin/orders/${paid[0].id}`, { method: 'DELETE' });
 ok('admin can delete an order', r.status === 200 && (await j(`/api/admin/orders/${paid[0].id}`)).status === 404);
+
+// CLP labels. The hazard wording is legally binding, so the point of these is
+// that nothing on the way in rewrites it and nothing invalid gets stored.
+r = await j('/api/admin/clp');
+const clp = r.body;
+ok('the 59 CLP labels are seeded', clp.labels.length === 59, `got ${clp.labels.length}`);
+ok('CLP business details are seeded without a phone number', clp.business.name === 'Over The Rainbow Wax Melts' && clp.business.phone === '');
+ok('most labels correctly carry no pictogram', clp.labels.filter((l) => !l.pictos.length).length === 36);
+const cotton = clp.labels.find((l) => l.name === 'Clean Cotton');
+ok('a sensitiser label keeps its wording', cotton && cotton.signal === 'Warning'
+  && cotton.h.join() === 'H317,H411' && cotton.pictos.join() === 'GHS07,GHS09' && cotton.contains.length > 0, JSON.stringify(cotton));
+
+r = await post('/api/admin/clp', { label: { id: 'test-label', name: 'Test', signal: 'Warning', pictos: ['GHS07'], h: ['H317'], p: ['P280'], hx: 'one\ntwo' } });
+ok('a label can be saved and keeps its line breaks', r.status === 200 && r.body.label.hx === 'one\ntwo');
+r = await post('/api/admin/clp', { label: { id: 'bad id!', name: 'X' } });
+ok('a label with an invalid id is rejected', r.status === 422);
+r = await post('/api/admin/clp', { label: { id: 'test-label', signal: 'SHOUT', pictos: ['GHS99', 'GHS05'], h: ['<script>', 'h412'] } });
+ok('invented signal words and pictograms are dropped', r.body.label.signal === '' && r.body.label.pictos.join() === 'GHS05' && r.body.label.h.join() === 'H412', JSON.stringify(r.body.label));
+r = await j('/api/admin/clp', { method: 'DELETE', body: JSON.stringify({ id: 'test-label' }) });
+ok('a label can be deleted', r.status === 200 && (await j('/api/admin/clp')).body.labels.length === 59);
+r = await fetch(BASE + '/api/admin/clp', { method: 'POST', body: '{}', headers: { 'content-type': 'application/json' } });
+ok('CLP writes without the CSRF header are blocked', r.status === 403);
+
 console.log(`\n${pass} passed, ${failN} failed`);
 process.exit(failN ? 1 : 0);

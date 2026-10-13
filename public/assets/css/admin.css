@@ -10,8 +10,11 @@ body.admin { background: #faf7fb; }
 .admin-tabs-wrap[data-more='true'] .tabs-more { display: flex; }
 @keyframes nudge { 0%, 100% { transform: translateY(-50%) translateX(0); } 50% { transform: translateY(-50%) translateX(4px); } }
 @media (min-width: 900px) { .admin-tabs-wrap::after, .tabs-more { display: none !important; } }
-.admin-tabs button { flex: none; min-height: 48px; padding: 0 1.125rem; border: 0; background: transparent; color: #fff; font: 600 1rem var(--body); border-radius: 12px 12px 0 0; cursor: pointer; }
+.admin-tabs button, .admin-tabs a { flex: none; min-height: 48px; padding: 0 1.125rem; border: 0; background: transparent; color: #fff; font: 600 1rem var(--body); border-radius: 12px 12px 0 0; cursor: pointer; }
 .admin-tabs button[aria-selected='true'] { background: #faf7fb; color: var(--plum); }
+/* The CLP label maker is its own page, so it is a link rather than a tab. */
+.admin-tabs a { display: inline-flex; align-items: center; gap: .4rem; text-decoration: none; white-space: nowrap; }
+.admin-tabs a:hover, .admin-tabs a:focus-visible { background: rgba(255, 255, 255, .14); text-decoration: underline; }
 .admin main { padding-block: 1.5rem 4rem; } .admin h1 { font-size: 1.75rem; }
 .bar { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; } .bar h1 { margin: 0 auto 0 0; }
 .panel-card { background: #fff; border: 1px solid var(--line); border-radius: var(--r-md); padding: 1.25rem; margin-bottom: 1rem; }

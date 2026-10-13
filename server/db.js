@@ -2,6 +2,7 @@
 // on first request, and sample content is seeded if the database is empty.
 import { SAMPLE_PRODUCTS, DEFAULT_SETTINGS, DEFAULT_PAGES } from './seed.js';
 import { FAQ_PAGE, BLOG_POSTS, ABOUT_COPY, POLICY_PAGES, SHOP_EMAIL, SCENT_PRODUCTS, MORE_SCENTS, CONTACT_COPY, DEFAULT_USAGE, DEFAULT_SAFETY } from './content.js';
+import { CLP_LABELS, CLP_BUSINESS } from './clp-data.js';
 
 const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)`,
@@ -43,6 +44,11 @@ const SCHEMA = [
      slug TEXT PRIMARY KEY, title TEXT NOT NULL, excerpt TEXT NOT NULL DEFAULT '',
      body TEXT NOT NULL DEFAULT '', image_url TEXT NOT NULL DEFAULT '',
      published INTEGER NOT NULL DEFAULT 1, published_at TEXT NOT NULL, updated_at TEXT NOT NULL)`,
+  // CLP labels. Kept in their own tables, not in `settings`, because the business
+  // block holds a personal phone number and `settings` is read by public pages.
+  `CREATE TABLE IF NOT EXISTS clp_labels (
+     id TEXT PRIMARY KEY, data TEXT NOT NULL, updated_at TEXT NOT NULL)`,
+  `CREATE TABLE IF NOT EXISTS clp_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)`,
 ];
 
 let ready = null; // memoised per worker isolate
@@ -69,7 +75,7 @@ async function init(db) {
 async function migrateContent(db) {
   const row = await db.prepare(`SELECT value FROM settings WHERE key='content_version'`).first();
   const have = Number(row?.value || 0);
-  if (have >= 10) return;
+  if (have >= 11) return;
   const now = new Date();
   const stmts = [];
   if (have < 2) { // FAQ page and starter blog posts
@@ -135,7 +141,14 @@ async function migrateContent(db) {
     stmts.push(db.prepare(`UPDATE pages SET body=?, needs_review=0, updated_at=? WHERE slug='contact' AND instr(body, ?) > 0`)
       .bind(CONTACT_COPY.body, now.toISOString(), CONTACT_COPY.stillPlaceholder));
   }
-  stmts.push(db.prepare(`INSERT INTO settings(key,value) VALUES('content_version','10') ON CONFLICT(key) DO UPDATE SET value='10'`));
+  if (have < 11) { // CLP labels for the 59 fragrances, from the supplier's own sheets
+    const iso = now.toISOString();
+    for (const label of CLP_LABELS)
+      stmts.push(db.prepare(`INSERT OR IGNORE INTO clp_labels(id,data,updated_at) VALUES(?,?,?)`)
+        .bind(label.id, JSON.stringify(label), iso));
+    stmts.push(db.prepare(`INSERT OR IGNORE INTO clp_settings(key,value) VALUES('business',?)`).bind(JSON.stringify(CLP_BUSINESS)));
+  }
+  stmts.push(db.prepare(`INSERT INTO settings(key,value) VALUES('content_version','11') ON CONFLICT(key) DO UPDATE SET value='11'`));
   await db.batch(stmts);
 }
 
