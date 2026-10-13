@@ -1,12 +1,21 @@
-OTR - COMPLETE CURRENT PROJECT (version 40)
+OTR - COMPLETE CURRENT PROJECT (version 41)
 
-New in v40: sample packs. Admin -> CLP labels -> Sample packs lays out a
+New in v41: pre-cut label sheets. The label size list now has 63.5 x 38.1 mm
+(Avery L7160 / "63 x 38" multipurpose, 21 per sheet) and 99.1 x 67.7 mm
+(L7165, 8 per sheet), and the print sheet puts each label exactly on its
+sticker, with nudge boxes for a printer that is a millimetre out. Wide labels
+get a landscape layout. Any label whose wording does not fit is now left off
+the print sheet and listed in red, instead of printing with the end cut off.
+Both sizes are under the 52 x 74 mm CLP minimum; at 7 pt, 28 of the 59
+fragrances fit the small one and none of the ones with a symbol do.
+
+v40: sample packs. Admin -> CLP labels -> Sample packs lays out a
 label for a clamshell holding several different melts, as a fold-out strip:
 the front panel has the pack name and business details, then every fragrance
 gets its own numbered block with its own wording. The blocks are never merged
 into one list. It measures how many panels a pack needs, warns when a strip is
 too wide for A4, and prints on landscape A4 with the fold lines marked.
-Everything from version 39 is included.
+Everything from version 40 is included.
 
 WHAT TO DO
 Upload all of these to GitHub, replacing what is there:
@@ -16,11 +25,11 @@ Make sure public/seasonal.html is NOT in the repo.
 No Cloudflare settings, environment variables or database changes.
 
 CHECK AFTER DEPLOY
-  /admin/labels.html       - a "Sample packs" tab between Print sheet and
-                             Business details
-  add a pack, tick 3 melts - a strip appears on the right with the fold
-                             lines; reload and the pack is still there
-  Print                    - the print preview is landscape, strip on it
+  Print sheet tab          - choose "63.5 x 38.1 mm - Avery L7160"; the gap
+                             box disappears and two nudge boxes appear
+  print one on plain paper - hold it against a label sheet; nudge if needed
+  a sensitiser (e.g. Clean Cotton) at that size shows in the red list, not
+  on the sheet
 
 STILL TO DO, AND IT MATTERS
   A telephone number. GB CLP requires one on the label and an email address

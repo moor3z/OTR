@@ -83,6 +83,7 @@ nav.tabs{background:var(--plum);position:sticky;top:env(safe-area-inset-top,0px)
 
 main{padding-block:22px 56px}
 .panel[hidden]{display:none}
+[hidden]{display:none!important}
 
 /* ---------- workbench ---------- */
 .bench{display:grid;gap:20px}
@@ -184,6 +185,12 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{border-color:var
 .lbl .l-pics{display:flex;gap:1.2mm;justify-content:center;flex:none}
 .lbl .l-pics svg{width:var(--pic);height:var(--pic);flex:none;display:block}
 .lbl .l-qty{font-weight:600;border-top:.22mm solid var(--paper-ink);padding-top:.7mm;flex:none;line-height:1.2}
+/* Landscape labels */
+.lbl.wide{flex-direction:row;gap:1.6mm;text-align:left;padding:1.8mm 2mm}
+.lbl.wide .l-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:.6mm;height:100%}
+.lbl.wide .l-name{font-size:1.22em}
+.lbl.wide .l-foot{justify-content:flex-start;text-align:left}
+.lbl.wide .l-pics.side{flex-direction:column;justify-content:center;gap:1mm}
 .demoflag{background:var(--hazard);color:#fff;font:700 .72rem/1 var(--ui);letter-spacing:.07em;text-align:center;padding:7px 8px;border-radius:var(--r-s) var(--r-s) 0 0;margin-bottom:-1px}
 .overflowing{outline:2px solid var(--hazard);outline-offset:3px}
 
@@ -212,6 +219,15 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{border-color:var
 body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20,55,.2)}
 .sheetgrid{display:grid;gap:var(--gap);justify-content:start}
 .sheetgrid .lbl{box-shadow:none;outline:.2mm dashed #bbb;outline-offset:0}
+/* Pre-cut sheets: a true-size page with each label at its sticker's position. */
+#sheet-out.precut{padding:0;width:210mm}
+.precut-page{position:relative;width:210mm;height:297mm;overflow:hidden;background:#fff;outline:1px solid var(--line)}
+.precut-page+.precut-page{margin-top:6mm}
+.precut-page .slot{position:absolute}
+.precut-page .lbl{outline:.2mm dashed #ccc}
+.nofit{box-sizing:border-box;display:flex;align-items:center;justify-content:center;text-align:center;padding:2mm;
+  font:600 7pt/1.3 'DM Sans',Arial,sans-serif;color:var(--stop);background:var(--stop-bg);outline:.3mm dashed var(--stop);flex:none}
+@media print{.nofit{visibility:hidden}}
 
 /* ---------- fold-out strip for sample packs ----------
    A strip is a row of equal panels. Each panel is the size of one fold of the
@@ -270,6 +286,11 @@ body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20
   @page{size:A4;margin:7mm}
   /* Pack strips are wider than they are tall, so they print on a landscape page. */
   @page packs{size:A4 landscape;margin:7mm}
+  @page precut{size:A4;margin:0}
+  #sheet-out.precut{page:precut}
+  .precut-page{outline:none;break-after:page;page-break-after:always}
+  .precut-page:last-child{break-after:auto;page-break-after:auto}
+  .precut-page .lbl{outline:none}
   /* Pinned to the printable width so a long strip wraps instead of being shrunk to fit. */
   #sheet-out.packs{page:packs;width:283mm!important}
   #sheet-out.packs .sheetgrid{display:block}
@@ -383,6 +404,17 @@ body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20
             <label class="f" for="sheetSize">Label size</label>
             <select id="sheetSize"></select>
           </div>
+          <div class="field" style="flex:0 0 108px">
+            <label class="f" for="sheetFs">Text</label>
+            <select id="sheetFs">
+                    <option value="6">6 pt</option>
+                    <option value="6.5">6.5 pt</option>
+                    <option value="7" selected>7 pt</option>
+                    <option value="7.5">7.5 pt</option>
+                    <option value="8">8 pt</option>
+                    <option value="9">9 pt</option>
+                  </select>
+          </div>
           <div class="field" style="flex:0 0 118px">
             <label class="f" for="sheetGap">Gap between</label>
             <select id="sheetGap">
@@ -394,7 +426,13 @@ body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20
           <button class="btn btn-ghost" id="clearQty" type="button">Clear all</button>
           <button class="btn btn-pri" id="printSheet" type="button">Print</button>
         </div>
+        <div class="sheetctrls" id="nudgeRow" style="margin-top:12px" hidden>
+          <div class="field" style="flex:0 0 150px"><label class="f" for="nudgeX">Nudge right (mm)</label><input type="number" id="nudgeX" min="-10" max="10" step="0.5" value="0"></div>
+          <div class="field" style="flex:0 0 150px"><label class="f" for="nudgeY">Nudge down (mm)</label><input type="number" id="nudgeY" min="-10" max="10" step="0.5" value="0"></div>
+          <p class="hintline" style="flex:1 1 200px;align-self:center;margin:0">Printers are often a millimetre or two out. Minus values move it the other way. Remembered on this device.</p>
+        </div>
         <div id="sheetFit" class="hintline" style="margin-top:10px"></div>
+        <div id="sheetWarn" class="note alert" style="margin-top:12px" hidden></div>
         <table class="qtytable"><thead><tr><th>Fragrance</th><th class="n">How many</th></tr></thead><tbody id="qtyBody"></tbody></table>
       </div>
       <div class="sheetwrap"></div>
@@ -488,6 +526,10 @@ body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20
           <p>Under <strong>Sample packs</strong>, tick the fragrances in the pack and set the panel size: measure the space on the back of the clamshell, and that is one panel. The page works out how many panels the pack needs and warns if a strip is too wide for an A4 sheet. Multi-layer peel-back labels are sold for exactly this, or print the strip on sticker paper and concertina-fold it.</p>
           <p>If a pack needs more panels than you'd like, the levers are: fewer fragrances in the pack, picking melts whose labels are short (the ones with no symbol are a third the length of the ones with one), a taller panel, or a smaller text size — but not below 7 pt.</p>
 
+          <h3>Pre-cut label sheets</h3>
+          <p>Two sizes in the list are standard pre-cut A4 sheets: <strong>63.5 × 38.1 mm, 21 per sheet</strong> (Avery L7160 and the "63 × 38" multipurpose compatibles) and <strong>99.1 × 67.7 mm, 8 per sheet</strong> (L7165). Choose one and the print sheet puts each label exactly on its sticker. Print the first run on plain paper, hold it against a label sheet up to the light, and use the nudge boxes if your printer is a millimetre out.</p>
+          <p>Both are under the 52 × 74 mm CLP minimum, so they are only defensible where the full details are also on the outer packaging. The 21-per-sheet size is small: at 7 pt about half of your fragrances fit, and none of the ones with a warning symbol do. Anything that does not fit is left off the sheet and listed in red rather than printed with its wording cut short.</p>
+
           <h3>Not sure?</h3>
           <p>The HSE publishes the GB CLP guidance, and most fragrance suppliers will answer questions about their own sheets. If a sheet says something this page has no box for, put it in the "Anything else" field and it prints at the bottom.</p>
         </div>
@@ -513,6 +555,6 @@ body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20
 <div id="sheet-out"><div class="sheetgrid" id="sheetGrid"></div></div>
 <div id="measure" aria-hidden="true"></div>
 
-<script type="module" src="/assets/js/clp.js?v=40"></script>
+<script type="module" src="/assets/js/clp.js?v=41"></script>
 </body>
 </html>

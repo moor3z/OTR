@@ -67,7 +67,10 @@ const SIZES=[
  {id:"most",label:"70 × 90 mm — fits all but Clean Cotton",w:70,h:90,ok:true},
  {id:"roomy",label:"60 × 80 mm",w:60,h:80,ok:true},
  {id:"clp",label:"52 × 74 mm — the CLP minimum",w:52,h:74,ok:true},
- {id:"l7165",label:"99.1 × 67.7 mm — Avery L7165",w:99.1,h:67.7,ok:false,why:"6 mm under the 74 mm minimum height, though much larger in area"},
+ {id:"l7165",label:"99.1 × 67.7 mm — Avery L7165, 8 per sheet",w:99.1,h:67.7,ok:false,why:"6 mm under the 74 mm minimum height, though much larger in area",
+  sheet:{cols:2,rows:4,left:4.65,top:13.1,pitchX:101.6,pitchY:67.7}},
+ {id:"l7160",label:"63.5 × 38.1 mm — Avery L7160, 21 per sheet",w:63.5,h:38.1,ok:false,why:"under the 52 × 74 mm minimum in both directions",
+  sheet:{cols:3,rows:7,left:7.2,top:15.1,pitchX:66,pitchY:38.1}},
  {id:"small",label:"45 × 60 mm — small packs only",w:45,h:60,ok:false,why:"under the 52 × 74 mm minimum"}
 ];
 const DEMO={id:"__demo",name:"Example Scent",signal:"Warning",pictos:["GHS07","GHS09"],
@@ -80,7 +83,7 @@ const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&g
 const uid=()=>"f"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const state={
   biz:{name:"Over The Rainbow Wax Melts",addr:"18 Sutton Way\nEllesmere Port\nCH65 7DN",phone:"",email:""},
-  scents:[], packs:[], selId:null, search:"", size:"all", fs:7, redName:false, gap:2, qty:{}, tab:"labels"
+  scents:[], packs:[], selId:null, search:"", size:"all", fs:7, redName:false, gap:2, qty:{}, tab:"labels", nudge:{x:0,y:0}
 };
 let draft=null, saveTimer=null, bizTimer=null;
 
@@ -113,7 +116,7 @@ async function send(method,body,what){
 /* local fallback so the page still works signed out */
 const LS="otr-clp-v1";
 function lsRead(){ try{const r=localStorage.getItem(LS);return r?JSON.parse(r):null}catch(e){return null} }
-function lsWrite(){ try{localStorage.setItem(LS,JSON.stringify({biz:state.biz,scents:state.scents,packs:state.packs}))}catch(e){} }
+function lsWrite(){ try{localStorage.setItem(LS,JSON.stringify({biz:state.biz,scents:state.scents,packs:state.packs,nudge:state.nudge}))}catch(e){} }
 
 /* ---------------------------------------------------------------- label */
 function joinPhrases(codes,extra,table){
@@ -162,7 +165,20 @@ function labelHTML(s,{demo=false,size=null,fs=null}={}){
   bits.push(foot);
   const q=[s.qty,s.batch?"Batch "+s.batch:""].filter(Boolean).join("  ·  ");
   if(q) bits.push('<div class="l-qty">'+esc(q)+'</div>');
-  const lbl='<div class="lbl" style="--w:'+sz.w+'mm;--h:'+sz.h+'mm;--fs:'+f+'pt;--pic:'+pic+'mm">'+bits.join("")+'</div>';
+  let lbl;
+  if(sz.w>sz.h){
+    /* Landscape labels: text in a column on the left, pictograms down the right. */
+    const col=[bits[0]];
+    if((s.contains||"").trim()) col.push('<div class="l-contains">Contains '+esc(s.contains.trim())+'</div>');
+    if(s.signal) col.push('<div class="l-signal">'+esc(s.signal)+'</div>');
+    if(body.length) col.push('<div class="l-body">'+body.join(" ")+'</div>');
+    col.push('<div class="l-foot">'+supplier+'</div>');
+    if(q) col.push('<div class="l-qty">'+esc(q)+'</div>');
+    lbl='<div class="lbl wide" data-name="'+esc(s.name||"Untitled")+'" style="--w:'+sz.w+'mm;--h:'+sz.h+'mm;--fs:'+f+'pt;--pic:'+pic+'mm"><div class="l-col">'+col.join("")+'</div>'+
+        (pics.length?'<div class="l-pics side">'+pics.map(pictoSVG).join("")+'</div>':"")+'</div>';
+  }else{
+    lbl='<div class="lbl" data-name="'+esc(s.name||"Untitled")+'" style="--w:'+sz.w+'mm;--h:'+sz.h+'mm;--fs:'+f+'pt;--pic:'+pic+'mm">'+bits.join("")+'</div>';
+  }
   return demo?'<div><div class="demoflag">EXAMPLE ONLY — NOT REAL SAFETY DATA</div>'+lbl+'</div>':lbl;
 }
 
@@ -331,17 +347,62 @@ function renderQty(){
 }
 function renderSheet(){
   const sz=SIZES.find(z=>z.id===$("#sheetSize").value)||SIZES[0];
+  const out=$("#sheet-out"), g=$("#sheetGrid");
+  out.classList.remove("packs");
+  const labels=[];
+  state.scents.forEach(s=>{ const n=Math.min(200,+state.qty[s.id]||0); for(let i=0;i<n;i++) labels.push(labelHTML(s,{size:sz})); });
+  const empty='<div style="color:#555;font:400 13px sans-serif;padding:20px">Set how many of each you need above.</div>';
+  $("#nudgeRow").hidden=!sz.sheet;
+  $("#sheetGap").closest(".field").hidden=!!sz.sheet;
+  $("#sheetFs").value=String(state.fs);
+  if(sz.sheet){
+    /* Pre-cut label sheet: every label goes exactly where the sticker is, so the
+       page is laid out from its own corner with no printer margin of our own. */
+    const sh=sz.sheet, per=sh.cols*sh.rows, nx=state.nudge.x, ny=state.nudge.y;
+    out.classList.add("precut"); g.style.display="block"; g.style.gridTemplateColumns="";
+    $("#sheetFit").textContent=per+" per A4 sheet ("+sh.cols+" across × "+sh.rows+" down), printed onto the pre-cut positions. "+
+      "Print one on plain paper first and hold it against a label sheet; if it is off, use the nudge boxes.";
+    if(!labels.length){ g.innerHTML=empty; return; }
+    const pages=[];
+    for(let i=0;i<labels.length;i+=per){
+      const slice=labels.slice(i,i+per);
+      pages.push('<div class="precut-page">'+slice.map((h,k)=>{
+        const c=k%sh.cols, r=Math.floor(k/sh.cols);
+        return '<div class="slot" style="left:'+(sh.left+c*sh.pitchX+nx).toFixed(2)+'mm;top:'+(sh.top+r*sh.pitchY+ny).toFixed(2)+'mm">'+h+'</div>';
+      }).join("")+'</div>');
+    }
+    g.innerHTML=pages.join("");
+    dropOverflowing(g,sz);
+    return;
+  }
+  out.classList.remove("precut"); g.style.display="";
   const gap=+$("#sheetGap").value;
   const usableW=210-14, usableH=297-14;
   const cols=Math.max(1,Math.floor((usableW+gap)/(sz.w+gap)));
   const rows=Math.max(1,Math.floor((usableH+gap)/(sz.h+gap)));
   $("#sheetFit").textContent=cols*rows+" per A4 sheet ("+cols+" across × "+rows+" down) at "+sz.w+" × "+sz.h+" mm.";
-  const g=$("#sheetGrid");
   g.style.setProperty("--gap",gap+"mm");
   g.style.gridTemplateColumns="repeat("+cols+", "+sz.w+"mm)";
-  let html="";
-  state.scents.forEach(s=>{ const n=Math.min(200,+state.qty[s.id]||0); for(let i=0;i<n;i++) html+=labelHTML(s,{size:sz}); });
-  g.innerHTML=html||'<div style="color:#555;font:400 13px sans-serif;padding:20px">Set how many of each you need above.</div>';
+  g.innerHTML=labels.join("")||empty;
+  dropOverflowing(g,sz);
+}
+/* A label whose wording does not fit is not printed at all: a hazard statement
+   with its end cut off is worse than a blank sticker. */
+function dropOverflowing(g,sz){
+  const bad=[];
+  $$(".lbl",g).forEach(el=>{
+    if(el.scrollHeight<=el.clientHeight+1) return;
+    const name=el.dataset.name||"Untitled";
+    if(!bad.includes(name)) bad.push(name);
+    const ph=document.createElement("div");
+    ph.className="nofit"; ph.style.width=sz.w+"mm"; ph.style.height=sz.h+"mm";
+    ph.innerHTML='<b>Not printed</b><br>'+esc(name)+'<br>does not fit at this size';
+    el.replaceWith(ph);
+  });
+  const w=$("#sheetWarn");
+  w.hidden=!bad.length;
+  if(bad.length) w.innerHTML='<strong>'+bad.length+' fragrance'+(bad.length===1?"":"s")+' left off this sheet</strong> because the wording does not fit at '+
+    sz.w+' × '+sz.h+' mm and '+state.fs+' pt — a cut-off hazard statement is not a label. Use a bigger size or smaller text for: '+bad.map(esc).join(", ")+'.';
 }
 
 function renderBiz(){
@@ -664,9 +725,13 @@ SIZES.forEach(z=>{
 });
 $("#sizePreset").addEventListener("change",e=>{state.size=e.target.value;$("#sheetSize").value=e.target.value;renderPreview();renderSheet()});
 $("#sheetSize").addEventListener("change",e=>{state.size=e.target.value;$("#sizePreset").value=e.target.value;renderPreview();renderSheet()});
-$("#fsize").addEventListener("change",e=>{state.fs=+e.target.value;renderPreview();renderSheet()});
+$("#fsize").addEventListener("change",e=>{state.fs=+e.target.value;$("#sheetFs").value=e.target.value;renderPreview();renderSheet()});
+$("#sheetFs").addEventListener("change",e=>{state.fs=+e.target.value;$("#fsize").value=e.target.value;renderPreview();renderSheet()});
 $("#redName").addEventListener("change",e=>{state.redName=e.target.checked;renderPreview();renderSheet()});
 $("#sheetGap").addEventListener("change",renderSheet);
+["x","y"].forEach(k=>$("#nudge"+k.toUpperCase()).addEventListener("change",e=>{
+  state.nudge[k]=Math.max(-10,Math.min(10,Math.round((+e.target.value||0)*10)/10)); e.target.value=state.nudge[k]; lsWrite(); renderSheet();
+}));
 $("#scentSearch").addEventListener("input",e=>{state.search=e.target.value;renderScents()});
 $("#addScent").addEventListener("click",()=>{
   const n=blank(); state.scents.push(n); select(n.id); persist(n); renderQty();
@@ -722,7 +787,8 @@ $("#ioLoad").addEventListener("click",()=>{
 
 /* ---------------------------------------------------------------- boot */
 const cached=lsRead();
-if(cached){ if(cached.biz) state.biz={...state.biz,...cached.biz}; if(Array.isArray(cached.scents)) state.scents=cached.scents; if(Array.isArray(cached.packs)) state.packs=cached.packs; }
+if(cached){ if(cached.biz) state.biz={...state.biz,...cached.biz}; if(Array.isArray(cached.scents)) state.scents=cached.scents; if(Array.isArray(cached.packs)) state.packs=cached.packs; if(cached.nudge) state.nudge={x:+cached.nudge.x||0,y:+cached.nudge.y||0}; }
+$("#nudgeX").value=state.nudge.x; $("#nudgeY").value=state.nudge.y;
 renderBiz(); renderScents(); renderEditor(); renderPreview(); renderQty(); setTab("labels");
 
 (async()=>{
