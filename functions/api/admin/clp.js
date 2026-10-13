@@ -1,10 +1,11 @@
 // CLP labels for the wax melts. Admin only (see _middleware.js).
 //
-//   GET                      -> { business, labels }
+//   GET                      -> { business, labels, packs }
 //   POST   { label }         -> add or replace one label
 //   DELETE { id }            -> remove one label
-//   PUT    { business?, labels? } -> save the business block, and/or replace the
-//                               whole list (used by the import box on the page)
+//   PUT    { business?, labels?, packs? } -> save the business block, replace the
+//                               sample pack list, and/or replace the whole label
+//                               list (used by the import box on the page)
 //
 // The hazard wording is legally binding, so nothing here rewrites it: fields are
 // length-capped and checked for shape, then stored exactly as sent.
@@ -58,19 +59,40 @@ const shapeBusiness = (raw = {}) => ({
 
 const DEFAULT_BUSINESS = { name: '', addr: '', phone: '', email: '' };
 
+// A sample pack: several fragrances in one package, labelled with a fold-out
+// strip of panels. `scents` are label ids; w/h are the panel size in mm.
+const MAX_PACKS = 100, MAX_PACK_SCENTS = 30;
+const num = (v, lo, hi, dflt) => { const n = Number(v); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, Math.round(n * 10) / 10)) : dflt; };
+function shapePack(raw) {
+  if (!raw || typeof raw !== 'object') throw httpError(422, 'No pack was sent.');
+  const id = line(raw.id, 40);
+  if (!/^[A-Za-z0-9_-]{1,40}$/.test(id)) throw httpError(422, 'That pack has a missing or invalid id.');
+  return {
+    id,
+    name: line(raw.name, 120),
+    qty: line(raw.qty, 80),
+    scents: (Array.isArray(raw.scents) ? raw.scents : []).map((s) => line(s, 40)).filter((s) => /^[A-Za-z0-9_-]{1,40}$/.test(s)).slice(0, MAX_PACK_SCENTS),
+    w: num(raw.w, 30, 150, 70),
+    h: num(raw.h, 30, 200, 95),
+    fs: num(raw.fs, 5, 10, 7),
+  };
+}
+
 async function readAll(db) {
   const [labels, settings] = await db.batch([
     db.prepare(`SELECT data FROM clp_labels ORDER BY id`),
-    db.prepare(`SELECT value FROM clp_settings WHERE key='business'`),
+    db.prepare(`SELECT key, value FROM clp_settings WHERE key IN ('business','packs')`),
   ]);
   const out = [];
   for (const row of labels.results) {
     try { out.push(JSON.parse(row.data)); } catch { /* skip a corrupt row rather than fail the page */ }
   }
-  let business = DEFAULT_BUSINESS;
-  try { business = { ...DEFAULT_BUSINESS, ...JSON.parse(settings.results[0]?.value || '{}') }; } catch { /* keep the default */ }
+  const kv = Object.fromEntries(settings.results.map((r) => [r.key, r.value]));
+  let business = DEFAULT_BUSINESS, packs = [];
+  try { business = { ...DEFAULT_BUSINESS, ...JSON.parse(kv.business || '{}') }; } catch { /* keep the default */ }
+  try { packs = JSON.parse(kv.packs || '[]'); if (!Array.isArray(packs)) packs = []; } catch { packs = []; }
   out.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'en-GB'));
-  return { business, labels: out };
+  return { business, labels: out, packs };
 }
 
 export const onRequestGet = handle(async ({ env }) => json(await readAll(await getDb(env))));
@@ -104,6 +126,13 @@ export const onRequestPut = handle(async ({ env, request }) => {
   if (body.business) {
     stmts.push(db.prepare(`INSERT INTO clp_settings(key,value) VALUES('business',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value`)
       .bind(JSON.stringify(shapeBusiness(body.business))));
+  }
+  if (Array.isArray(body.packs)) {
+    if (body.packs.length > MAX_PACKS) return fail(422, `There is a limit of ${MAX_PACKS} sample packs.`);
+    const packs = body.packs.map(shapePack);
+    if (new Set(packs.map((p) => p.id)).size !== packs.length) return fail(422, 'Two packs in that list share the same id.');
+    stmts.push(db.prepare(`INSERT INTO clp_settings(key,value) VALUES('packs',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value`)
+      .bind(JSON.stringify(packs)));
   }
   if (Array.isArray(body.labels)) {
     if (body.labels.length > MAX_LABELS) return fail(422, `There is a limit of ${MAX_LABELS} labels.`);

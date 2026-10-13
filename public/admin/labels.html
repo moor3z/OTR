@@ -213,6 +213,41 @@ body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20
 .sheetgrid{display:grid;gap:var(--gap);justify-content:start}
 .sheetgrid .lbl{box-shadow:none;outline:.2mm dashed #bbb;outline-offset:0}
 
+/* ---------- fold-out strip for sample packs ----------
+   A strip is a row of equal panels. Each panel is the size of one fold of the
+   sticker. Fragrance blocks flow across panels but never split across one. */
+.strip{display:flex;flex-wrap:wrap;width:max-content;max-width:100%;background:var(--paper);box-shadow:0 2px 10px rgba(46,20,55,.22)}
+#sheet-out .strip{box-shadow:none}
+.pnl{
+  width:var(--w);height:var(--h);background:var(--paper);color:var(--paper-ink);
+  font-family:'DM Sans',Arial,sans-serif;font-size:var(--fs);line-height:1.22;
+  padding:2.2mm 2.1mm;overflow:hidden;position:relative;flex:none;
+  border-right:.25mm dashed #999;box-sizing:border-box
+}
+.pnl:last-child{border-right:0}
+.pnl *{min-width:0}
+.pnl .pnl-no{position:absolute;right:1mm;bottom:.6mm;font-size:.72em;color:#888;line-height:1}
+.pnl .pk-head{text-align:center;margin-bottom:1.2mm}
+.pnl .pk-name{font-weight:700;font-size:1.3em;line-height:1.06;text-transform:uppercase}
+.pnl .pk-name.red{color:var(--hazard)}
+.pnl .pk-lede{font-size:.92em;line-height:1.2;margin-top:.6mm}
+.pnl .pk-sup{text-align:center;font-weight:600;line-height:1.24;margin-top:1mm}
+.pnl .pk-sup .addr{font-weight:400}
+.pnl .pk-qty{text-align:center;font-weight:600;border-top:.22mm solid var(--paper-ink);padding-top:.7mm;margin-top:1mm;line-height:1.2}
+.pnl .pk-lift{text-align:center;font-weight:700;font-size:.95em;letter-spacing:.04em;text-transform:uppercase;margin-top:1.4mm}
+.pnl .pb{display:flex;gap:1.2mm;align-items:flex-start;padding:.9mm 0;border-top:.2mm solid #bbb}
+.pnl .pb:first-child{border-top:0;padding-top:0}
+.pnl .pb .pb-txt{flex:1;text-align:left}
+.pnl .pb .pb-h{font-weight:700;font-size:1.12em;line-height:1.1;text-transform:uppercase}
+.pnl .pb .pb-h .pb-n{display:inline-block;min-width:1.25em;margin-right:.35em;border:.3mm solid var(--paper-ink);border-radius:.25em;text-align:center;padding:0 .2em;font-size:.86em;line-height:1.25;vertical-align:.06em}
+.pnl .pb .pb-contains{font-size:.88em;line-height:1.15}
+.pnl .pb .pb-signal{font-weight:700;text-transform:uppercase;letter-spacing:.07em;line-height:1.15}
+.pnl .pb .pb-body b{font-weight:700}
+.pnl .pb .pb-pics{flex:none;display:flex;flex-direction:column;gap:.8mm}
+.pnl .pb .pb-pics svg{width:var(--pic);height:var(--pic);display:block}
+.strip-copy{break-inside:avoid;margin-bottom:var(--gap,3mm)}
+#measure{position:absolute;left:-9999px;top:0;visibility:hidden}
+
 /* ---------- guide ---------- */
 .prose{max-width:68ch}
 .prose h3{font-size:1rem;margin:22px 0 6px}
@@ -231,7 +266,14 @@ body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20
   #sheet-out{display:block!important;box-shadow:none!important;padding:0!important;width:auto!important;background:#fff!important}
   .sheetgrid .lbl{outline:none}
   .lbl{box-shadow:none;break-inside:avoid}
+  .strip{box-shadow:none}
   @page{size:A4;margin:7mm}
+  /* Pack strips are wider than they are tall, so they print on a landscape page. */
+  @page packs{size:A4 landscape;margin:7mm}
+  /* Pinned to the printable width so a long strip wraps instead of being shrunk to fit. */
+  #sheet-out.packs{page:packs;width:283mm!important}
+  #sheet-out.packs .sheetgrid{display:block}
+  .strip-copy{break-inside:avoid;page-break-inside:avoid}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
@@ -266,6 +308,7 @@ body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20
   <div class="wrap"><div class="tabrow" role="tablist">
     <button role="tab" id="t-labels" aria-controls="p-labels" aria-selected="true" data-tab="labels">Fragrances</button>
     <button role="tab" id="t-sheet" aria-controls="p-sheet" aria-selected="false" data-tab="sheet">Print sheet</button>
+    <button role="tab" id="t-packs" aria-controls="p-packs" aria-selected="false" data-tab="packs">Sample packs</button>
     <button role="tab" id="t-biz" aria-controls="p-biz" aria-selected="false" data-tab="biz">Business details</button>
     <button role="tab" id="t-guide" aria-controls="p-guide" aria-selected="false" data-tab="guide">How to fill this in</button>
   </div></div>
@@ -334,7 +377,7 @@ body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20
       <div class="card">
         <h2>Print sheet</h2>
         <p class="sub">Set how many of each you need, then print this page from your browser onto A4.</p>
-        <div class="note"><strong>To print:</strong> open this page on its own (the link Claude gave you), then press <strong>Ctrl&nbsp;+&nbsp;P</strong> on Windows or <strong>⌘&nbsp;+&nbsp;P</strong> on a Mac. In the print box set <strong>Scale to 100%</strong> and turn <strong>off</strong> "fit to page", or the labels come out the wrong size. Turn off headers and footers too.</p>
+        <div class="note"><strong>To print:</strong> click <strong>Print</strong> below, or press <strong>Ctrl&nbsp;+&nbsp;P</strong> on Windows or <strong>⌘&nbsp;+&nbsp;P</strong> on a Mac. In the print box set <strong>Scale to 100%</strong> and turn <strong>off</strong> "fit to page", or the labels come out the wrong size. Turn off headers and footers too.</div>
         <div class="sheetctrls" style="margin-top:14px">
           <div class="field">
             <label class="f" for="sheetSize">Label size</label>
@@ -349,11 +392,47 @@ body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20
             </select>
           </div>
           <button class="btn btn-ghost" id="clearQty" type="button">Clear all</button>
+          <button class="btn btn-pri" id="printSheet" type="button">Print</button>
         </div>
         <div id="sheetFit" class="hintline" style="margin-top:10px"></div>
         <table class="qtytable"><thead><tr><th>Fragrance</th><th class="n">How many</th></tr></thead><tbody id="qtyBody"></tbody></table>
       </div>
       <div class="sheetwrap"></div>
+    </section>
+
+    <!-- ============ SAMPLE PACKS ============ -->
+    <section class="panel" id="p-packs" role="tabpanel" aria-labelledby="t-packs" hidden>
+      <div class="bench">
+        <div>
+          <div class="card">
+            <h2>Sample packs</h2>
+            <p class="sub">Several fragrances in one pack. The label is a fold-out strip: the front panel carries the pack name and your details, then every fragrance gets its own block with its own wording. The blocks are never merged.</p>
+            <div class="scentbar">
+              <input type="search" id="packSearch" placeholder="Search packs" aria-label="Search packs">
+              <button class="btn btn-pri" id="addPack" type="button">+ Add a pack</button>
+            </div>
+            <ul class="scents" id="packList"></ul>
+          </div>
+          <div class="card" id="packEditor" hidden>
+            <h2 id="packTitle">Pack</h2>
+            <p class="sub">Tick the fragrances that go in this pack. The order you tick them is the order they print, so number the melts to match.</p>
+            <div id="packBody"></div>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <h2>Fold-out label</h2>
+            <p class="sub" id="packSub">Panels print side by side on A4 landscape, with the fold lines marked.</p>
+            <div class="ctrlrow">
+              <div class="field" style="flex:0 0 96px"><label class="f" for="packCopies">Copies</label><input type="number" id="packCopies" min="1" max="50" step="1" value="1"></div>
+              <button class="btn btn-pri" id="printPacks" type="button" style="margin-bottom:0">Print</button>
+            </div>
+            <div class="stage" id="packStage"></div>
+            <p class="hintline" id="packFit" style="margin-top:10px"></p>
+            <ul class="checks" id="packChecks"></ul>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- ============ BUSINESS ============ -->
@@ -403,6 +482,12 @@ body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20
           <p><strong>Most of your melts need no pictogram, and that is correct.</strong> The pictogram and the signal word both follow from the hazard statements, and not every hazard statement calls for one. "Harmful to aquatic life with long lasting effects" carries neither; nor does an allergen declaration on its own. Of your 59, twenty-one carry the exclamation mark with <em>Warning</em>, seven carry the environment symbol, and the remaining thirty-six are correctly bare.</p>
           <p>Adding a symbol a fragrance doesn't need is over-labelling. It is not a safe default — it makes the symbols that do matter easier to ignore, and enforcement treats an inaccurate label as a non-compliant one. The checklist under the preview compares what you have ticked against the hazard statements, so it tells you when a symbol is missing <em>and</em> when one is spare. The "Set from the hazard statements" button in the editor fills them in for you.</p>
 
+          <h3>Sample packs</h3>
+          <p>A pack with several different melts in it is several different mixtures in one package, and each one keeps its own label wording. The wording is never merged into one list — that would say every melt in the pack carries hazards that most of them don't, which is as wrong as leaving one off.</p>
+          <p>So the pack label is a strip of panels that folds down to the size of one panel and sticks to the back of the clamshell. The front panel carries the pack name, your business details and the net quantity. Then each fragrance gets a numbered block with its own signal word, symbol, statements and allergens. Put a matching number, or the name, on each melt.</p>
+          <p>Under <strong>Sample packs</strong>, tick the fragrances in the pack and set the panel size: measure the space on the back of the clamshell, and that is one panel. The page works out how many panels the pack needs and warns if a strip is too wide for an A4 sheet. Multi-layer peel-back labels are sold for exactly this, or print the strip on sticker paper and concertina-fold it.</p>
+          <p>If a pack needs more panels than you'd like, the levers are: fewer fragrances in the pack, picking melts whose labels are short (the ones with no symbol are a third the length of the ones with one), a taller panel, or a smaller text size — but not below 7 pt.</p>
+
           <h3>Not sure?</h3>
           <p>The HSE publishes the GB CLP guidance, and most fragrance suppliers will answer questions about their own sheets. If a sheet says something this page has no box for, put it in the "Anything else" field and it prints at the bottom.</p>
         </div>
@@ -426,7 +511,8 @@ body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20
 <div id="saveState" role="status" aria-live="polite"></div>
 
 <div id="sheet-out"><div class="sheetgrid" id="sheetGrid"></div></div>
+<div id="measure" aria-hidden="true"></div>
 
-<script type="module" src="/assets/js/clp.js?v=39"></script>
+<script type="module" src="/assets/js/clp.js?v=40"></script>
 </body>
 </html>

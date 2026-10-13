@@ -107,6 +107,7 @@ Three things are worth knowing before touching this:
 - **The wording is legally binding.** It belongs to one oil at one percentage. Never copy a statement between fragrances, from another maker's label, or from a sheet for a different load. If the pour strength changes, every label has to be redone from the right sheets.
 - **No pictogram is usually the correct answer.** The symbol and the signal word follow from the hazard statements; 36 of the 59 require neither. Adding one "to be safe" is itself a labelling fault. The page derives what is required and flags both a missing symbol and a spare one.
 - **A telephone number is required** on the label by GB CLP, and an email address does not satisfy it. It is blank until someone fills it in under Business details, and every label is flagged until then.
+- **Sample packs** (several different melts in one clamshell) are labelled with a fold-out strip: one front panel with the pack name and business details, then a numbered block per fragrance carrying that fragrance's own wording. The blocks are laid into panels by measurement and never split or merged. Packs are saved under `clp_settings` key `packs`.
 
 ## Search engines, social sharing and AI assistants (SEO)
 

@@ -1,45 +1,37 @@
-OTR - COMPLETE CURRENT PROJECT (version 39)
+OTR - COMPLETE CURRENT PROJECT (version 40)
 
-New in v39: the CLP label maker is now part of the shop admin, at
-Admin -> CLP labels. It lays out the safety labels that legally have to go on
-each melt and prints them a sheet at a time. All 59 fragrances are already in
-it, taken from FizzyWhiz's own CLP sheets for each oil at 10% in a
-non-hazardous base. Everything from version 38 is included.
-
-It sits behind the same Cloudflare Access sign-in as the rest of the admin
-area, and saves to the shop's own database, so Michelle sees the same list on
-her phone and on the computer.
+New in v40: sample packs. Admin -> CLP labels -> Sample packs lays out a
+label for a clamshell holding several different melts, as a fold-out strip:
+the front panel has the pack name and business details, then every fragrance
+gets its own numbered block with its own wording. The blocks are never merged
+into one list. It measures how many panels a pack needs, warns when a strip is
+too wide for A4, and prints on landscape A4 with the fold lines marked.
+Everything from version 39 is included.
 
 WHAT TO DO
 Upload all of these to GitHub, replacing what is there:
   public/   functions/   server/   tools/   tests/   README.md
 
 Make sure public/seasonal.html is NOT in the repo.
-No Cloudflare settings or environment variables to change.
-No database work either - the two new tables create themselves and fill
-themselves on the first page load after deploy.
+No Cloudflare settings, environment variables or database changes.
 
 CHECK AFTER DEPLOY
-  /admin                   - "CLP labels" at the end of the tab row
-  /admin/labels.html       - 59 fragrances listed, "59 fragrances loaded"
-                             bottom right
-  pick any fragrance       - change the net quantity, reload the page, the
-                             change is still there
-  Print sheet tab          - put a number against a fragrance, labels appear
+  /admin/labels.html       - a "Sample packs" tab between Print sheet and
+                             Business details
+  add a pack, tick 3 melts - a strip appears on the right with the fold
+                             lines; reload and the pack is still there
+  Print                    - the print preview is landscape, strip on it
 
 STILL TO DO, AND IT MATTERS
   A telephone number. GB CLP requires one on the label and an email address
-  does not count, so as things stand every one of the 59 labels is
-  non-compliant. Put Michelle's mobile in under Business details and the red
-  warning clears on all of them.
+  does not count. Every label, single or pack, is flagged until Michelle's
+  mobile is put in under Business details.
 
-  Confirm the melts really are poured at 10% in a non-hazardous base. The
-  wording is specific to that percentage - if it is different, every label
-  needs redoing from the right sheets.
+  Confirm the melts really are poured at 10% in a non-hazardous base.
 
-  Trick Or Treat (oil 333) is not in the list. FizzyWhiz have not published a
-  wax melt label for it; ask them for one.
+  Trick Or Treat (oil 333): FizzyWhiz have not published a wax melt label.
 
-  Five fragrances are still loaded under trademarked oil names (Black Opium,
-  Savage, Angels, Lenora Blue, Detol) and will print that way. Rename them on
-  the CLP labels page to whatever the shop calls them.
+  The names on the sample pack in the photo (Chanel, Creed, Dior, Jimmy Choo
+  and the rest) are trademarks printed on the product itself, which is a
+  bigger exposure than a comparison in a web listing. Decide on that before
+  printing a run.

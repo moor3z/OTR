@@ -80,7 +80,7 @@ const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&g
 const uid=()=>"f"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const state={
   biz:{name:"Over The Rainbow Wax Melts",addr:"18 Sutton Way\nEllesmere Port\nCH65 7DN",phone:"",email:""},
-  scents:[], selId:null, search:"", size:"all", fs:7, redName:false, gap:2, qty:{}, tab:"labels"
+  scents:[], packs:[], selId:null, search:"", size:"all", fs:7, redName:false, gap:2, qty:{}, tab:"labels"
 };
 let draft=null, saveTimer=null, bizTimer=null;
 
@@ -113,7 +113,7 @@ async function send(method,body,what){
 /* local fallback so the page still works signed out */
 const LS="otr-clp-v1";
 function lsRead(){ try{const r=localStorage.getItem(LS);return r?JSON.parse(r):null}catch(e){return null} }
-function lsWrite(){ try{localStorage.setItem(LS,JSON.stringify({biz:state.biz,scents:state.scents}))}catch(e){} }
+function lsWrite(){ try{localStorage.setItem(LS,JSON.stringify({biz:state.biz,scents:state.scents,packs:state.packs}))}catch(e){} }
 
 /* ---------------------------------------------------------------- label */
 function joinPhrases(codes,extra,table){
@@ -418,8 +418,232 @@ function delScent(id){
   delete state.qty[id];
   send("DELETE",{id},"It was not deleted").catch(()=>{});
   lsWrite();
+  if(state.tab==="packs"){ renderPacks(); renderPackPreview(); }
   select(state.scents.length?state.scents[0].id:null);
   renderQty();
+}
+
+/* ---------------------------------------------------------------- sample packs
+   Several fragrances in one package. The label is a strip of equal panels
+   (one per fold of the sticker). The front panel carries the pack name and the
+   supplier details; every fragrance then gets a numbered block with its own
+   signal word, pictograms, statements and allergens. Blocks flow across
+   panels but are never split or merged, because each one describes one
+   mixture and the hazard information has to stay attributable to it. */
+const PIC_MM=16;
+let packDraft=null, packTimer=null;
+function blankPack(){ return {id:uid(),name:"",qty:"",scents:[],w:70,h:95,fs:7}; }
+function packScents(p){ return (p.scents||[]).map(id=>state.scents.find(s=>s.id===id)).filter(Boolean); }
+function packVars(p){ return '--w:'+p.w+'mm;--h:'+p.h+'mm;--fs:'+p.fs+'pt;--pic:'+PIC_MM+'mm'; }
+
+function packBlocks(p){
+  const scents=packScents(p);
+  const addr=(state.biz.addr||"").split(/\r?\n/).map(t=>t.trim()).filter(Boolean).join(", ");
+  const n=scents.length;
+  let front='<div class="pk-head"><div class="pk-name'+(state.redName?" red":"")+'">'+esc(p.name||"Sample pack")+'</div>'+
+    '<div class="pk-lede">'+(n?n+" different wax melt"+(n===1?"":"s")+". The safety information for each one follows, numbered to match the melt.":"")+'</div></div>'+
+    '<div class="pk-sup">'+esc(state.biz.name||"")+'<div class="addr">'+esc(addr)+(state.biz.phone?"<br>"+esc(state.biz.phone):"")+'</div></div>'+
+    ((p.qty||"").trim()?'<div class="pk-qty">'+esc(p.qty.trim())+'</div>':"");
+  const blocks=[{html:front,name:"the front panel"}];
+  scents.forEach((s,i)=>{
+    const hz=sentence(joinPhrases(s.h||[],s.hx,H_PHRASES));
+    const pz=sentence(joinPhrases(s.p||[],s.px,P_PHRASES));
+    const al=(s.allergens||"").trim();
+    const pics=(s.pictos||[]).filter(k=>PICTOS[k]);
+    const body=[];
+    if(hz) body.push(esc(hz));
+    if(pz) body.push(esc(pz));
+    if(al) body.push("<b>Contains</b> "+esc(al)+". May produce an allergic reaction.");
+    if((s.extra||"").trim()) body.push(esc(s.extra.trim()));
+    const txt='<div class="pb-txt"><div class="pb-h"><span class="pb-n">'+(i+1)+'</span>'+esc(s.name||"Untitled")+'</div>'+
+      ((s.contains||"").trim()?'<div class="pb-contains">Contains '+esc(s.contains.trim())+'</div>':"")+
+      (s.signal?'<div class="pb-signal">'+esc(s.signal)+'</div>':"")+
+      (body.length?'<div class="pb-body">'+body.join(" ")+'</div>':"")+'</div>';
+    const pic=pics.length?'<div class="pb-pics">'+pics.map(pictoSVG).join("")+'</div>':"";
+    blocks.push({html:'<div class="pb">'+txt+pic+'</div>',name:(i+1)+". "+(s.name||"Untitled")});
+  });
+  return blocks;
+}
+
+/* Lay blocks into panels by measuring them in a hidden panel of the real size. */
+function paginate(p,blocks){
+  const host=$("#measure");
+  host.innerHTML='<div class="pnl" style="'+packVars(p)+'"></div>';
+  const pnl=host.firstElementChild;
+  const fits=()=>pnl.scrollHeight<=pnl.clientHeight+0.5;
+  const panels=[], tooBig=[];
+  let cur=[];
+  for(const b of blocks){
+    pnl.insertAdjacentHTML("beforeend",b.html);
+    if(fits()){ cur.push(b.html); continue; }
+    pnl.lastElementChild.remove();
+    if(cur.length){ panels.push(cur); cur=[]; pnl.innerHTML=""; pnl.insertAdjacentHTML("beforeend",b.html); }
+    if(!fits()) tooBig.push(b.name); /* kept on a panel of its own, and flagged */
+    cur.push(b.html);
+  }
+  if(cur.length) panels.push(cur);
+  host.innerHTML="";
+  return {panels,tooBig};
+}
+function stripHTML(p,panels){
+  return '<div class="strip" style="'+packVars(p)+'">'+panels.map((bl,i)=>
+    '<div class="pnl">'+bl.join("")+'<div class="pnl-no">'+(i+1)+'/'+panels.length+'</div></div>').join("")+'</div>';
+}
+const PAGE_W=297-14; /* A4 landscape less the 7 mm print margins */
+function packLayout(p){
+  const {panels,tooBig}=paginate(p,packBlocks(p));
+  const across=Math.max(1,Math.floor((PAGE_W+0.01)/p.w));
+  return {panels,tooBig,across};
+}
+
+function packChecks(p,lay){
+  const out=[];
+  const req=(label,val,msg)=>out.push({s:val?"ok":"bad",t:val?label:msg});
+  req("Business name",(state.biz.name||"").trim(),"Business name is missing — add it in Business details");
+  req("Address",(state.biz.addr||"").trim(),"Address is missing — add it in Business details");
+  req("Telephone number",(state.biz.phone||"").trim(),"No telephone number. GB CLP requires one; an email address is not enough");
+  req("Pack name",(p.name||"").trim(),"The pack needs a name — it is the product identifier for the pack");
+  const scents=packScents(p);
+  req(scents.length+" fragrance"+(scents.length===1?"":"s")+" in the pack",scents.length,"Tick the fragrances that go in this pack");
+  if((p.scents||[]).length>scents.length) out.push({s:"warn",t:"A fragrance that was in this pack has since been deleted — it has been left off"});
+  out.push((p.qty||"").trim()?{s:"ok",t:"Net quantity shown"}:{s:"warn",t:"No net quantity — fine only if it is printed elsewhere on the pack"});
+  if(lay){
+    out.push({s:lay.panels.length>lay.across?"warn":"ok",t:lay.panels.length+" panel"+(lay.panels.length===1?"":"s")+" of "+p.w+" × "+p.h+" mm"+
+      (lay.panels.length>lay.across?" — wider than an A4 sheet, so it prints as two rows to join at a fold. Narrower panels, fewer fragrances or smaller text would bring it onto one.":"")});
+    lay.tooBig.forEach(n=>out.push({s:"bad",t:n+" does not fit on one panel even by itself — use a taller panel or smaller text"}));
+  }
+  if(p.fs<7) out.push({s:"warn",t:"Text under 7 pt may be too small to count as easily legible"});
+  /* Each fragrance's own problems, minus the business ones already listed. */
+  scents.forEach((s,i)=>{
+    checkList(s,false).filter(c=>c.s==="bad"&&!/Business name|Address|telephone/i.test(c.t))
+      .forEach(c=>out.push({s:"bad",t:(i+1)+". "+(s.name||"Untitled")+": "+c.t}));
+  });
+  return out;
+}
+function packStatus(p){
+  const cs=packChecks(p,null);
+  return cs.some(c=>c.s==="bad")?"bad":cs.some(c=>c.s==="warn")?"part":"ok";
+}
+
+function renderPacks(){
+  const ul=$("#packList"); const q=($("#packSearch").value||"").toLowerCase();
+  if(!state.packs.length){ ul.innerHTML='<div class="empty-list">No sample packs yet. Add one, give it a name, and tick the fragrances that go in it.</div>'; return; }
+  const list=state.packs.filter(p=>!q||(p.name||"").toLowerCase().includes(q));
+  if(!list.length){ ul.innerHTML='<div class="empty-list">Nothing matches that.</div>'; return; }
+  ul.innerHTML=list.map(p=>
+    '<li><button class="pick" type="button" data-pack="'+p.id+'" aria-current="'+(packDraft&&p.id===packDraft.id)+'">'+
+    '<span class="dot '+packStatus(p)+'" aria-hidden="true"></span>'+
+    '<span class="nm">'+esc(p.name||"Untitled pack")+'<span class="hintline" style="margin:0 0 0 8px;display:inline">'+packScents(p).length+' melts</span></span></button>'+
+    '<button class="icon-x" type="button" data-delpack="'+p.id+'" aria-label="Delete '+esc(p.name||"pack")+'">&times;</button></li>'
+  ).join("");
+}
+function renderPackEditor(){
+  const card=$("#packEditor");
+  if(!packDraft){ card.hidden=true; return; }
+  card.hidden=false;
+  const p=packDraft;
+  $("#packTitle").textContent=p.name||"Untitled pack";
+  const sorted=state.scents.slice().sort((a,b)=>(a.name||"").localeCompare(b.name||"","en-GB"));
+  const q=(p._q||"").toLowerCase();
+  $("#packBody").innerHTML=
+    '<div class="grid2">'+
+      '<div class="field"><label class="f" for="pk-name">Pack name</label><input type="text" id="pk-name" value="'+esc(p.name)+'" placeholder="e.g. Perfume sample pack"></div>'+
+      '<div class="field"><label class="f" for="pk-qty">Net quantity</label><input type="text" id="pk-qty" value="'+esc(p.qty)+'" placeholder="e.g. 8 × 10 g"></div>'+
+    '</div>'+
+    '<div class="field"><label class="f" for="pk-search">Fragrances in this pack <span class="opt">— '+p.scents.length+' ticked</span></label>'+
+      '<input type="search" id="pk-search" value="'+esc(p._q||"")+'" placeholder="Find a fragrance" style="margin-bottom:8px">'+
+      '<div class="phrases" id="pk-scents" style="max-height:280px">'+
+      sorted.filter(s=>!q||(s.name||"").toLowerCase().includes(q)).map(s=>{
+        const i=p.scents.indexOf(s.id);
+        return '<label><input type="checkbox" value="'+s.id+'"'+(i>-1?" checked":"")+'>'+
+          '<code style="min-width:1.4em;text-align:right">'+(i>-1?(i+1):"")+'</code><span>'+esc(s.name||"Untitled")+'</span></label>';
+      }).join("")+'</div>'+
+      '<p class="hintline">Numbered in the order you tick them. Put a matching number, or the name, on each melt.</p></div>'+
+    '<div class="ctrlrow">'+
+      '<div class="field" style="flex:0 0 110px"><label class="f" for="pk-w">Panel width mm</label><input type="number" id="pk-w" min="30" max="150" step="1" value="'+p.w+'"></div>'+
+      '<div class="field" style="flex:0 0 110px"><label class="f" for="pk-h">Panel height mm</label><input type="number" id="pk-h" min="30" max="200" step="1" value="'+p.h+'"></div>'+
+      '<div class="field" style="flex:0 0 110px"><label class="f" for="pk-fs">Text size</label><select id="pk-fs">'+
+        [6,6.5,7,7.5,8].map(v=>'<option value="'+v+'"'+(+p.fs===v?" selected":"")+'>'+v+' pt</option>').join("")+'</select></div>'+
+    '</div>'+
+    '<p class="hintline">A panel is one fold of the sticker. Measure the space on the back of the clamshell: that is the panel size, and the strip folds down to it.</p>'+
+    '<div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:12px"><button class="btn btn-ghost btn-sm" id="pk-dup" type="button">Duplicate</button>'+
+    '<button class="btn btn-danger btn-sm" id="pk-del" type="button">Delete this pack</button></div>';
+  wirePackEditor();
+}
+function wirePackEditor(){
+  const p=packDraft;
+  const upd=()=>{ renderPackPreview(); renderPacks(); queuePackSave(); };
+  $("#pk-name").addEventListener("input",e=>{p.name=e.target.value;$("#packTitle").textContent=p.name||"Untitled pack";upd()});
+  $("#pk-qty").addEventListener("input",e=>{p.qty=e.target.value;upd()});
+  $("#pk-w").addEventListener("change",e=>{p.w=Math.min(150,Math.max(30,+e.target.value||70));e.target.value=p.w;upd()});
+  $("#pk-h").addEventListener("change",e=>{p.h=Math.min(200,Math.max(30,+e.target.value||95));e.target.value=p.h;upd()});
+  $("#pk-fs").addEventListener("change",e=>{p.fs=+e.target.value;upd()});
+  $("#pk-search").addEventListener("input",e=>{
+    p._q=e.target.value; const pos=e.target.selectionStart;
+    renderPackEditor(); const s=$("#pk-search"); s.focus(); s.setSelectionRange(pos,pos);
+  });
+  $("#pk-scents").addEventListener("change",e=>{
+    const id=e.target.value;
+    if(e.target.checked){ if(!p.scents.includes(id)) p.scents.push(id); }
+    else p.scents=p.scents.filter(x=>x!==id);
+    const top=$("#pk-scents").scrollTop;
+    renderPackEditor(); $("#pk-scents").scrollTop=top; upd();
+  });
+  $("#pk-del").addEventListener("click",()=>delPack(p.id));
+  $("#pk-dup").addEventListener("click",()=>{
+    const c={...p,id:uid(),name:(p.name||"Untitled pack")+" (copy)",scents:[...p.scents]}; delete c._q;
+    state.packs.push(c); selectPack(c.id); queuePackSave(true);
+  });
+}
+function selectPack(id){
+  const p=state.packs.find(x=>x.id===id);
+  packDraft=p?JSON.parse(JSON.stringify(p)):null;
+  renderPacks(); renderPackEditor(); renderPackPreview();
+}
+function delPack(id){
+  state.packs=state.packs.filter(p=>p.id!==id);
+  if(packDraft&&packDraft.id===id) packDraft=null;
+  selectPack(state.packs.length?state.packs[0].id:null);
+  queuePackSave(true);
+}
+function cleanPack(p){ const c={...p}; delete c._q; return c; }
+function queuePackSave(now){
+  if(packDraft){
+    const i=state.packs.findIndex(x=>x.id===packDraft.id);
+    if(i>-1) state.packs[i]=cleanPack(packDraft);
+  }
+  lsWrite();
+  clearTimeout(packTimer);
+  const go=()=>send("PUT",{packs:state.packs.map(cleanPack)},"The sample packs were not saved").catch(()=>{});
+  if(now) go(); else packTimer=setTimeout(go,650);
+}
+function renderPackPreview(){
+  const stage=$("#packStage"), fit=$("#packFit"), ul=$("#packChecks");
+  if(!packDraft){
+    stage.innerHTML='<div class="empty-list" style="background:transparent">Pick a pack, or add one.</div>';
+    fit.textContent=""; ul.innerHTML=""; return;
+  }
+  const p=packDraft;
+  const lay=packLayout(p);
+  stage.innerHTML=stripHTML(p,lay.panels);
+  const w=(lay.panels.length*p.w).toFixed(0);
+  fit.textContent=lay.panels.length+" panel"+(lay.panels.length===1?"":"s")+" — the strip is "+w+" × "+p.h+" mm flat"+
+    (lay.panels.length>lay.across?" (two rows on A4)":"")+". Dashed lines are the folds.";
+  const items=packChecks(p,lay);
+  ul.innerHTML=items.map(c=>'<li class="'+c.s+'"><span class="mk">'+(c.s==="ok"?"✓":c.s==="warn"?"!":"✕")+'</span><span>'+esc(c.t)+'</span></li>').join("");
+  renderPackSheet();
+}
+/* What Ctrl+P prints while this tab is open: the chosen pack, N times, on landscape A4. */
+function renderPackSheet(){
+  const out=$("#sheet-out"), g=$("#sheetGrid");
+  out.classList.add("packs");
+  g.style.gridTemplateColumns="1fr"; g.style.setProperty("--gap","4mm");
+  if(!packDraft){ g.innerHTML=""; return; }
+  const copies=Math.min(50,Math.max(1,+$("#packCopies").value||1));
+  const lay=packLayout(packDraft);
+  let html="";
+  for(let i=0;i<copies;i++) html+='<div class="strip-copy">'+stripHTML(packDraft,lay.panels)+'</div>';
+  g.innerHTML=html;
 }
 
 /* tabs */
@@ -427,8 +651,9 @@ function setTab(t){
   state.tab=t; document.body.dataset.tab=t;
   $$(".tabrow button").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.tab===t)));
   $$(".panel").forEach(p=>{p.hidden=p.id!=="p-"+t});
-  if(t==="sheet") renderSheet();
-  if(t==="guide") $("#ioBox").value=JSON.stringify({biz:state.biz,scents:state.scents},null,1);
+  if(t==="sheet"){ $("#sheet-out").classList.remove("packs"); renderSheet(); }
+  if(t==="packs"){ renderPacks(); renderPackPreview(); }
+  if(t==="guide") $("#ioBox").value=JSON.stringify({biz:state.biz,scents:state.scents,packs:state.packs},null,1);
 }
 $$(".tabrow button").forEach(b=>b.addEventListener("click",()=>setTab(b.dataset.tab)));
 
@@ -456,6 +681,22 @@ $("#qtyBody").addEventListener("input",e=>{
   state.qty[i.dataset.qty]=Math.max(0,Math.min(200,+i.value||0)); renderSheet();
 });
 $("#clearQty").addEventListener("click",()=>{state.qty={};renderQty()});
+$("#printSheet").addEventListener("click",()=>{ $("#sheet-out").classList.remove("packs"); renderSheet(); window.print(); });
+$("#addPack").addEventListener("click",()=>{
+  const n=blankPack(); state.packs.push(n); selectPack(n.id); queuePackSave(true);
+  setTimeout(()=>$("#pk-name")&&$("#pk-name").focus(),30);
+});
+$("#packSearch").addEventListener("input",renderPacks);
+$("#packList").addEventListener("click",e=>{
+  const p=e.target.closest("[data-pack]"); if(p) return selectPack(p.dataset.pack);
+  const d=e.target.closest("[data-delpack]"); if(d) delPack(d.dataset.delpack);
+});
+$("#packCopies").addEventListener("change",renderPackSheet);
+$("#printPacks").addEventListener("click",()=>{ renderPackSheet(); window.print(); });
+/* Ctrl+P prints whatever the open tab is about. */
+addEventListener("beforeprint",()=>{ if(state.tab==="packs") renderPackSheet(); else { $("#sheet-out").classList.remove("packs"); renderSheet(); } });
+/* Measurements depend on the real font, so lay out again once it has arrived. */
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ if(state.tab==="packs") renderPackPreview(); renderPreview(); });
 $("#ioCopy").addEventListener("click",async()=>{
   try{ await navigator.clipboard.writeText($("#ioBox").value); $("#ioMsg").textContent="Copied."; }
   catch(e){ $("#ioBox").select(); $("#ioMsg").textContent="Press Ctrl+C to copy."; }
@@ -466,12 +707,13 @@ $("#ioLoad").addEventListener("click",()=>{
     const d=JSON.parse($("#ioBox").value);
     if(d.biz) state.biz={...state.biz,...d.biz};
     if(Array.isArray(d.scents)) state.scents=d.scents.map(s=>({...blank(),...s,id:s.id||uid()}));
+    if(Array.isArray(d.packs)) state.packs=d.packs.map(p=>({...blankPack(),...p,id:p.id||uid()}));
     lsWrite();
     select(state.scents.length?state.scents[0].id:null);
     renderBiz(); renderQty(); renderPreview();
     $("#ioMsg").textContent="Loaded "+state.scents.length+" fragrances. Saving…";
     /* Replaces the stored list outright, which is what loading a backup means. */
-    send("PUT",{business:state.biz,labels:state.scents},"The list was not saved")
+    send("PUT",{business:state.biz,labels:state.scents,packs:state.packs.map(cleanPack)},"The list was not saved")
       .then(()=>{ $("#ioMsg").textContent="Loaded and saved "+state.scents.length+" fragrances."; })
       .catch(e=>{ $("#ioMsg").textContent="Loaded on screen, but not saved: "+e.message; });
   }catch(e){ $("#ioMsg").textContent="That isn't valid data."; }
@@ -480,15 +722,17 @@ $("#ioLoad").addEventListener("click",()=>{
 
 /* ---------------------------------------------------------------- boot */
 const cached=lsRead();
-if(cached){ if(cached.biz) state.biz={...state.biz,...cached.biz}; if(Array.isArray(cached.scents)) state.scents=cached.scents; }
+if(cached){ if(cached.biz) state.biz={...state.biz,...cached.biz}; if(Array.isArray(cached.scents)) state.scents=cached.scents; if(Array.isArray(cached.packs)) state.packs=cached.packs; }
 renderBiz(); renderScents(); renderEditor(); renderPreview(); renderQty(); setTab("labels");
 
 (async()=>{
   saveState("busy","Loading…");
   try{
-    const { business, labels } = await api("GET");
+    const { business, labels, packs } = await api("GET");
     if(business) state.biz={...state.biz,...business};
     if(Array.isArray(labels)) state.scents=labels.map(s=>({...blank(),...s}));
+    if(Array.isArray(packs)) state.packs=packs.map(p=>({...blankPack(),...p}));
+    if(packDraft&&!state.packs.some(p=>p.id===packDraft.id)) packDraft=null;
     lsWrite();
     if(state.selId&&!state.scents.some(s=>s.id===state.selId)) state.selId=null;
     renderBiz(); renderScents(); renderQty();

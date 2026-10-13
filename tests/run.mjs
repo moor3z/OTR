@@ -133,5 +133,17 @@ ok('a label can be deleted', r.status === 200 && (await j('/api/admin/clp')).bod
 r = await fetch(BASE + '/api/admin/clp', { method: 'POST', body: '{}', headers: { 'content-type': 'application/json' } });
 ok('CLP writes without the CSRF header are blocked', r.status === 403);
 
+// Sample packs: a list of label ids plus a panel size, saved as a whole.
+const ids = clp.labels.slice(0, 3).map((l) => l.id);
+r = await j('/api/admin/clp', { method: 'PUT', body: JSON.stringify({ packs: [{ id: 'pack-a', name: 'Trio', qty: '3 × 10 g', scents: [...ids, 'no such label', 'bad id!'], w: 70, h: 95, fs: 7 }] }) });
+ok('a sample pack is saved with its fragrances in order', r.status === 200 && r.body.packs.length === 1 && r.body.packs[0].scents.join() === ids.join(), JSON.stringify(r.body.packs));
+ok('an invalid fragrance id in a pack is dropped', r.body.packs[0].scents.length === 3);
+r = await j('/api/admin/clp', { method: 'PUT', body: JSON.stringify({ packs: [{ id: 'pack-a', name: 'Huge', scents: ids, w: 9999, h: -5, fs: 40 }] }) });
+ok('pack panel sizes are clamped to sane values', r.body.packs[0].w === 150 && r.body.packs[0].h === 30 && r.body.packs[0].fs === 10, JSON.stringify(r.body.packs[0]));
+r = await j('/api/admin/clp', { method: 'PUT', body: JSON.stringify({ packs: [{ id: 'x', scents: [] }, { id: 'x', scents: [] }] }) });
+ok('two packs with the same id are rejected', r.status === 422);
+r = await j('/api/admin/clp', { method: 'PUT', body: JSON.stringify({ packs: [] }) });
+ok('the pack list can be cleared', r.status === 200 && r.body.packs.length === 0 && r.body.labels.length === 59);
+
 console.log(`\n${pass} passed, ${failN} failed`);
 process.exit(failN ? 1 : 0);
