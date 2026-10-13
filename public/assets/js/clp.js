@@ -67,9 +67,9 @@ const SIZES=[
  {id:"most",label:"70 × 90 mm — fits all but Clean Cotton",w:70,h:90,ok:true},
  {id:"roomy",label:"60 × 80 mm",w:60,h:80,ok:true},
  {id:"clp",label:"52 × 74 mm — the CLP minimum",w:52,h:74,ok:true},
- {id:"l7165",label:"99.1 × 67.7 mm — Avery L7165, 8 per sheet",w:99.1,h:67.7,ok:false,why:"6 mm under the 74 mm minimum height, though much larger in area",
+ {id:"l7165",label:"99 × 68 mm — sticker sheets, 8 per sheet (Avery L7165 size, 99.1 × 67.7)",w:99.1,h:67.7,ok:false,why:"6 mm under the 74 mm minimum height, though much larger in area",
   sheet:{cols:2,rows:4,left:4.65,top:13.1,pitchX:101.6,pitchY:67.7}},
- {id:"l7160",label:"63.5 × 38.1 mm — Avery L7160, 21 per sheet",w:63.5,h:38.1,ok:false,why:"under the 52 × 74 mm minimum in both directions",
+ {id:"l7160",label:"63 × 38 mm — your small sticker sheets (21 per sheet, Avery L7160 size, 63.5 × 38.1)",w:63.5,h:38.1,ok:false,why:"under the 52 × 74 mm minimum in both directions",
   sheet:{cols:3,rows:7,left:7.2,top:15.1,pitchX:66,pitchY:38.1}},
  {id:"small",label:"45 × 60 mm — small packs only",w:45,h:60,ok:false,why:"under the 52 × 74 mm minimum"}
 ];
