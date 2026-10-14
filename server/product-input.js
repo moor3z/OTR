@@ -18,7 +18,18 @@ export function parseProduct(body, productId) {
     image_url: clean(body.image_url, 500), option_name: clean(body.option_name, 40),
     hidden: body.hidden ? 1 : 0, sold_out: body.sold_out ? 1 : 0, featured: body.featured ? 1 : 0,
     sort: Number.isInteger(body.sort) ? body.sort : 0,
+    // Multi-buy: "any 2 hearts for £5". Group is a plain word like "hearts";
+    // blank means the deal is for this product alone. Both numbers or neither.
+    deal_group: clean(body.deal_group, 40).replace(/\s+/g, ' '),
+    deal_qty: Number(body.deal_qty) || 0,
+    deal_pence: Number(body.deal_pence) || 0,
   };
+  if (p.deal_qty || p.deal_pence) {
+    if (!Number.isInteger(p.deal_qty) || p.deal_qty < 2 || p.deal_qty > 20) fields.deal_qty = 'The deal quantity must be a whole number from 2 to 20 (e.g. 2 for "2 for £5").';
+    if (!Number.isInteger(p.deal_pence) || p.deal_pence < 30 || p.deal_pence > 100000) fields.deal_pence = 'Enter the deal price in pounds, between £0.30 and £1,000.';
+  } else {
+    p.deal_group = '';
+  }
   if (p.name.length < 2) fields.name = 'Enter a product name.';
   if (!CATEGORIES.some((c) => c.id === p.category)) fields.category = 'Choose a category.';
   if (!okImage(p.image_url)) fields.image_url = 'Image must be an uploaded image or an https:// address.';
@@ -36,4 +47,14 @@ export function parseProduct(body, productId) {
   if (raw.length > 1 && !p.option_name) p.option_name = 'Option';
   if (Object.keys(fields).length) throw httpError(422, 'Please check the highlighted fields.', { fields });
   return { p, variants, newVariantId: (pid) => `${pid}--${randomId(4)}` };
+}
+
+// A deal group is one deal: "any 2 hearts for £5" has to mean the same on
+// every heart. Saving a product with a group therefore sets the same quantity
+// and price on every other product in that group, so Michelle changes the
+// deal once rather than on each product in turn.
+export function spreadDeal(db, p, id) {
+  if (!p.deal_group || !p.deal_qty) return [];
+  return [db.prepare(`UPDATE products SET deal_qty=?, deal_pence=? WHERE lower(deal_group)=lower(?) AND id<>?`)
+    .bind(p.deal_qty, p.deal_pence, p.deal_group, id)];
 }

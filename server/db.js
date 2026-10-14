@@ -14,7 +14,8 @@ const SCHEMA = [
      image_url TEXT NOT NULL DEFAULT '', option_name TEXT NOT NULL DEFAULT '',
      hidden INTEGER NOT NULL DEFAULT 0, sold_out INTEGER NOT NULL DEFAULT 0,
      featured INTEGER NOT NULL DEFAULT 0, is_sample INTEGER NOT NULL DEFAULT 0,
-     sort INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL)`,
+     sort INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL,
+     deal_group TEXT NOT NULL DEFAULT '', deal_qty INTEGER NOT NULL DEFAULT 0, deal_pence INTEGER NOT NULL DEFAULT 0)`,
   `CREATE TABLE IF NOT EXISTS variants (
      id TEXT PRIMARY KEY, product_id TEXT NOT NULL, label TEXT NOT NULL,
      price_pence INTEGER NOT NULL, stock INTEGER NOT NULL DEFAULT 0,
@@ -34,7 +35,8 @@ const SCHEMA = [
      subtotal_pence INTEGER NOT NULL, delivery_pence INTEGER NOT NULL, total_pence INTEGER NOT NULL,
      currency TEXT NOT NULL DEFAULT 'gbp',
      stock_deducted INTEGER NOT NULL DEFAULT 0, email_sent INTEGER NOT NULL DEFAULT 0,
-     admin_note TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL, paid_at TEXT)`,
+     admin_note TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL, paid_at TEXT,
+     discount_pence INTEGER NOT NULL DEFAULT 0, deals TEXT NOT NULL DEFAULT '[]')`,
   `CREATE INDEX IF NOT EXISTS idx_orders_created ON orders(created_at)`,
   `CREATE TABLE IF NOT EXISTS stripe_events (id TEXT PRIMARY KEY, type TEXT NOT NULL, received_at TEXT NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS pages (
@@ -65,9 +67,31 @@ export function getDb(env) {
 
 async function init(db) {
   await db.batch(SCHEMA.map((s) => db.prepare(s)));
+  await addColumns(db);
   const seeded = await db.prepare(`SELECT value FROM settings WHERE key='seeded'`).first();
   if (!seeded) await seed(db);
   await migrateContent(db);
+}
+
+// CREATE TABLE IF NOT EXISTS leaves an existing table alone, so columns added
+// after a database was first created have to be bolted on here. Each is
+// checked against the live table, so this is safe to run every time.
+const ADDED_COLUMNS = [
+  ['products', 'deal_group', `TEXT NOT NULL DEFAULT ''`],
+  ['products', 'deal_qty', `INTEGER NOT NULL DEFAULT 0`],
+  ['products', 'deal_pence', `INTEGER NOT NULL DEFAULT 0`],
+  ['orders', 'discount_pence', `INTEGER NOT NULL DEFAULT 0`],
+  ['orders', 'deals', `TEXT NOT NULL DEFAULT '[]'`],
+];
+async function addColumns(db) {
+  const have = {};
+  for (const table of [...new Set(ADDED_COLUMNS.map((c) => c[0]))]) {
+    const { results } = await db.prepare(`PRAGMA table_info(${table})`).all();
+    have[table] = new Set(results.map((r) => r.name));
+  }
+  const stmts = ADDED_COLUMNS.filter(([t, c]) => !have[t].has(c))
+    .map(([t, c, def]) => db.prepare(`ALTER TABLE ${t} ADD COLUMN ${c} ${def}`));
+  if (stmts.length) await db.batch(stmts);
 }
 
 // One-off content additions for databases created before a feature existed.
@@ -208,6 +232,21 @@ export async function loadProducts(db, { includeHidden = false, id = null } = {}
   return prods.results.map((p) => shapeProduct(p, byProduct[p.id] || [], includeHidden));
 }
 
+// The multi-buy deal on a product, or null. Products sharing a deal_group
+// mix and match ("any 2 hearts for £5"); a product with a quantity and price
+// but no group has a deal of its own.
+export function dealOf(p) {
+  const qty = Number(p.deal_qty) || 0, pence = Number(p.deal_pence) || 0;
+  if (qty < 2 || pence <= 0) return null;
+  const group = String(p.deal_group || '').trim();
+  const price = pence % 100 ? '£' + (pence / 100).toFixed(2) : '£' + (pence / 100);
+  return {
+    key: group ? 'g:' + group.toLowerCase() : 'p:' + p.id,
+    group, qty, pence,
+    label: group ? `Any ${qty} ${group} for ${price}` : `${qty} for ${price}`,
+  };
+}
+
 function shapeProduct(p, variants, admin) {
   const vs = variants.map((v) => ({
     id: v.id, label: v.label, price_pence: v.price_pence,
@@ -217,6 +256,7 @@ function shapeProduct(p, variants, admin) {
   const out = {
     id: p.id, name: p.name, category: p.category,
     scents: p.scents ? p.scents.split(',').filter(Boolean) : [],
+    deal: dealOf(p),
     short_desc: p.short_desc, description: p.description, weight: p.weight,
     usage: p.usage, safety: p.safety, image_url: p.image_url, option_name: p.option_name,
     featured: !!p.featured, sold_out: !!p.sold_out,

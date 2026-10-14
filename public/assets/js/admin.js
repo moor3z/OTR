@@ -55,7 +55,7 @@ async function openOrder(id) {
       <dt>Deliver to</dt><dd>${[o.name, a.line1, a.line2, a.city, a.county, a.postcode].filter(Boolean).map(esc).join('<br>')}</dd>
       ${o.payment_intent ? `<dt>Stripe ref</dt><dd>${esc(o.payment_intent)}<br><a class="btn btn-ghost btn-sm" style="margin-top:.375rem" href="https://dashboard.stripe.com/${o.mode === 'live' ? '' : 'test/'}payments/${encodeURIComponent(o.payment_intent)}" target="_blank" rel="noopener">Open payment in Stripe</a></dd>` : ''}</dl>
     <ul class="rows">${o.items.map((i) => `<li class="row order"><div><span class="row-title">${esc(i.name)}${i.label ? ` (${esc(i.label)})` : ''}</span><p class="row-sub">${i.qty} × ${gbp(i.unit_pence)}</p></div><strong>${gbp(i.line_pence)}</strong></li>`).join('')}</ul>
-    <dl class="kv"><dt>Subtotal</dt><dd>${gbp(o.subtotal_pence)}</dd><dt>Delivery</dt><dd>${gbp(o.delivery_pence)}</dd><dt><strong>Total</strong></dt><dd><strong>${gbp(o.total_pence)}</strong></dd></dl>
+    <dl class="kv">${o.discount_pence > 0 ? `<dt>Multi-buy saving</dt><dd>&minus;${gbp(o.discount_pence)}${o.deals && o.deals.length ? ` <span class="muted">(${esc(o.deals.map((d) => d.label).join(', '))})</span>` : ''}</dd>` : ''}<dt>Subtotal</dt><dd>${gbp(o.subtotal_pence)}</dd><dt>Delivery</dt><dd>${gbp(o.delivery_pence)}</dd><dt><strong>Total</strong></dt><dd><strong>${gbp(o.total_pence)}</strong></dd></dl>
     <div class="field"><label for="fulfilment">Fulfilment status</label><select id="fulfilment">${FULFILMENT.map((f) => `<option${f === o.fulfilment ? ' selected' : ''}>${f}</option>`).join('')}</select></div>
     <div class="field"><label for="note">Private note</label><textarea id="note">${esc(o.admin_note)}</textarea></div>
     <div class="editor-actions"><button class="btn btn-primary" type="submit" value="save">Save order</button><button class="btn btn-ghost" type="button" data-close>Close</button>
@@ -135,7 +135,7 @@ function showProducts(reload = true) {
       </div>
       <p class="muted small" role="status">${list.length} of ${products.length} products</p>
       ${list.length ? `<ul class="rows">${list.map((p) => `<li class="row"><img src="${esc(p.image_url || '/assets/ph/blank.svg')}" alt="">
-        <div><span class="row-title">${esc(p.name)}</span> ${p.is_sample ? '<span class="tag sample">Sample</span>' : ''}${p.hidden ? '<span class="tag hidden">Hidden</span>' : ''}${p.variants.some((v) => !v.price_pence) ? '<span class="tag warn">Needs price</span>' : ''}${!p.image_url ? '<span class="tag">No photo</span>' : ''}${p.sold_out ? '<span class="tag warn">Marked sold out</span>' : !p.available ? '<span class="tag warn">Out of stock</span>' : ''}${p.scents.filter((s) => s === 'halloween' || s === 'christmas').map((s) => `<span class="tag">${s[0].toUpperCase() + s.slice(1)}</span>`).join('')}
+        <div><span class="row-title">${esc(p.name)}</span> ${p.is_sample ? '<span class="tag sample">Sample</span>' : ''}${p.hidden ? '<span class="tag hidden">Hidden</span>' : ''}${p.variants.some((v) => !v.price_pence) ? '<span class="tag warn">Needs price</span>' : ''}${!p.image_url ? '<span class="tag">No photo</span>' : ''}${p.sold_out ? '<span class="tag warn">Marked sold out</span>' : !p.available ? '<span class="tag warn">Out of stock</span>' : ''}${p.scents.filter((s) => s === 'halloween' || s === 'christmas').map((s) => `<span class="tag">${s[0].toUpperCase() + s.slice(1)}</span>`).join('')}${p.deal ? `<span class="tag paid">${esc(p.deal.label)}</span>` : ''}
           <p class="row-sub">${p.variants.map((v) => `${p.variants.length > 1 ? esc(v.label) + ' ' : ''}${gbp(v.price_pence)}, ${v.stock} in stock`).join(' | ')}</p></div>
         <button class="btn btn-ghost btn-sm" data-product="${esc(p.id)}">Edit</button></li>`).join('')}</ul>` : `<div class="empty"><p>${products.length ? 'No products match those filters.' : 'No products yet. Add your first one.'}</p></div>`}`;
     const search = $('#pf-q');
@@ -178,6 +178,16 @@ function openProduct(p) {
     <div id="variants">${p.variants.map((v) => variantRow(v, multi)).join('')}</div>
     <button type="button" class="btn btn-ghost btn-sm" id="add-variant"${multi ? '' : ' hidden'}>Add another option</button>
 
+    <details class="help" id="deal-details"${p.deal ? ' open' : ''}><summary>Multi-buy deal (e.g. any 2 for £5)</summary>
+      <p class="small">Leave blank for no deal. To let customers mix and match, give every product in the deal the same <strong>group</strong> word, like <em>hearts</em> — the deal then reads "Any 2 hearts for £5" and works across scents. Change the quantity or price on one product and every product in that group follows. With no group, the deal is for this product only.</p>
+      <div class="variant is-multi" style="align-items:flex-end">
+        ${field('p-deal-group', 'Group', 'e.g. hearts, snap bars', `<input id="p-deal-group" type="text" maxlength="40" list="deal-groups" value="${esc(p.deal?.group || '')}" placeholder="hearts"><datalist id="deal-groups">${[...new Set(products.map((x) => x.deal?.group).filter(Boolean))].map((g) => `<option value="${esc(g)}">`).join('')}</datalist>`)}
+        ${field('p-deal-qty', 'Any', 'how many', `<input id="p-deal-qty" type="number" min="2" max="20" step="1" value="${p.deal ? p.deal.qty : ''}" placeholder="2">`)}
+        ${field('p-deal-price', 'for £', 'deal price', `<input id="p-deal-price" type="text" inputmode="decimal" value="${p.deal ? (p.deal.pence / 100).toFixed(2) : ''}" placeholder="5.00">`)}
+      </div>
+      <p class="small muted" id="deal-preview"></p>
+    </details>
+
     <h3 class="form-section">3. Descriptions</h3>
     ${field('p-short', 'Short description', 'One line, shown under the name on the shop page', `<input id="p-short" type="text" maxlength="200" value="${esc(p.short_desc)}" placeholder="e.g. Sweet cherries with a creamy vanilla finish.">`)}
     ${field('p-desc', 'Full description', 'Shown on the product page under “About this scent”', `<textarea id="p-desc" placeholder="A few sentences about the scent, when it suits, and what makes it special.">${esc(p.description)}</textarea>`)}
@@ -206,6 +216,11 @@ function openProduct(p) {
   $('#add-variant').onclick = () => $('#variants').insertAdjacentHTML('beforeend', variantRow({}, true));
   $('#variants').onclick = (e) => { if (e.target.closest('[data-remove-variant]') && $('#variants').children.length > 1) e.target.closest('.variant').remove(); };
   if (!p.usage && !p.safety && !isNew) $('#more-details').open = true;
+  const dealPreview = () => {
+    const g = $('#p-deal-group').value.trim(), q = parseInt($('#p-deal-qty').value, 10), pr = toPence($('#p-deal-price').value);
+    $('#deal-preview').textContent = q >= 2 && pr >= 30 ? `Customers will see: "${g ? `Any ${q} ${g} for ${pr % 100 ? gbp(pr) : '£' + pr / 100}` : `${q} for ${pr % 100 ? gbp(pr) : '£' + pr / 100}`}"` : (g || q || $('#p-deal-price').value ? 'Fill in both the quantity and the price for the deal to apply.' : '');
+  };
+  ['p-deal-group', 'p-deal-qty', 'p-deal-price'].forEach((id) => $('#' + id).addEventListener('input', dealPreview)); dealPreview();
   $('#p-file').onchange = async (e) => {
     const file = e.target.files[0]; if (!file) return;
     const note = $('#p-file-note'); note.textContent = 'Uploading…';
@@ -222,6 +237,8 @@ function openProduct(p) {
       scents: [...form.querySelectorAll('[name=scent]:checked')].map((c) => c.value), image_url: $('#p-image-url').value,
       short_desc: $('#p-short').value, description: $('#p-desc').value, option_name: isMulti ? $('#p-option').value : '', weight: $('#p-weight').value,
       usage: $('#p-usage').value, safety: $('#p-safety').value, featured: $('#p-featured').checked, sold_out: $('#p-soldout').checked, hidden: $('#p-hidden').checked,
+      deal_group: $('#p-deal-group').value, deal_qty: parseInt($('#p-deal-qty').value, 10) || 0,
+      deal_pence: $('#p-deal-price').value.trim() ? toPence($('#p-deal-price').value) : 0,
       variants: (isMulti ? rows : rows.slice(0, 1)).map((row) => ({ id: row.dataset.vid || undefined, label: isMulti ? $('[data-v=label]', row).value : 'Default', price_pence: toPence($('[data-v=price]', row).value), stock: parseInt($('[data-v=stock]', row).value, 10) })),
     };
     try { await api(isNew ? '/products' : `/products/${p.id}`, { method: isNew ? 'POST' : 'PUT', body }); editor.close(); flash('Product saved'); showProducts(); }
@@ -352,6 +369,7 @@ function showHelp() {
       <li><a href="#h-photo">add a photo or put a new scent on sale</a></li>
       <li><a href="#h-new">add a brand-new product</a></li>
       <li><a href="#h-soldout">mark something sold out or hide it</a></li>
+      <li><a href="#h-deal">set up a deal like "any 2 for £5"</a></li>
       <li><a href="#h-refund">refund or cancel an order</a></li>
       <li><a href="#h-notice">put a notice on the shop (e.g. Christmas last order date)</a></li>
       <li><a href="#h-pages">change the wording on a page or the FAQ</a></li>
@@ -366,6 +384,7 @@ function showHelp() {
   ${step('Change a price or stock number', ['' + tab('products') + ' → find the product (type its name in the search box) → <strong>Edit</strong>.', 'Change the number. Prices are in pounds, so 3.50 is £3.50.', 'Click <strong>Save product</strong>.'], 'h-price')}
   ${step('Add a photo, or put a new scent on sale', ['' + tab('products') + ' → click the <strong>Needs price or photo</strong> filter. It lists everything not finished yet.', 'Click <strong>Edit</strong> on one.', 'Under Image click <strong>Choose file</strong> and pick a photo. Square photos look best. It resizes itself, so any phone photo is fine.', 'Type the price and how many you have.', 'Check the short description (one line, shown on the shop page) and the full description.', 'Untick <strong>Hide from shop</strong>. Click <strong>Save product</strong>. Done: it is on the shop now.'], 'h-photo')}
   ${step('Add a brand-new product', ['' + tab('products') + ' → <strong>Add product</strong>.', 'Name, then choose the category (Snap Bars, Wax Melt Shapes, Sample Boxes, Gift Sets or Accessories).', 'Tick the scent filters that fit (Fresh, Floral, Fruity, Sweet, Halloween, Christmas). Halloween and Christmas also put it in the Seasonal section.', 'Only if it comes in sizes or scents: type what the customer picks (for example <em>Size</em>) and click <strong>Add another option</strong> for each one, each with its own price and stock.', 'Add a photo, price, stock and descriptions, then <strong>Save product</strong>.'], 'h-new')}
+  ${step('Set up a multi-buy deal, like "any 2 hearts for £5"', ['Open the product in ' + tab('products') + ' and open <strong>Multi-buy deal</strong> under the price.', 'Type a group word that all the products in the deal share, e.g. <strong>hearts</strong>, then the quantity (2) and the deal price (5.00). Save.', 'Do the same on every other heart, with the same group word. You only need to type the quantity and price once — saving one product in a group updates the rest.', 'Customers see "Any 2 hearts for £5" on the product and in the basket, and the saving comes off automatically at checkout. An odd one out is charged at full price.'], 'h-deal')}
   ${step('Mark something sold out, or take it off the shop', ['<strong>Edit</strong> the product.', 'Tick <strong>Mark as sold out</strong> to keep it on the shop with a Sold out label (good for “back soon”). Tick <strong>Hide from shop</strong> to remove it completely.', 'Untick the box when it is back. <strong>Save product</strong>.'], 'h-soldout')}
   ${step('Choose what shows on the homepage', ['<strong>Edit</strong> a product and tick <strong>Feature on homepage</strong>. The first eight featured products show on the front page.', 'The <strong>Position</strong> number sets the order everywhere. Lower numbers come first, so 1 is the top.'])}
   </div>

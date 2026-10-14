@@ -13,10 +13,10 @@ function encodeForm(obj, prefix, out = []) {
   return out;
 }
 
-export async function createCheckoutSession(env, params, idempotencyKey) {
+async function post(env, path, params, idempotencyKey) {
   // STRIPE_API_BASE exists only so the automated tests can point at a local mock.
   const base = env.STRIPE_API_BASE || 'https://api.stripe.com';
-  const res = await fetch(`${base}/v1/checkout/sessions`, {
+  const res = await fetch(`${base}${path}`, {
     method: 'POST',
     headers: {
       authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
@@ -32,6 +32,14 @@ export async function createCheckoutSession(env, params, idempotencyKey) {
   }
   return data;
 }
+
+export const createCheckoutSession = (env, params, idempotencyKey) => post(env, '/v1/checkout/sessions', params, idempotencyKey);
+
+// A multi-buy saving is passed to Checkout as a single-use coupon, so the
+// payment page shows the items at full price and the saving as its own line,
+// and Stripe's total matches the order total we stored.
+export const createDiscountCoupon = (env, amountPence, name, idempotencyKey) =>
+  post(env, '/v1/coupons', { amount_off: amountPence, currency: 'gbp', duration: 'once', name, max_redemptions: 1 }, idempotencyKey);
 
 const enc = new TextEncoder();
 const hex = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');

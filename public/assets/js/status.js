@@ -1,4 +1,4 @@
-import { api, basket, gbp, esc, $ } from './site.js?v=42';
+import { api, basket, gbp, esc, $ } from './site.js?v=43';
 
 const root = $('#status-root'), view = root.dataset.view;
 const token = new URLSearchParams(location.search).get('token') || '';
@@ -6,7 +6,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const summary = (o) => `<div class="summary-box"><h2>Order ${esc(o.ref)}</h2>
   <ul class="lines">${o.items.map((i) => `<li style="display:flex;justify-content:space-between;gap:1rem;padding:.4rem 0"><span>${esc(i.name)}${i.label ? ` (${esc(i.label)})` : ''} × ${i.qty}</span><strong>${gbp(i.line_pence)}</strong></li>`).join('')}</ul>
-  <dl class="totals"><div><dt>Subtotal</dt><dd>${gbp(o.subtotal_pence)}</dd></div><div><dt>Delivery</dt><dd>${o.delivery_pence ? gbp(o.delivery_pence) : 'Free'}</dd></div>
+  <dl class="totals">${o.discount_pence > 0 ? `<div class="saving"><dt>Multi-buy saving${o.deals && o.deals.length ? ` (${esc(o.deals.map((d) => d.label).join(', '))})` : ''}</dt><dd>&minus;${gbp(o.discount_pence)}</dd></div>` : ''}<div><dt>Subtotal</dt><dd>${gbp(o.subtotal_pence)}</dd></div><div><dt>Delivery</dt><dd>${o.delivery_pence ? gbp(o.delivery_pence) : 'Free'}</dd></div>
   <div class="grand"><dt>Total</dt><dd>${gbp(o.total_pence)}</dd></div></dl></div>`;
 
 const views = {

@@ -1,5 +1,5 @@
-import { api, basket, gbp, esc, $ } from './site.js?v=42';
-import { totalsHtml } from './basket.js?v=42';
+import { api, basket, gbp, esc, $ } from './site.js?v=43';
+import { totalsHtml, dealHints } from './basket.js?v=43';
 
 const form = $('#checkout-form'), btn = $('#pay-btn'), errBox = $('#form-error');
 const SAVED = 'otr_checkout_details';
@@ -16,7 +16,7 @@ if (!basket.read().length) {
 
   api('/api/quote', { method: 'POST', body: JSON.stringify({ items: basket.payload() }) }).then((q) => {
     if (!q.ok) { location.replace('/basket'); return; }
-    $('#summary').innerHTML = `<ul class="lines">${q.lines.map((l) => `<li style="display:flex;justify-content:space-between;gap:1rem;padding:.5rem 0"><span>${esc(l.name)}${l.label ? ` <span class="muted">(${esc(l.label)})</span>` : ''} × ${l.qty}</span><strong>${gbp(l.line_pence)}</strong></li>`).join('')}</ul>${totalsHtml(q)}`;
+    $('#summary').innerHTML = `<ul class="lines">${q.lines.map((l) => `<li style="display:flex;justify-content:space-between;gap:1rem;padding:.5rem 0"><span>${esc(l.name)}${l.label ? ` <span class="muted">(${esc(l.label)})</span>` : ''} × ${l.qty}</span><strong>${gbp(l.line_pence)}</strong></li>`).join('')}</ul>${dealHints(q)}${totalsHtml(q)}`;
   }).catch((e) => { $('#summary').innerHTML = `<p class="field-error">${esc(e.message)}</p>`; });
 
   form.addEventListener('submit', async (e) => {

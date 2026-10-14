@@ -1,6 +1,17 @@
-OTR - COMPLETE CURRENT PROJECT (version 41)
+OTR - COMPLETE CURRENT PROJECT (version 43)
 
-New in v41: pre-cut label sheets. The label size list now has 63.5 x 38.1 mm
+New in v43: multi-buy deals. Admin -> Products -> open a product -> Multi-buy
+deal: a group word (e.g. hearts), a quantity (2) and a price (5.00). Every
+product with the same group word is in the same deal, mix and match, and
+saving one updates the rest. Customers see "Any 2 hearts for £5" on the
+product, the shop cards and the basket, with "add 1 more" nudges; the saving
+comes off at checkout and shows on the Stripe payment page as its own line.
+Odd ones out are charged at full price. Two new columns on products and two
+on orders add themselves on the first request after deploy.
+
+v42: the sticker-sheet sizes named the way the box names them.
+
+v41: pre-cut label sheets. The label size list now has 63.5 x 38.1 mm
 (Avery L7160 / "63 x 38" multipurpose, 21 per sheet) and 99.1 x 67.7 mm
 (L7165, 8 per sheet), and the print sheet puts each label exactly on its
 sticker, with nudge boxes for a printer that is a millimetre out. Wide labels
@@ -25,11 +36,11 @@ Make sure public/seasonal.html is NOT in the repo.
 No Cloudflare settings, environment variables or database changes.
 
 CHECK AFTER DEPLOY
-  Print sheet tab          - choose "63.5 x 38.1 mm - Avery L7160"; the gap
-                             box disappears and two nudge boxes appear
-  print one on plain paper - hold it against a label sheet; nudge if needed
-  a sensitiser (e.g. Clean Cotton) at that size shows in the red list, not
-  on the sheet
+  Admin -> Products -> a heart -> "Multi-buy deal": group hearts, 2, 5.00, Save
+  Do a second heart the same way (the price fills itself from the group)
+  Shop: both cards show "Any 2 hearts for £5"; put one in the basket and the
+  summary says "add 1 more"; put two in and it says "you save £1.00"
+  Checkout in Stripe test mode: the payment page shows the saving as a line
 
 STILL TO DO, AND IT MATTERS
   A telephone number. GB CLP requires one on the label and an email address

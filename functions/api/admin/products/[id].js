@@ -1,5 +1,5 @@
 import { getDb, loadProducts } from '../../../../server/db.js';
-import { parseProduct } from '../../../../server/product-input.js';
+import { parseProduct, spreadDeal } from '../../../../server/product-input.js';
 import { handle, json, fail, readJson } from '../../../../server/util.js';
 
 export const onRequestPut = handle(async ({ env, request, params }) => {
@@ -10,9 +10,10 @@ export const onRequestPut = handle(async ({ env, request, params }) => {
 
   const keepIds = variants.filter((v) => v.id).map((v) => v.id);
   const stmts = [db.prepare(
-    `UPDATE products SET name=?,category=?,scents=?,short_desc=?,description=?,weight=?,usage=?,safety=?,image_url=?,option_name=?,hidden=?,sold_out=?,featured=?,sort=?,is_sample=0 WHERE id=?`)
+    `UPDATE products SET name=?,category=?,scents=?,short_desc=?,description=?,weight=?,usage=?,safety=?,image_url=?,option_name=?,hidden=?,sold_out=?,featured=?,sort=?,is_sample=0,deal_group=?,deal_qty=?,deal_pence=? WHERE id=?`)
     .bind(p.name, p.category, p.scents.join(','), p.short_desc, p.description, p.weight, p.usage, p.safety,
-      p.image_url, p.option_name, p.hidden, p.sold_out, p.featured, p.sort, id)];
+      p.image_url, p.option_name, p.hidden, p.sold_out, p.featured, p.sort, p.deal_group, p.deal_qty, p.deal_pence, id)];
+  stmts.push(...spreadDeal(db, p, id));
   stmts.push(keepIds.length
     ? db.prepare(`DELETE FROM variants WHERE product_id=? AND id NOT IN (${keepIds.map(() => '?').join(',')})`).bind(id, ...keepIds)
     : db.prepare(`DELETE FROM variants WHERE product_id=?`).bind(id));

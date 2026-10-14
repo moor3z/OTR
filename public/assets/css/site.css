@@ -239,6 +239,14 @@ details.info div { padding-bottom: 1rem; white-space: pre-line; }
 .totals dt { font-weight: 400; } .totals dd { margin: 0; font-weight: 600; }
 .totals .grand { border-top: 2px solid var(--plum); margin-top: .5rem; padding-top: .75rem; font-size: 1.25rem; color: var(--plum); } .totals .grand dt { font-weight: 700; }
 .free-hint { background: var(--mint); color: #12391f; border-radius: var(--r-sm); padding: .625rem .875rem; font-size: .9375rem; font-weight: 500; margin: 0 0 .75rem; }
+/* Multi-buy deals */
+.deal-hint { background: var(--pink-soft, #ffe3f3); color: var(--plum); border-radius: var(--r-sm); padding: .625rem .875rem; font-size: .9375rem; margin: 0 0 .75rem; }
+.deal-hint.is-on { background: var(--mint); color: #12391f; }
+.totals .saving dd { color: #12391f; font-weight: 600; }
+.deal { display: flex; align-items: center; gap: .5rem; margin: -.25rem 0 .75rem; font-weight: 600; color: var(--plum); }
+.deal-tag, .badge.deal-badge { background: var(--pink, #ff89cd); color: var(--plum); }
+.deal-tag { font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: .2rem .5rem; border-radius: 999px; }
+.badge.deal-badge { top: auto; bottom: .625rem; }
 .summary-box { background: var(--blush); border-radius: var(--r-lg); padding: 1.5rem; }
 .two-col { display: grid; gap: 2rem; } @media (min-width: 900px) { .two-col { grid-template-columns: 1.4fr 1fr; align-items: start; gap: 3rem; } .two-col .summary-box { position: sticky; top: 150px; } }
 

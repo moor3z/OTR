@@ -1,13 +1,19 @@
 // Local stand-in for api.stripe.com, used ONLY by tests/run.mjs.
 import http from 'node:http';
-export const sessions = [];
+export const sessions = [], coupons = {};
 http.createServer((req, res) => {
   let body = ''; req.on('data', (c) => (body += c));
   req.on('end', () => {
     const f = new URLSearchParams(body);
+    if (req.url.startsWith('/v1/coupons')) {
+      const c = { id: 'co_' + Math.random().toString(36).slice(2), amount_off: Number(f.get('amount_off')), name: f.get('name'), form: Object.fromEntries(f) };
+      coupons[c.id] = c;
+      res.writeHead(200, { 'content-type': 'application/json' }); return res.end(JSON.stringify(c));
+    }
     const amount = [...f.keys()].filter((k) => /^line_items\[\d+\]\[quantity\]$/.test(k)).reduce((n, k) => {
       const i = k.match(/\d+/)[0]; return n + Number(f.get(k)) * Number(f.get(`line_items[${i}][price_data][unit_amount]`)); }, 0)
-      + Number(f.get('shipping_options[0][shipping_rate_data][fixed_amount][amount]'));
+      + Number(f.get('shipping_options[0][shipping_rate_data][fixed_amount][amount]'))
+      - (coupons[f.get('discounts[0][coupon]')]?.amount_off || 0);
     const s = { id: 'cs_test_' + Math.random().toString(36).slice(2), url: f.get('success_url'), cancel_url: f.get('cancel_url'), amount_total: amount,
       client_reference_id: f.get('client_reference_id'), auth: req.headers.authorization, form: Object.fromEntries(f) };
     sessions.push(s);

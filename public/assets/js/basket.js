@@ -1,13 +1,25 @@
-import { api, basket, lineHtml, wireLines, gbp, esc, $ } from './site.js?v=42';
+import { api, basket, lineHtml, wireLines, gbp, esc, $ } from './site.js?v=43';
 
 const root = $('#basket-root');
 let seq = 0;
 
 export function totalsHtml(q) {
+  const saving = q.discount_pence > 0;
   return `<dl class="totals">
+    ${saving ? `<div><dt>Items</dt><dd>${gbp(q.items_pence)}</dd></div>
+    <div class="saving"><dt>Multi-buy saving</dt><dd>&minus;${gbp(q.discount_pence)}</dd></div>` : ''}
     <div><dt>Subtotal</dt><dd>${gbp(q.subtotal_pence)}</dd></div>
     <div><dt>${esc(q.delivery_name || 'Delivery')}</dt><dd>${q.delivery_pence ? gbp(q.delivery_pence) : 'Free'}</dd></div>
     <div class="grand"><dt>Total</dt><dd>${gbp(q.total_pence)}</dd></div></dl>`;
+}
+
+// "Any 2 hearts for £5 — add 1 more" / "applied, saving £1.00". One line per deal in the basket.
+export function dealHints(q) {
+  return (q.deals || []).map((d) => {
+    const thing = d.group ? `of the ${esc(d.group)}` : 'of these';
+    if (d.need) return `<p class="deal-hint"><strong>${esc(d.label)}</strong> — add ${d.need} more ${thing} to get it${d.bundles ? ` again` : ''}.</p>`;
+    return `<p class="deal-hint is-on"><strong>${esc(d.label)}</strong> applied — you save ${gbp(d.saving_pence)}.</p>`;
+  }).join('');
 }
 
 async function render() {
@@ -35,6 +47,7 @@ async function render() {
       <p style="margin-top:1rem"><a href="/shop">Continue shopping</a></p>
     </div>
     <aside class="summary-box" aria-labelledby="sum-title"><h2 id="sum-title">Summary</h2>
+      ${dealHints(q)}
       ${q.to_free_delivery_pence > 0 ? `<p class="free-hint">Spend ${gbp(q.to_free_delivery_pence)} more for free UK delivery.</p>` : q.free_delivery ? `<p class="free-hint">You have free UK delivery.</p>` : ''}
       ${totalsHtml(q)}
       ${q.ok ? `<a class="btn btn-primary btn-block" href="/checkout">Checkout</a>` : `<button class="btn btn-block" disabled>Checkout</button>`}

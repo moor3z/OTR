@@ -1,4 +1,4 @@
-import { api, getConfig, productCard, wireAddButtons, addToBasket, gbp, esc, $ } from './site.js?v=42';
+import { api, getConfig, productCard, wireAddButtons, addToBasket, gbp, esc, $ } from './site.js?v=43';
 
 const id = decodeURIComponent(location.pathname.split('/')[2] || '') || new URLSearchParams(location.search).get('id') || '';
 const root = $('#product-root');
@@ -18,6 +18,7 @@ function render(p, cfg) {
     <div>
       <h1>${esc(p.name)}</h1>
       <p class="price" id="price" aria-live="polite"></p>
+      ${p.deal ? `<p class="deal"><span class="deal-tag">Deal</span> ${esc(p.deal.label)}${p.deal.group ? ' — mix and match any scents' : ''}</p>` : ''}
       <p>${esc(p.short_desc)}</p>
       ${multi ? `<fieldset class="options"><legend>${esc(p.option_name || 'Option')}</legend><div class="options-list">
         ${p.variants.map((v) => `<label class="option"><input type="radio" name="variant" value="${esc(v.id)}"${v === chosen ? ' checked' : ''}${v.available ? '' : ' disabled'}><span>${esc(v.label)}${v.available ? '' : ' (sold out)'}</span></label>`).join('')}

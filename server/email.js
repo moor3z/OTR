@@ -36,6 +36,7 @@ export async function sendOrderEmails(env, order, settings) {
   const addr = JSON.parse(order.address);
   const shop = settings.business_name || 'Over The Rainbow';
   const addrLines = [order.name, addr.line1, addr.line2, addr.city, addr.county, addr.postcode, 'United Kingdom'].filter(Boolean);
+  let dealNames = ''; try { dealNames = JSON.parse(order.deals || '[]').map((d) => d.label).join(', '); } catch { /* an old order without deals */ }
   const rows = items.map((i) =>
     `<tr><td style="padding:6px 0">${escapeHtml(i.name)}${i.label ? ' – ' + escapeHtml(i.label) : ''} × ${i.qty}</td>
      <td style="padding:6px 0;text-align:right">${gbp(i.line_pence)}</td></tr>`).join('');
@@ -43,6 +44,7 @@ export async function sendOrderEmails(env, order, settings) {
     <h1 style="font-size:20px">${heading}</h1>
     <p>${intro}</p>
     <table style="width:100%;border-collapse:collapse">${rows}
+      ${order.discount_pence > 0 ? `<tr><td style="padding:6px 0;border-top:1px solid #ddd">Multi-buy saving${dealNames ? ' (' + escapeHtml(dealNames) + ')' : ''}</td><td style="padding:6px 0;border-top:1px solid #ddd;text-align:right">&minus;${gbp(order.discount_pence)}</td></tr>` : ''}
       <tr><td style="padding:6px 0;border-top:1px solid #ddd">Delivery</td><td style="padding:6px 0;border-top:1px solid #ddd;text-align:right">${order.delivery_pence ? gbp(order.delivery_pence) : 'Free'}</td></tr>
       <tr><td style="padding:6px 0"><strong>Total paid</strong></td><td style="padding:6px 0;text-align:right"><strong>${gbp(order.total_pence)}</strong></td></tr>
     </table>
@@ -52,6 +54,7 @@ export async function sendOrderEmails(env, order, settings) {
     <p>${escapeHtml(shop)}</p></div>`;
   const text = (heading, intro) => [heading, '', intro, '',
     ...items.map((i) => `${i.name}${i.label ? ' – ' + i.label : ''} x ${i.qty}  ${gbp(i.line_pence)}`),
+    ...(order.discount_pence > 0 ? [`Multi-buy saving${dealNames ? ' (' + dealNames + ')' : ''}  -${gbp(order.discount_pence)}`] : []),
     `Delivery  ${order.delivery_pence ? gbp(order.delivery_pence) : 'Free'}`, `Total paid  ${gbp(order.total_pence)}`, '',
     'Delivering to:', ...addrLines, ...(order.phone ? ['', `Phone: ${order.phone}`] : []), '', settings.dispatch_estimate || '', shop].join('\n');
 

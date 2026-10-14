@@ -69,6 +69,7 @@ export function productCard(p) {
     <a class="card-media" href="${href}" tabindex="-1" aria-hidden="true">
       <img src="${esc(p.image_url || '/assets/ph/blank.svg')}" alt="" loading="lazy" decoding="async" width="400" height="400">
       ${p.available ? '' : '<span class="badge">Sold out</span>'}
+      ${p.available && p.deal ? `<span class="badge deal-badge">${esc(p.deal.label)}</span>` : ''}
     </a>
     <h3><a href="${href}">${esc(p.name)}</a></h3>
     <p class="card-desc">${esc(p.short_desc)}</p>

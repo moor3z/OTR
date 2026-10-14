@@ -1,6 +1,6 @@
 import { getDb, getSettings } from '../../server/db.js';
 import { priceBasket } from '../../server/pricing.js';
-import { createCheckoutSession } from '../../server/stripe.js';
+import { createCheckoutSession, createDiscountCoupon } from '../../server/stripe.js';
 import { handle, json, fail, readJson, clean, randomId, orderRef, paymentMode } from '../../server/util.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -46,10 +46,11 @@ export const onRequestPost = handle(async ({ env, request }) => {
   const address = { line1: v.line1, line2: v.line2, city: v.city, county: v.county, postcode: v.postcode, country: 'GB' };
 
   await db.prepare(
-    `INSERT INTO orders(id,ref,token,mode,status,email,name,phone,address,items,subtotal_pence,delivery_pence,total_pence,currency,created_at)
-     VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,'gbp',?)`)
+    `INSERT INTO orders(id,ref,token,mode,status,email,name,phone,address,items,subtotal_pence,delivery_pence,total_pence,currency,created_at,discount_pence,deals)
+     VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,'gbp',?,?,?)`)
     .bind(id, ref, token, mode, mode === 'demo' ? 'demo' : 'pending', v.email, v.name, v.phone,
-      JSON.stringify(address), JSON.stringify(items), quote.subtotal_pence, quote.delivery_pence, quote.total_pence, now).run();
+      JSON.stringify(address), JSON.stringify(items), quote.subtotal_pence, quote.delivery_pence, quote.total_pence, now,
+      quote.discount_pence, JSON.stringify(quote.deals.filter((d) => d.saving_pence > 0).map(({ label, bundles, saving_pence }) => ({ label, bundles, saving_pence })))).run();
 
   const origin = new URL(request.url).origin;
 
@@ -61,6 +62,12 @@ export const onRequestPost = handle(async ({ env, request }) => {
 
   let session;
   try {
+  let discounts;
+  if (quote.discount_pence > 0) {
+    const names = quote.deals.filter((d) => d.saving_pence > 0).map((d) => d.label).join(', ');
+    const coupon = await createDiscountCoupon(env, quote.discount_pence, `Multi-buy saving (${names})`.slice(0, 40), `coupon-${id}`);
+    discounts = { 0: { coupon: coupon.id } };
+  }
   session = await createCheckoutSession(env, {
     mode: 'payment',
     client_reference_id: id,
@@ -82,6 +89,7 @@ export const onRequestPost = handle(async ({ env, request }) => {
       price_data: { currency: 'gbp', unit_amount: it.unit_pence,
         product_data: { name: it.label ? `${it.name} – ${it.label}` : it.name } },
     }])),
+    discounts,
     shipping_options: { 0: { shipping_rate_data: {
       type: 'fixed_amount', display_name: settings.delivery_name || 'UK delivery',
       fixed_amount: { amount: quote.delivery_pence, currency: 'gbp' } } } },

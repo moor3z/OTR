@@ -133,6 +133,49 @@ ok('a label can be deleted', r.status === 200 && (await j('/api/admin/clp')).bod
 r = await fetch(BASE + '/api/admin/clp', { method: 'POST', body: '{}', headers: { 'content-type': 'application/json' } });
 ok('CLP writes without the CSRF header are blocked', r.status === 403);
 
+// Multi-buy deals: "any 2 for £5" across a group, odd one at full price, and
+// the saving carried through checkout, Stripe and the webhook unchanged.
+const prodById = async (id) => (await j('/api/admin/products')).body.products.find((p) => p.id === id);
+const putProduct = async (id, over) => j(`/api/admin/products/${id}`, { method: 'PUT', body: JSON.stringify({ ...(await prodById(id)), ...over }) });
+r = await putProduct('coconut-breeze-melts', { deal_group: 'melts', deal_qty: 2, deal_pence: 500 });
+ok('a deal can be set on a product', r.status === 200 && r.body.product.deal?.label === 'Any 2 melts for £5', JSON.stringify(r.body));
+r = await putProduct('rose-garden-melts', { deal_group: 'Melts', deal_qty: 2, deal_pence: 999 });
+const coconut = await prodById('coconut-breeze-melts');
+ok('saving one product in a group updates the whole group', r.body.product.deal.pence === 999 && coconut.deal.pence === 999, JSON.stringify(coconut.deal));
+await putProduct('rose-garden-melts', { deal_group: 'melts', deal_qty: 2, deal_pence: 500 });
+r = await putProduct('vanilla-cloud-snap-bar', { deal_qty: 1, deal_pence: 500 });
+ok('a deal quantity under 2 is rejected', r.status === 422 && r.body.fields?.deal_qty);
+
+r = await post('/api/quote', { items: [{ variant_id: 'coconut-breeze-melts--1', qty: 1 }] });
+ok('one unit: no saving, but the basket is told what it would take', r.body.discount_pence === 0 && r.body.subtotal_pence === 400 && r.body.deals[0]?.need === 1, JSON.stringify(r.body.deals));
+r = await post('/api/quote', { items: [{ variant_id: 'coconut-breeze-melts--1', qty: 2 }] });
+ok('two of the same: charged the deal price', r.body.items_pence === 800 && r.body.discount_pence === 300 && r.body.subtotal_pence === 500, JSON.stringify(r.body));
+r = await post('/api/quote', { items: [{ variant_id: 'coconut-breeze-melts--1', qty: 1 }, { variant_id: 'rose-garden-melts--1', qty: 1 }] });
+ok('mix and match across the group', r.body.subtotal_pence === 500 && r.body.deals[0].bundles === 1 && r.body.deals[0].need === 0);
+r = await post('/api/quote', { items: [{ variant_id: 'coconut-breeze-melts--1', qty: 2 }, { variant_id: 'rose-garden-melts--1', qty: 1 }] });
+ok('three: one deal plus one at full price', r.body.subtotal_pence === 900 && r.body.deals[0].need === 1);
+r = await post('/api/quote', { items: [{ variant_id: 'coconut-breeze-melts--1', qty: 1 }, { variant_id: 'fresh-linen-snap-bar--1', qty: 1 }] });
+ok('a product outside the group does not count towards it', r.body.discount_pence === 0 && r.body.subtotal_pence === 750);
+r = await post('/api/quote', { items: [{ variant_id: 'coconut-breeze-melts--1', qty: 2 }, { variant_id: 'rainbow-gift-box--1', qty: 2 }] });
+ok('free delivery is judged on the discounted subtotal', r.body.subtotal_pence === 4100 && r.body.free_delivery);
+r = await post('/api/quote', { items: [{ variant_id: 'coconut-breeze-melts--1', qty: 1 }, { variant_id: 'clean-cotton-melts--1', qty: 1 }] });
+ok('a sold-out line never counts towards a deal', r.body.discount_pence === 0 && r.body.deals[0]?.need === 1);
+
+const dealStock = await stock('coconut-breeze-melts--1');
+r = await post('/api/checkout', { customer, items: [{ variant_id: 'coconut-breeze-melts--1', qty: 2 }, { variant_id: 'rose-garden-melts--1', qty: 1 }] });
+const dealSession = sessions[sessions.length - 1];
+ok('checkout stores the saving on the order and sends Stripe a coupon', r.status === 200 && dealSession.form['discounts[0][coupon]'] && dealSession.amount_total === 900 + 395, JSON.stringify({ status: r.status, amount: dealSession.amount_total }));
+ok('Stripe line items stay at full price', dealSession.form['line_items[0][price_data][unit_amount]'] === '400');
+ok('verified webhook pays a discounted order', await webhook(paidEvent('evt_deal_1', dealSession)) === 200);
+const dealOrder = (await j('/api/admin/orders?view=paid')).body.orders.find((o) => o.id === dealSession.client_reference_id);
+const dealFull = await orderByRef(dealOrder.id);
+ok('the paid order records the deal, its total and the stock movement', dealFull.status === 'paid' && dealFull.total_pence === 1295 && dealFull.discount_pence === 300 && dealFull.deals[0].label === 'Any 2 melts for £5' && (await stock('coconut-breeze-melts--1')) === dealStock - 2, JSON.stringify({ status: dealFull.status, total: dealFull.total_pence, discount: dealFull.discount_pence }));
+await j(`/api/admin/orders/${dealOrder.id}`, { method: 'DELETE' });
+await putProduct('coconut-breeze-melts', { deal_group: '', deal_qty: 0, deal_pence: 0 });
+await putProduct('rose-garden-melts', { deal_group: '', deal_qty: 0, deal_pence: 0 });
+r = await post('/api/quote', { items: [{ variant_id: 'coconut-breeze-melts--1', qty: 2 }] });
+ok('clearing the deal clears it', r.body.discount_pence === 0 && r.body.deals.length === 0);
+
 // Sample packs: a list of label ids plus a panel size, saved as a whole.
 const ids = clp.labels.slice(0, 3).map((l) => l.id);
 r = await j('/api/admin/clp', { method: 'PUT', body: JSON.stringify({ packs: [{ id: 'pack-a', name: 'Trio', qty: '3 × 10 g', scents: [...ids, 'no such label', 'bad id!'], w: 70, h: 95, fs: 7 }] }) });
