@@ -116,12 +116,13 @@ async function printOrder(o, mode) {
 
 /* ── Products ───────────────────────────────────────────────────────────── */
 let products = [];
-const pf = { scent: 'all', status: 'all', q: '' }; // product list filters, kept while you edit
+const pf = { category: 'all', scent: 'all', status: 'all', q: '' }; // product list filters, kept while you edit
 function showProducts(reload = true) {
   return (reload ? api('/products').then((d) => (products = d.products)) : Promise.resolve()).then(() => {
     const samples = products.filter((p) => p.is_sample).length;
     const q = pf.q.toLowerCase();
     const list = products.filter((p) =>
+      (pf.category === 'all' || p.category === pf.category) &&
       (pf.scent === 'all' || (pf.scent === 'allyear' ? !p.scents.includes('halloween') && !p.scents.includes('christmas') : p.scents.includes(pf.scent))) &&
       (pf.status === 'all' || (pf.status === 'live' ? !p.hidden && p.available : pf.status === 'hidden' ? p.hidden : pf.status === 'todo' ? p.variants.some((v) => !v.price_pence) || !p.image_url : pf.status === 'soldout' ? !p.hidden && (p.sold_out || !p.available) : true)) &&
       (!q || p.name.toLowerCase().includes(q)));
@@ -130,6 +131,7 @@ function showProducts(reload = true) {
       ${samples ? `<div class="notice notice-demo"><p><strong>${samples} sample product${samples === 1 ? '' : 's'} with made-up prices.</strong> Edit them into real products (saving removes the Sample tag) or clear them out.</p><button class="btn btn-ghost btn-sm" data-delete-samples>Delete all sample products</button></div>` : ''}
       <div class="panel-card" style="padding:1rem">
         <input type="search" id="pf-q" placeholder="Search by name" value="${esc(pf.q)}" style="margin-bottom:.75rem">
+        <p class="filter-label">Category</p><div class="chips" style="margin:0 0 .75rem;padding:4px 0">${[['all', 'All'], ...CATEGORIES].map(([v, l]) => chip('category', v, l)).join('')}</div>
         <p class="filter-label">Scent</p><div class="chips" style="margin:0 0 .75rem;padding:4px 0">${[['all', 'All'], ['allyear', 'All year round'], ['halloween', 'Halloween & Autumn'], ['christmas', 'Christmas & Winter'], ['fresh', 'Fresh'], ['floral', 'Floral'], ['fruity', 'Fruity'], ['sweet', 'Sweet']].map(([v, l]) => chip('scent', v, l)).join('')}</div>
         <p class="filter-label">Status</p><div class="chips" style="margin:0;padding:4px 0">${[['all', 'All'], ['live', 'On sale'], ['soldout', 'Sold out'], ['hidden', 'Hidden'], ['todo', 'Needs price or photo']].map(([v, l]) => chip('status', v, l)).join('')}</div>
       </div>
