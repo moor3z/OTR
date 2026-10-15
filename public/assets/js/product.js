@@ -1,4 +1,4 @@
-import { api, getConfig, productCard, wireAddButtons, addToBasket, gbp, esc, $ } from './site.js?v=48';
+import { api, getConfig, productCard, wireAddButtons, addToBasket, gbp, esc, $ } from './site.js?v=49';
 
 const id = decodeURIComponent(location.pathname.split('/')[2] || '') || new URLSearchParams(location.search).get('id') || '';
 const root = $('#product-root');
@@ -10,7 +10,7 @@ function render(p, cfg) {
   const cat = cfg.categories.find((c) => c.id === p.category);
   $('#crumb-cat').innerHTML = cat ? `<a href="/shop?category=${cat.id}">${esc(cat.name)}</a>` : '';
   const multi = p.variants.length > 1;
-  const shapes = (cfg.shapes || []).filter((s) => (p.shapes || []).includes(s.id));
+  const shapes = p.shapes_priced ? [] : (cfg.shapes || []).filter((s) => (p.shapes || []).includes(s.id));
   let chosen = p.variants.find((v) => v.available) || p.variants[0];
   let shape = shapes[0] || null;
   let qty = 1;

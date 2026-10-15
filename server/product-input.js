@@ -35,6 +35,17 @@ export function parseProduct(body, productId) {
   // Shapes only mean anything on a snap bar, and only the known ones count.
   p.shapes = p.category === SHAPE_CATEGORY ? SHAPES.map((s) => s.id).filter((id) => p.shapes.includes(id)) : [];
   p.shape = p.shapes.join(',');
+  // With shapes ticked, the options ARE the shapes: one row per ticked shape,
+  // named after it, each with its own price and stock. Rows for shapes that
+  // are not ticked are dropped; a ticked shape with no row is an error.
+  if (p.shapes.length) {
+    const rows = Array.isArray(body.variants) ? body.variants : [];
+    body = { ...body, option_name: 'Shape', variants: p.shapes.map((id) => {
+      const row = rows.find((v) => v && v.shape === id) || {};
+      return { ...row, shape: id, label: SHAPES.find((s) => s.id === id).name };
+    }) };
+    p.option_name = 'Shape';
+  }
   if (p.name.length < 2) fields.name = 'Enter a product name.';
   if (!CATEGORIES.some((c) => c.id === p.category)) fields.category = 'Choose a category.';
   if (!okImage(p.image_url)) fields.image_url = 'Image must be an uploaded image or an https:// address.';
@@ -53,7 +64,9 @@ export function parseProduct(body, productId) {
       if (!Number.isInteger(d.deal_qty) || d.deal_qty < 2 || d.deal_qty > 20) fields.variants = `The deal quantity on "${label}" must be a whole number from 2 to 20.`;
       if (!Number.isInteger(d.deal_pence) || d.deal_pence < 30 || d.deal_pence > 100000) fields.variants = `The deal price on "${label}" must be between £0.30 and £1,000.`;
     } else d.deal_group = '';
-    return { id: keep ? v.id.slice(0, 120) : null, label, price_pence: price, stock, sort: i, ...d };
+    const shape = p.shapes.length ? clean(v.shape, 40) : '';
+    if (p.shapes.length && !Number.isInteger(price)) fields.variants = `Give the ${label} shape a price.`;
+    return { id: keep ? v.id.slice(0, 120) : null, label, price_pence: price, stock, sort: i, shape, ...d };
   });
   if (raw.length > 1 && !p.option_name) p.option_name = 'Option';
   if (Object.keys(fields).length) throw httpError(422, 'Please check the highlighted fields.', { fields });

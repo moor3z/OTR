@@ -21,7 +21,8 @@ const SCHEMA = [
      id TEXT PRIMARY KEY, product_id TEXT NOT NULL, label TEXT NOT NULL,
      price_pence INTEGER NOT NULL, stock INTEGER NOT NULL DEFAULT 0,
      sort INTEGER NOT NULL DEFAULT 0,
-     deal_group TEXT NOT NULL DEFAULT '', deal_qty INTEGER NOT NULL DEFAULT 0, deal_pence INTEGER NOT NULL DEFAULT 0)`,
+     deal_group TEXT NOT NULL DEFAULT '', deal_qty INTEGER NOT NULL DEFAULT 0, deal_pence INTEGER NOT NULL DEFAULT 0,
+     shape TEXT NOT NULL DEFAULT '')`,
   `CREATE INDEX IF NOT EXISTS idx_variants_product ON variants(product_id)`,
   `CREATE TABLE IF NOT EXISTS images (
      id TEXT PRIMARY KEY, mime TEXT NOT NULL, data BLOB NOT NULL, created_at TEXT NOT NULL)`,
@@ -86,6 +87,7 @@ const ADDED_COLUMNS = [
   ['variants', 'deal_group', `TEXT NOT NULL DEFAULT ''`],
   ['variants', 'deal_qty', `INTEGER NOT NULL DEFAULT 0`],
   ['variants', 'deal_pence', `INTEGER NOT NULL DEFAULT 0`],
+  ['variants', 'shape', `TEXT NOT NULL DEFAULT ''`],
   ['orders', 'discount_pence', `INTEGER NOT NULL DEFAULT 0`],
   ['orders', 'deals', `TEXT NOT NULL DEFAULT '[]'`],
 ];
@@ -267,7 +269,7 @@ export const dealFor = (variant, product) => dealOf(variant, 'v') || dealOf(prod
 
 function shapeProduct(p, variants, admin) {
   const vs = variants.map((v) => ({
-    id: v.id, label: v.label, price_pence: v.price_pence,
+    id: v.id, label: v.label, price_pence: v.price_pence, shape: v.shape || '',
     available: !p.sold_out && v.stock > 0,
     deal: dealFor(v, p),
     ...(admin ? { stock: v.stock, own_deal: dealOf(v, 'v') } : { low_stock: v.stock > 0 && v.stock <= 3 }),
@@ -279,7 +281,10 @@ function shapeProduct(p, variants, admin) {
     id: p.id, name: p.name, category: p.category,
     scents: p.scents ? p.scents.split(',').filter(Boolean) : [],
     deal: dealOf(p), deal_labels: dealLabels,
-    shapes: p.shape ? p.shape.split(',').filter(Boolean) : [],
+    // Shapes: one option per shape, each with its own price and stock. Older
+    // rows may still carry shapes on the product with a single price.
+    shapes: [...new Set([...vs.map((v) => v.shape).filter(Boolean), ...(p.shape ? p.shape.split(',').filter(Boolean) : [])])],
+    shapes_priced: vs.some((v) => v.shape),
     short_desc: p.short_desc, description: p.description, weight: p.weight,
     usage: p.usage, safety: p.safety, image_url: p.image_url, option_name: p.option_name,
     featured: !!p.featured, sold_out: !!p.sold_out,

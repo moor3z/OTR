@@ -19,8 +19,8 @@ export const onRequestPut = handle(async ({ env, request, params }) => {
     : db.prepare(`DELETE FROM variants WHERE product_id=?`).bind(id));
   for (const v of variants) {
     stmts.push(v.id
-      ? db.prepare(`UPDATE variants SET label=?,price_pence=?,stock=?,sort=?,deal_group=?,deal_qty=?,deal_pence=? WHERE id=? AND product_id=?`).bind(v.label, v.price_pence, v.stock, v.sort, v.deal_group, v.deal_qty, v.deal_pence, v.id, id)
-      : db.prepare(`INSERT INTO variants(id,product_id,label,price_pence,stock,sort,deal_group,deal_qty,deal_pence) VALUES(?,?,?,?,?,?,?,?,?)`).bind(newVariantId(id), id, v.label, v.price_pence, v.stock, v.sort, v.deal_group, v.deal_qty, v.deal_pence));
+      ? db.prepare(`UPDATE variants SET label=?,price_pence=?,stock=?,sort=?,deal_group=?,deal_qty=?,deal_pence=?,shape=? WHERE id=? AND product_id=?`).bind(v.label, v.price_pence, v.stock, v.sort, v.deal_group, v.deal_qty, v.deal_pence, v.shape || '', v.id, id)
+      : db.prepare(`INSERT INTO variants(id,product_id,label,price_pence,stock,sort,deal_group,deal_qty,deal_pence,shape) VALUES(?,?,?,?,?,?,?,?,?,?)`).bind(newVariantId(id), id, v.label, v.price_pence, v.stock, v.sort, v.deal_group, v.deal_qty, v.deal_pence, v.shape || ''));
   }
   await db.batch(stmts);
   const [product] = await loadProducts(db, { includeHidden: true, id });

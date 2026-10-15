@@ -30,7 +30,7 @@ export async function priceBasket(db, settings, rawItems) {
   if (ids.length) {
     const marks = ids.map(() => '?').join(',');
     const res = await db.prepare(
-      `SELECT v.id AS variant_id, v.label, v.price_pence, v.stock,
+      `SELECT v.id AS variant_id, v.label, v.price_pence, v.stock, v.shape AS v_shape,
               v.deal_group AS v_deal_group, v.deal_qty AS v_deal_qty, v.deal_pence AS v_deal_pence,
               p.id AS product_id, p.name, p.image_url, p.hidden, p.sold_out,
               p.deal_group, p.deal_qty, p.deal_pence, p.shape AS shapes,
@@ -49,14 +49,16 @@ export async function priceBasket(db, settings, rawItems) {
       lines.push({ variant_id: id, shape, qty, ok: false, problem: 'gone', message: 'This item is no longer available.' });
       continue;
     }
-    const shapeName = shape ? (SHAPES.find((s) => s.id === shape) || {}).name : '';
-    const shapeOk = !shape || ((r.shapes || '').split(',').includes(shape) && shapeName);
+    // A variant that is itself a shape ignores any shape sent with the line.
+    const lineShape = r.v_shape ? '' : shape;
+    const shapeName = lineShape ? (SHAPES.find((s) => s.id === lineShape) || {}).name : '';
+    const shapeOk = !lineShape || ((r.shapes || '').split(',').includes(lineShape) && shapeName);
     const deal = dealFor({ id: r.variant_id, deal_group: r.v_deal_group, deal_qty: r.v_deal_qty, deal_pence: r.v_deal_pence },
                          { id: r.product_id, deal_group: r.deal_group, deal_qty: r.deal_qty, deal_pence: r.deal_pence });
     const line = {
       variant_id: id, product_id: r.product_id, name: r.name,
       label: [r.variant_count > 1 ? r.label : '', shapeName].filter(Boolean).join(' · '),
-      shape, shape_name: shapeName || '',
+      shape: lineShape, shape_name: shapeName || '',
       image_url: r.image_url, unit_pence: r.price_pence, qty, ok: true,
       deal_key: deal ? deal.key : '', deal_label: deal ? deal.label : '',
     };

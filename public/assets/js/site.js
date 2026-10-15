@@ -61,7 +61,7 @@ export function toast(message) {
 
 /* ── Product card (used on home, shop and related products) ───────────────── */
 export function productCard(p) {
-  const single = p.variants.length === 1, hasShapes = (p.shapes || []).length > 0;
+  const single = p.variants.length === 1, hasShapes = (p.shapes || []).length > 0 && !p.shapes_priced;
   const price = single ? gbp(p.from_pence) : `From ${gbp(p.from_pence)}`;
   const href = `/products/${encodeURIComponent(p.id)}`;
   let action;

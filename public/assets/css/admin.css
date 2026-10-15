@@ -36,6 +36,8 @@ dialog.editor::backdrop { background: rgba(46, 20, 55, .55); }
 .v-deal .v-deal-note { font-size: .8125rem; color: var(--muted); align-self: center; }
 .variant.single .v-deal { display: none; }
 .shape-preset { margin: .25rem 0 .75rem; }
+.variant.is-shape input[readonly] { background: var(--paper, #faf7fb); color: var(--muted); }
+.is-shapes .v-remove { display: none; }
 .form-section { font-size: 1.0625rem; margin: 1.5rem 0 .75rem; padding-top: 1rem; border-top: 2px solid var(--line); }
 .checks label .hint { margin-left: .25rem; }
 .checks { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; } .checks label { display: inline-flex; gap: .5rem; align-items: center; font-weight: 500; min-height: 44px; margin: 0; }

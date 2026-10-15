@@ -1,6 +1,12 @@
-OTR - COMPLETE CURRENT PROJECT (version 48)
+OTR - COMPLETE CURRENT PROJECT (version 49)
 
-New in v48: customers pick the shape. A snap bar with shapes ticked shows a
+New in v49: each shape has its own price and stock. Tick the shapes a snap
+bar comes in under Category, and a price row appears for each under Price and
+stock (the existing price moves to the first shape). Customers pick the shape
+on the product page and pay that shape's price; the shop card says "From £x"
+and "Choose shape". One column on variants adds itself on first request.
+
+v48: customers pick the shape. A snap bar with shapes ticked shows a
 Shape choice on its product page (and "Choose shape" on the shop card instead
 of Add to Basket). Hearts and squares of one scent sit on separate basket
 lines, share the scent's stock, and the shape prints on the order, the

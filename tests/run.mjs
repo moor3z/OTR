@@ -197,28 +197,32 @@ ok('a bad option deal is rejected with the option named', r.status === 422 && /H
 await putProduct('vanilla-cloud-snap-bar', { option_name: '', variants: [mk('Default', 350)] });
 await putProduct('lavender-dreams-snap-bar', { option_name: '', variants: [mk('Default', 350)] });
 
-// Shape on a snap bar: one of the known shapes, and only on snap bars.
-r = await putProduct('fresh-linen-snap-bar', { shapes: ['square', 'hearts'] });
-ok('a snap bar can come in several shapes', r.status === 200 && r.body.product.shapes.join() === 'hearts,square', JSON.stringify(r.body.product.shapes));
-r = await putProduct('fresh-linen-snap-bar', { shapes: ['triangle', 'circle'] });
+// Shapes on a snap bar: each ticked shape is an option with its own price and
+// stock, named after the shape; only known shapes, only on snap bars.
+r = await putProduct('fresh-linen-snap-bar', { shapes: ['square', 'hearts'], variants: [{ shape: 'hearts', price_pence: 300, stock: 5 }, { shape: 'square', price_pence: 350, stock: 7 }] });
+ok('ticked shapes become priced options in shape order', r.status === 200 && r.body.product.option_name === 'Shape' && r.body.product.variants.map((v) => `${v.label}:${v.price_pence}:${v.shape}`).join() === 'Hearts:300:hearts,Square:350:square', JSON.stringify(r.body.product.variants));
+ok('the product reports its shapes as priced', r.body.product.shapes.join() === 'hearts,square' && r.body.product.shapes_priced === true);
+const fl = r.body.product.variants;
+r = await putProduct('fresh-linen-snap-bar', { shapes: ['hearts', 'circle'], variants: [{ id: fl[0].id, shape: 'hearts', price_pence: 300, stock: 5 }, { shape: 'circle', price_pence: 400, stock: 2 }] });
+ok('unticking a shape drops its option, ticking one adds it', r.body.product.variants.map((v) => v.label).join() === 'Hearts,Circle' && r.body.product.variants[0].id === fl[0].id);
+r = await putProduct('fresh-linen-snap-bar', { shapes: ['hearts'], variants: [{ shape: 'hearts', stock: 5 }] });
+ok('a ticked shape without a price is refused', r.status === 422 && /Hearts/.test(r.body.fields?.variants || ''), JSON.stringify(r.body));
+r = await putProduct('fresh-linen-snap-bar', { shapes: ['triangle', 'circle'], variants: [{ shape: 'circle', price_pence: 400, stock: 2 }] });
 ok('an unknown shape is dropped, a known one kept', r.status === 200 && r.body.product.shapes.join() === 'circle');
 r = await putProduct('coconut-breeze-melts', { shapes: ['hearts'] });
 ok('shapes on a non-snap-bar are dropped', r.status === 200 && r.body.product.shapes.length === 0);
 r = await j('/api/config');
 ok('the shop is told the shapes', r.body.shapes?.length === 4 && r.body.shape_category === 'snap-bars');
-await putProduct('fresh-linen-snap-bar', { shapes: ['hearts', 'square'] });
-r = await post('/api/quote', { items: [{ variant_id: V, qty: 1, shape: 'hearts' }, { variant_id: V, qty: 2, shape: 'square' }] });
-ok('two shapes of one scent are two lines, labelled', r.body.lines.length === 2 && r.body.lines[0].label === 'Hearts' && r.body.lines[1].label === 'Square' && r.body.subtotal_pence === 1050, JSON.stringify(r.body.lines.map((l) => [l.label, l.qty])));
-r = await post('/api/quote', { items: [{ variant_id: V, qty: 20, shape: 'hearts' }, { variant_id: V, qty: 20, shape: 'square' }] });
-ok('the shapes share the scent\'s stock', !r.body.ok && r.body.lines.some((l) => l.problem === 'too_many' && /across all shapes/.test(l.message)), JSON.stringify(r.body.lines.map((l) => l.message)));
-r = await post('/api/quote', { items: [{ variant_id: V, qty: 1, shape: 'circle' }] });
-ok('a shape the scent does not come in is refused', !r.body.ok && r.body.lines[0].problem === 'gone');
-r = await post('/api/checkout', { customer, items: [{ variant_id: V, qty: 1, shape: 'hearts' }] });
+r = await putProduct('fresh-linen-snap-bar', { shapes: ['hearts', 'square'], variants: [{ shape: 'hearts', price_pence: 300, stock: 5 }, { shape: 'square', price_pence: 350, stock: 7 }] });
+const fl2 = r.body.product.variants;
+r = await post('/api/quote', { items: [{ variant_id: fl2[0].id, qty: 1 }, { variant_id: fl2[1].id, qty: 2 }] });
+ok('a heart and two squares are priced at their own prices', r.body.lines.length === 2 && r.body.lines[0].label === 'Hearts' && r.body.subtotal_pence === 1000, JSON.stringify(r.body.lines.map((l) => [l.label, l.qty, l.unit_pence])));
+r = await post('/api/checkout', { customer, items: [{ variant_id: fl2[0].id, qty: 1 }] });
 const shapeSession = sessions[sessions.length - 1];
 const shapeOrder = await orderByRef(shapeSession.client_reference_id);
-ok('the order and the Stripe line carry the shape', r.status === 200 && shapeSession.form['line_items[0][price_data][product_data][name]'] === 'Fresh Linen Snap Bar – Hearts' && shapeOrder.items[0]?.shape === 'hearts' && shapeOrder.items[0]?.label === 'Hearts', JSON.stringify([shapeSession.form['line_items[0][price_data][product_data][name]'], shapeOrder.items[0]]));
+ok('the order and the Stripe line name the shape', r.status === 200 && shapeSession.form['line_items[0][price_data][product_data][name]'] === 'Fresh Linen Snap Bar – Hearts' && shapeOrder.items[0]?.label === 'Hearts', JSON.stringify(shapeSession.form['line_items[0][price_data][product_data][name]']));
 await j(`/api/admin/orders/${shapeSession.client_reference_id}`, { method: 'DELETE' });
-await putProduct('fresh-linen-snap-bar', { shapes: [] });
+await putProduct('fresh-linen-snap-bar', { shapes: [], option_name: '', variants: [{ label: 'Default', price_pence: 350, stock: 24 }] });
 
 // Sample packs: a list of label ids plus a panel size, saved as a whole.
 const ids = clp.labels.slice(0, 3).map((l) => l.id);
