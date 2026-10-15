@@ -1,4 +1,4 @@
-import { getDb, getSettings, CATEGORIES, SCENTS } from '../../server/db.js';
+import { getDb, getSettings, CATEGORIES, SCENTS, SHAPES, SHAPE_CATEGORY } from '../../server/db.js';
 import { handle, json, paymentMode } from '../../server/util.js';
 
 export const onRequestGet = handle(async ({ env }) => {
@@ -6,7 +6,7 @@ export const onRequestGet = handle(async ({ env }) => {
   const s = await getSettings(db);
   return json({
     payment_mode: paymentMode(env), // 'demo' | 'test' | 'live'
-    categories: CATEGORIES, scents: SCENTS,
+    categories: CATEGORIES, scents: SCENTS, shapes: SHAPES, shape_category: SHAPE_CATEGORY,
     delivery_pence: parseInt(s.delivery_pence, 10) || 0,
     free_delivery_threshold_pence: parseInt(s.free_delivery_threshold_pence, 10) || 0,
     delivery_name: s.delivery_name, dispatch_estimate: s.dispatch_estimate,

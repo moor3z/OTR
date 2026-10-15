@@ -1,6 +1,11 @@
-OTR - COMPLETE CURRENT PROJECT (version 45)
+OTR - COMPLETE CURRENT PROJECT (version 46)
 
-New in v45: shapes, and deals per shape. On a product, "Use shapes: Square,
+New in v46: a Shape box under Category for snap bars (Hearts, 5 piece snap
+bar, Square, Circle). The Snap Bars page in the shop gets a "Filter by shape"
+row showing only the shapes on sale, and the admin product list can filter
+by shape too. One column on products adds itself on first request.
+
+v45: shape options, and deals per shape. On a product, "Use shapes: Square,
 Heart, Rectangle" sets up a Shape option with the three, each with its own
 price and stock (a heart weighs less, so it can cost less). Each option now
 has its own deal line, so "hearts 2 for £5" works when Heart is a shape inside

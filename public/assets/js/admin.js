@@ -8,6 +8,7 @@ const when = (iso) => iso ? new Date(iso).toLocaleString('en-GB', { dateStyle: '
 const panel = $('#panel'), editor = $('#editor');
 const CATEGORIES = [['snap-bars', 'Snap Bars'], ['wax-melt-shapes', 'Wax Melt Shapes'], ['sample-boxes', 'Sample Boxes'], ['gift-sets', 'Gift Sets'], ['accessories', 'Accessories']];
 const SCENTS = ['fresh', 'floral', 'fruity', 'sweet', 'halloween', 'christmas'];
+const SHAPES = [['hearts', 'Hearts'], ['5-piece', '5 piece snap bar'], ['square', 'Square'], ['circle', 'Circle']], SHAPE_CATEGORY = 'snap-bars';
 const FULFILMENT = ['unfulfilled', 'packed', 'dispatched', 'delivered', 'cancelled'];
 
 async function api(path, { method = 'GET', body, raw, type } = {}) {
@@ -116,13 +117,14 @@ async function printOrder(o, mode) {
 
 /* ── Products ───────────────────────────────────────────────────────────── */
 let products = [];
-const pf = { category: 'all', scent: 'all', status: 'all', q: '' }; // product list filters, kept while you edit
+const pf = { category: 'all', shape: 'all', scent: 'all', status: 'all', q: '' }; // product list filters, kept while you edit
 function showProducts(reload = true) {
   return (reload ? api('/products').then((d) => (products = d.products)) : Promise.resolve()).then(() => {
     const samples = products.filter((p) => p.is_sample).length;
     const q = pf.q.toLowerCase();
     const list = products.filter((p) =>
       (pf.category === 'all' || p.category === pf.category) &&
+      (pf.category !== SHAPE_CATEGORY || pf.shape === 'all' || p.shape === pf.shape) &&
       (pf.scent === 'all' || (pf.scent === 'allyear' ? !p.scents.includes('halloween') && !p.scents.includes('christmas') : p.scents.includes(pf.scent))) &&
       (pf.status === 'all' || (pf.status === 'live' ? !p.hidden && p.available : pf.status === 'hidden' ? p.hidden : pf.status === 'todo' ? p.variants.some((v) => !v.price_pence) || !p.image_url : pf.status === 'soldout' ? !p.hidden && (p.sold_out || !p.available) : true)) &&
       (!q || p.name.toLowerCase().includes(q)));
@@ -132,12 +134,13 @@ function showProducts(reload = true) {
       <div class="panel-card" style="padding:1rem">
         <input type="search" id="pf-q" placeholder="Search by name" value="${esc(pf.q)}" style="margin-bottom:.75rem">
         <p class="filter-label">Category</p><div class="chips" style="margin:0 0 .75rem;padding:4px 0">${[['all', 'All'], ...CATEGORIES].map(([v, l]) => chip('category', v, l)).join('')}</div>
+        ${pf.category === SHAPE_CATEGORY ? `<p class="filter-label">Shape</p><div class="chips" style="margin:0 0 .75rem;padding:4px 0">${[['all', 'All'], ...SHAPES, ['', 'No shape set']].map(([v, l]) => chip('shape', v, l)).join('')}</div>` : ''}
         <p class="filter-label">Scent</p><div class="chips" style="margin:0 0 .75rem;padding:4px 0">${[['all', 'All'], ['allyear', 'All year round'], ['halloween', 'Halloween & Autumn'], ['christmas', 'Christmas & Winter'], ['fresh', 'Fresh'], ['floral', 'Floral'], ['fruity', 'Fruity'], ['sweet', 'Sweet']].map(([v, l]) => chip('scent', v, l)).join('')}</div>
         <p class="filter-label">Status</p><div class="chips" style="margin:0;padding:4px 0">${[['all', 'All'], ['live', 'On sale'], ['soldout', 'Sold out'], ['hidden', 'Hidden'], ['todo', 'Needs price or photo']].map(([v, l]) => chip('status', v, l)).join('')}</div>
       </div>
       <p class="muted small" role="status">${list.length} of ${products.length} products</p>
       ${list.length ? `<ul class="rows">${list.map((p) => `<li class="row"><img src="${esc(p.image_url || '/assets/ph/blank.svg')}" alt="">
-        <div><span class="row-title">${esc(p.name)}</span> ${p.is_sample ? '<span class="tag sample">Sample</span>' : ''}${p.hidden ? '<span class="tag hidden">Hidden</span>' : ''}${p.variants.some((v) => !v.price_pence) ? '<span class="tag warn">Needs price</span>' : ''}${!p.image_url ? '<span class="tag">No photo</span>' : ''}${p.sold_out ? '<span class="tag warn">Marked sold out</span>' : !p.available ? '<span class="tag warn">Out of stock</span>' : ''}${p.scents.filter((s) => s === 'halloween' || s === 'christmas').map((s) => `<span class="tag">${s[0].toUpperCase() + s.slice(1)}</span>`).join('')}${(p.deal_labels || []).map((l) => `<span class="tag paid">${esc(l)}</span>`).join('')}
+        <div><span class="row-title">${esc(p.name)}</span> ${p.is_sample ? '<span class="tag sample">Sample</span>' : ''}${p.hidden ? '<span class="tag hidden">Hidden</span>' : ''}${p.variants.some((v) => !v.price_pence) ? '<span class="tag warn">Needs price</span>' : ''}${!p.image_url ? '<span class="tag">No photo</span>' : ''}${p.sold_out ? '<span class="tag warn">Marked sold out</span>' : !p.available ? '<span class="tag warn">Out of stock</span>' : ''}${p.scents.filter((s) => s === 'halloween' || s === 'christmas').map((s) => `<span class="tag">${s[0].toUpperCase() + s.slice(1)}</span>`).join('')}${p.shape ? `<span class="tag">${esc((SHAPES.find(([id]) => id === p.shape) || [, p.shape])[1])}</span>` : ''}${(p.deal_labels || []).map((l) => `<span class="tag paid">${esc(l)}</span>`).join('')}
           <p class="row-sub">${p.variants.map((v) => `${p.variants.length > 1 ? esc(v.label) + ' ' : ''}${gbp(v.price_pence)}, ${v.stock} in stock`).join(' | ')}</p></div>
         <button class="btn btn-ghost btn-sm" data-product="${esc(p.id)}">Edit</button></li>`).join('')}</ul>` : `<div class="empty"><p>${products.length ? 'No products match those filters.' : 'No products yet. Add your first one.'}</p></div>`}`;
     const search = $('#pf-q');
@@ -173,6 +176,7 @@ function openProduct(p) {
     <h3 class="form-section">1. The basics</h3>
     ${field('p-name', 'Product name', '', `<input id="p-name" type="text" value="${esc(p.name)}" required placeholder="e.g. Cherry Vanilla Snap Bar">`)}
     ${field('p-cat', 'Category', 'Which shop section it appears in', `<select id="p-cat">${CATEGORIES.map(([id, n]) => `<option value="${id}"${id === p.category ? ' selected' : ''}>${n}</option>`).join('')}</select>`)}
+    <div id="shape-wrap"${(p.category || CATEGORIES[0][0]) === SHAPE_CATEGORY ? '' : ' hidden'}>${field('p-shape', 'Shape', 'Customers can filter snap bars by shape', `<select id="p-shape"><option value="">Choose a shape</option>${SHAPES.map(([id, n]) => `<option value="${id}"${id === p.shape ? ' selected' : ''}>${n}</option>`).join('')}</select>`)}</div>
     <fieldset class="field" style="border:0;padding:0"><legend>Seasonal? <span class="hint">Tick one to put it on the Seasonal page as well. It stays in its category too.</span></legend><div class="checks">
       <label><input type="checkbox" name="scent" value="halloween"${p.scents.includes('halloween') ? ' checked' : ''}>Halloween &amp; Autumn</label>
       <label><input type="checkbox" name="scent" value="christmas"${p.scents.includes('christmas') ? ' checked' : ''}>Christmas &amp; Winter</label></div></fieldset>
@@ -239,6 +243,7 @@ function openProduct(p) {
   };
   $('#variants').onclick = (e) => { if (e.target.closest('[data-remove-variant]') && $('#variants').children.length > 1) e.target.closest('.variant').remove(); };
   if (!p.usage && !p.safety && !isNew) $('#more-details').open = true;
+  $('#p-cat').onchange = (e) => { $('#shape-wrap').hidden = e.target.value !== SHAPE_CATEGORY; };
   const dealPreview = () => {
     const g = $('#p-deal-group').value.trim(), q = parseInt($('#p-deal-qty').value, 10), pr = toPence($('#p-deal-price').value);
     $('#deal-preview').textContent = q >= 2 && pr >= 30 ? `Customers will see: "${g ? `Any ${q} ${g} for ${pr % 100 ? gbp(pr) : '£' + pr / 100}` : `${q} for ${pr % 100 ? gbp(pr) : '£' + pr / 100}`}"` : (g || q || $('#p-deal-price').value ? 'Fill in both the quantity and the price for the deal to apply.' : '');
@@ -256,7 +261,7 @@ function openProduct(p) {
     const isMulti = $('#p-multi').checked;
     const rows = [...$('#variants').children];
     const body = {
-      name: $('#p-name').value, category: $('#p-cat').value, sort: parseInt($('#p-sort').value, 10) || 0,
+      name: $('#p-name').value, category: $('#p-cat').value, sort: parseInt($('#p-sort').value, 10) || 0, shape: $('#p-shape').value,
       scents: [...form.querySelectorAll('[name=scent]:checked')].map((c) => c.value), image_url: $('#p-image-url').value,
       short_desc: $('#p-short').value, description: $('#p-desc').value, option_name: isMulti ? $('#p-option').value : '', weight: $('#p-weight').value,
       usage: $('#p-usage').value, safety: $('#p-safety').value, featured: $('#p-featured').checked, sold_out: $('#p-soldout').checked, hidden: $('#p-hidden').checked,

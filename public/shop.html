@@ -13,7 +13,7 @@
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="apple-touch-icon" href="/assets/img/icon-192.png">
 <link rel="preload" href="/assets/fonts/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/css/site.css?v=45">
+<link rel="stylesheet" href="/assets/css/site.css?v=46">
 </head>
 <body>
 <!-- chrome:start -->
@@ -39,6 +39,7 @@
   <h1 id="shop-title">All Products</h1>
   <nav aria-label="Product categories"><ul class="chips" id="cats"></ul></nav>
   <div class="shop-tools">
+    <div id="shape-tools" hidden><p class="filter-label" id="shape-label">Filter by shape</p><ul class="chips" id="shapes" aria-labelledby="shape-label"></ul></div>
     <div><p class="filter-label" id="scent-label">Filter by scent</p><ul class="chips" id="scents" aria-labelledby="scent-label"></ul></div>
     <div class="field-inline"><label for="sort" style="margin:0;white-space:nowrap">Sort by</label>
       <select id="sort"><option value="featured">Featured</option><option value="price-asc">Price: low to high</option><option value="price-desc">Price: high to low</option><option value="name-asc">Name: A to Z</option><option value="name-desc">Name: Z to A</option></select></div>
@@ -55,6 +56,6 @@
 </div><p class="footer-base">© <span id="year"></span> Over The Rainbow. Prices in GBP. UK delivery only.</p></div></footer>
 <!-- footer:end -->
 <noscript><p style="padding:2rem;text-align:center">This shop needs JavaScript switched on to add items to your basket and check out.</p></noscript>
-<script type="module" src="/assets/js/shop.js?v=45"></script>
+<script type="module" src="/assets/js/shop.js?v=46"></script>
 </body>
 </html>

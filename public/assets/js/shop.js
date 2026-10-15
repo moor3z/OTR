@@ -1,12 +1,13 @@
-import { api, getConfig, productCard, wireAddButtons, esc, $ } from './site.js?v=45';
+import { api, getConfig, productCard, wireAddButtons, esc, $ } from './site.js?v=46';
 
 const params = new URLSearchParams(location.search);
 const state = {
   category: params.get('category') || 'all',
   scents: new Set((params.get('scent') || '').split(',').filter(Boolean)),
   q: (params.get('q') || '').trim(), sort: params.get('sort') || 'featured',
+  shape: params.get('shape') || 'all',
 };
-let products = [], categories = [];
+let products = [], categories = [], shapes = [], shapeCategory = '';
 const results = $('#results'), count = $('#result-count');
 const LABELS = { halloween: 'Halloween & Autumn', christmas: 'Christmas & Winter' };
 const cap = (s) => LABELS[s] || s[0].toUpperCase() + s.slice(1);
@@ -15,6 +16,7 @@ function syncUrl() {
   const p = new URLSearchParams();
   if (state.category !== 'all') p.set('category', state.category);
   if (state.scents.size) p.set('scent', [...state.scents].join(','));
+  if (state.category === shapeCategory && state.shape !== 'all') p.set('shape', state.shape);
   if (state.q) p.set('q', state.q);
   if (state.sort !== 'featured') p.set('sort', state.sort);
   history.replaceState(null, '', p.size ? `?${p}` : location.pathname);
@@ -28,6 +30,15 @@ function render() {
   $('#cats').innerHTML = [{ id: 'all', name: 'All Products' }, ...allCats].map((c) =>
     `<li><button type="button" class="chip" data-cat="${c.id}" aria-pressed="${c.id === state.category}">${esc(c.name)}</button></li>`).join('');
   document.querySelectorAll('#scents .chip').forEach((b) => b.setAttribute('aria-pressed', String(state.scents.has(b.dataset.scent))));
+  // Shape chips only on the snap bars page, and only for shapes that are actually on sale.
+  const onShapes = state.category === shapeCategory;
+  const have = new Set(products.filter((p) => p.category === shapeCategory && p.shape).map((p) => p.shape));
+  $('#shape-tools').hidden = !onShapes || !have.size;
+  if (onShapes && have.size) {
+    if (state.shape !== 'all' && !have.has(state.shape)) state.shape = 'all';
+    $('#shapes').innerHTML = [{ id: 'all', name: 'All shapes' }, ...shapes.filter((s) => have.has(s.id))].map((s) =>
+      `<li><button type="button" class="chip" data-shape="${s.id}" aria-pressed="${s.id === state.shape}">${esc(s.name)}</button></li>`).join('');
+  }
   document.querySelectorAll('.site-nav a').forEach((a) => {
     const u = new URL(a.href), c = u.searchParams.get('category');
     u.pathname === '/shop' && (c || 'all') === state.category ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current');
@@ -38,6 +49,7 @@ function render() {
   let list = products.filter((p) =>
     (state.category === 'all' || (state.category === 'seasonal' ? isSeasonal(p) : p.category === state.category)) &&
     (!state.scents.size || p.scents.some((s) => state.scents.has(s))) &&
+    (!onShapes || state.shape === 'all' || p.shape === state.shape) &&
     (!q || `${p.name} ${p.short_desc} ${p.scents.join(' ')}`.toLowerCase().includes(q)));
   const by = { 'price-asc': (a, b) => a.from_pence - b.from_pence, 'price-desc': (a, b) => b.from_pence - a.from_pence,
     'name-asc': (a, b) => a.name.localeCompare(b.name), 'name-desc': (a, b) => b.name.localeCompare(a.name) }[state.sort];
@@ -57,7 +69,7 @@ function render() {
 }
 
 Promise.all([getConfig(), api('/api/products')]).then(([cfg, data]) => {
-  categories = cfg.categories; products = data.products;
+  categories = cfg.categories; products = data.products; shapes = cfg.shapes || []; shapeCategory = cfg.shape_category || '';
   if (state.category !== 'all' && state.category !== 'seasonal' && !categories.some((c) => c.id === state.category)) state.category = 'all';
   $('#scents').innerHTML = cfg.scents.map((s) => `<li><button type="button" class="chip scent" data-scent="${s}" aria-pressed="false">${cap(s)}</button></li>`).join('');
   $('#sort').value = state.sort;
@@ -65,10 +77,11 @@ Promise.all([getConfig(), api('/api/products')]).then(([cfg, data]) => {
 }).catch((e) => { results.innerHTML = `<div class="notice notice-error" role="alert"><p>${esc(e.message)}</p><button class="btn btn-ghost btn-sm" data-reload>Try again</button></div>`; });
 
 document.addEventListener('click', (e) => {
-  const cat = e.target.closest('[data-cat]'), scent = e.target.closest('[data-scent]');
-  if (cat) { state.category = cat.dataset.cat; render(); $(`[data-cat="${state.category}"]`)?.focus(); }
+  const cat = e.target.closest('[data-cat]'), scent = e.target.closest('[data-scent]'), shape = e.target.closest('[data-shape]');
+  if (cat) { state.category = cat.dataset.cat; state.shape = 'all'; render(); $(`[data-cat="${state.category}"]`)?.focus(); }
+  else if (shape) { state.shape = shape.dataset.shape; render(); }
   else if (scent) { const s = scent.dataset.scent; state.scents.has(s) ? state.scents.delete(s) : state.scents.add(s); render(); }
-  else if (e.target.id === 'clear') { state.category = 'all'; state.scents.clear(); state.q = ''; document.querySelectorAll('.search-form input').forEach((i) => (i.value = '')); render(); }
+  else if (e.target.id === 'clear') { state.category = 'all'; state.shape = 'all'; state.scents.clear(); state.q = ''; document.querySelectorAll('.search-form input').forEach((i) => (i.value = '')); render(); }
 });
 $('#sort').addEventListener('change', (e) => { state.sort = e.target.value; render(); });
 // Searching while already on the shop page filters in place

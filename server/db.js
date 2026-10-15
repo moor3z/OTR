@@ -15,7 +15,8 @@ const SCHEMA = [
      hidden INTEGER NOT NULL DEFAULT 0, sold_out INTEGER NOT NULL DEFAULT 0,
      featured INTEGER NOT NULL DEFAULT 0, is_sample INTEGER NOT NULL DEFAULT 0,
      sort INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL,
-     deal_group TEXT NOT NULL DEFAULT '', deal_qty INTEGER NOT NULL DEFAULT 0, deal_pence INTEGER NOT NULL DEFAULT 0)`,
+     deal_group TEXT NOT NULL DEFAULT '', deal_qty INTEGER NOT NULL DEFAULT 0, deal_pence INTEGER NOT NULL DEFAULT 0,
+     shape TEXT NOT NULL DEFAULT '')`,
   `CREATE TABLE IF NOT EXISTS variants (
      id TEXT PRIMARY KEY, product_id TEXT NOT NULL, label TEXT NOT NULL,
      price_pence INTEGER NOT NULL, stock INTEGER NOT NULL DEFAULT 0,
@@ -81,6 +82,7 @@ const ADDED_COLUMNS = [
   ['products', 'deal_group', `TEXT NOT NULL DEFAULT ''`],
   ['products', 'deal_qty', `INTEGER NOT NULL DEFAULT 0`],
   ['products', 'deal_pence', `INTEGER NOT NULL DEFAULT 0`],
+  ['products', 'shape', `TEXT NOT NULL DEFAULT ''`],
   ['variants', 'deal_group', `TEXT NOT NULL DEFAULT ''`],
   ['variants', 'deal_qty', `INTEGER NOT NULL DEFAULT 0`],
   ['variants', 'deal_pence', `INTEGER NOT NULL DEFAULT 0`],
@@ -217,6 +219,15 @@ export const CATEGORIES = [
   { id: 'accessories', name: 'Accessories' },
 ];
 export const SCENTS = ['fresh', 'floral', 'fruity', 'sweet', 'halloween', 'christmas'];
+// Shapes a snap bar comes in. Only the Snap Bars category uses this; the shop
+// shows a shape filter there and the admin form a Shape box under Category.
+export const SHAPES = [
+  { id: 'hearts', name: 'Hearts' },
+  { id: '5-piece', name: '5 piece snap bar' },
+  { id: 'square', name: 'Square' },
+  { id: 'circle', name: 'Circle' },
+];
+export const SHAPE_CATEGORY = 'snap-bars';
 
 // Load products with their variants. includeHidden is for admin only.
 export async function loadProducts(db, { includeHidden = false, id = null } = {}) {
@@ -267,7 +278,7 @@ function shapeProduct(p, variants, admin) {
   const out = {
     id: p.id, name: p.name, category: p.category,
     scents: p.scents ? p.scents.split(',').filter(Boolean) : [],
-    deal: dealOf(p), deal_labels: dealLabels,
+    deal: dealOf(p), deal_labels: dealLabels, shape: p.shape || '',
     short_desc: p.short_desc, description: p.description, weight: p.weight,
     usage: p.usage, safety: p.safety, image_url: p.image_url, option_name: p.option_name,
     featured: !!p.featured, sold_out: !!p.sold_out,

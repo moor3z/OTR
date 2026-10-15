@@ -13,10 +13,10 @@ export const onRequestPost = handle(async ({ env, request }) => {
   let id = slugify(p.name) || 'product';
   if (await db.prepare(`SELECT 1 FROM products WHERE id=?`).bind(id).first()) id += '-' + randomId(2);
   const stmts = [db.prepare(
-    `INSERT INTO products(id,name,category,scents,short_desc,description,weight,usage,safety,image_url,option_name,hidden,sold_out,featured,is_sample,sort,created_at,deal_group,deal_qty,deal_pence)
-     VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,?,?,?,?,?)`)
+    `INSERT INTO products(id,name,category,scents,short_desc,description,weight,usage,safety,image_url,option_name,hidden,sold_out,featured,is_sample,sort,created_at,deal_group,deal_qty,deal_pence,shape)
+     VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,?,?,?,?,?,?)`)
     .bind(id, p.name, p.category, p.scents.join(','), p.short_desc, p.description, p.weight, p.usage, p.safety,
-      p.image_url, p.option_name, p.hidden, p.sold_out, p.featured, p.sort, new Date().toISOString(), p.deal_group, p.deal_qty, p.deal_pence)];
+      p.image_url, p.option_name, p.hidden, p.sold_out, p.featured, p.sort, new Date().toISOString(), p.deal_group, p.deal_qty, p.deal_pence, p.shape)];
   stmts.push(...spreadDeal(db, p, id, variants));
   for (const v of variants)
     stmts.push(db.prepare(`INSERT INTO variants(id,product_id,label,price_pence,stock,sort,deal_group,deal_qty,deal_pence) VALUES(?,?,?,?,?,?,?,?,?)`)

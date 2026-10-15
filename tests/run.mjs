@@ -197,6 +197,17 @@ ok('a bad option deal is rejected with the option named', r.status === 422 && /H
 await putProduct('vanilla-cloud-snap-bar', { option_name: '', variants: [mk('Default', 350)] });
 await putProduct('lavender-dreams-snap-bar', { option_name: '', variants: [mk('Default', 350)] });
 
+// Shape on a snap bar: one of the known shapes, and only on snap bars.
+r = await putProduct('fresh-linen-snap-bar', { shape: 'hearts' });
+ok('a snap bar can be given a shape', r.status === 200 && r.body.product.shape === 'hearts');
+r = await putProduct('fresh-linen-snap-bar', { shape: 'triangle' });
+ok('an unknown shape is dropped', r.status === 200 && r.body.product.shape === '');
+r = await putProduct('coconut-breeze-melts', { shape: 'hearts' });
+ok('a shape on a non-snap-bar is dropped', r.status === 200 && r.body.product.shape === '');
+r = await j('/api/config');
+ok('the shop is told the shapes', r.body.shapes?.length === 4 && r.body.shape_category === 'snap-bars');
+await putProduct('fresh-linen-snap-bar', { shape: '' });
+
 // Sample packs: a list of label ids plus a panel size, saved as a whole.
 const ids = clp.labels.slice(0, 3).map((l) => l.id);
 r = await j('/api/admin/clp', { method: 'PUT', body: JSON.stringify({ packs: [{ id: 'pack-a', name: 'Trio', qty: '3 × 10 g', scents: [...ids, 'no such label', 'bad id!'], w: 70, h: 95, fs: 7 }] }) });
