@@ -176,6 +176,27 @@ await putProduct('rose-garden-melts', { deal_group: '', deal_qty: 0, deal_pence:
 r = await post('/api/quote', { items: [{ variant_id: 'coconut-breeze-melts--1', qty: 2 }] });
 ok('clearing the deal clears it', r.body.discount_pence === 0 && r.body.deals.length === 0);
 
+// Deals on an option: Heart is a shape inside each scent, and "any 2 hearts
+// for £5" has to work across scents while the Square option stays full price.
+const mk = (label, price, deal = {}) => ({ label, price_pence: price, stock: 10, ...deal });
+r = await putProduct('vanilla-cloud-snap-bar', { option_name: 'Shape', variants: [mk('Square', 350), mk('Heart', 300, { deal_group: 'hearts', deal_qty: 2, deal_pence: 500 }), mk('Rectangle', 350)] });
+ok('shapes with a deal on one option can be saved', r.status === 200 && r.body.product.variants.length === 3 && r.body.product.variants[1].deal?.label === 'Any 2 hearts for £5' && !r.body.product.variants[0].deal, JSON.stringify(r.body.product.variants));
+ok('the card line comes from the option deals', r.body.product.deal_labels.join() === 'Any 2 hearts for £5');
+const vanilla = r.body.product.variants;
+r = await putProduct('lavender-dreams-snap-bar', { option_name: 'Shape', variants: [mk('Square', 350), mk('Heart', 300, { deal_group: 'Hearts', deal_qty: 2, deal_pence: 450 })] });
+const vanillaNow = await prodById('vanilla-cloud-snap-bar');
+ok('saving a group on an option updates that group on other products\' options', r.body.product.variants[1].deal.pence === 450 && vanillaNow.variants[1].deal.pence === 450 && !vanillaNow.variants[0].deal);
+await putProduct('lavender-dreams-snap-bar', { option_name: 'Shape', variants: [mk('Square', 350), mk('Heart', 300, { deal_group: 'hearts', deal_qty: 2, deal_pence: 500 })] });
+const lav = (await prodById('lavender-dreams-snap-bar')).variants;
+r = await post('/api/quote', { items: [{ variant_id: vanilla[1].id, qty: 1 }, { variant_id: lav[1].id, qty: 1 }] });
+ok('a vanilla heart and a lavender heart make the deal', r.body.subtotal_pence === 500 && r.body.discount_pence === 100, JSON.stringify(r.body.deals));
+r = await post('/api/quote', { items: [{ variant_id: vanilla[1].id, qty: 1 }, { variant_id: vanilla[0].id, qty: 1 }] });
+ok('a heart and a square do not', r.body.discount_pence === 0 && r.body.subtotal_pence === 650);
+r = await putProduct('vanilla-cloud-snap-bar', { option_name: 'Shape', variants: [mk('Square', 350), mk('Heart', 300, { deal_qty: 1, deal_pence: 500 })] });
+ok('a bad option deal is rejected with the option named', r.status === 422 && /Heart/.test(r.body.fields?.variants || ''), JSON.stringify(r.body));
+await putProduct('vanilla-cloud-snap-bar', { option_name: '', variants: [mk('Default', 350)] });
+await putProduct('lavender-dreams-snap-bar', { option_name: '', variants: [mk('Default', 350)] });
+
 // Sample packs: a list of label ids plus a panel size, saved as a whole.
 const ids = clp.labels.slice(0, 3).map((l) => l.id);
 r = await j('/api/admin/clp', { method: 'PUT', body: JSON.stringify({ packs: [{ id: 'pack-a', name: 'Trio', qty: '3 × 10 g', scents: [...ids, 'no such label', 'bad id!'], w: 70, h: 95, fs: 7 }] }) });

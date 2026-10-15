@@ -1,6 +1,16 @@
-OTR - COMPLETE CURRENT PROJECT (version 43)
+OTR - COMPLETE CURRENT PROJECT (version 45)
 
-New in v43: multi-buy deals. Admin -> Products -> open a product -> Multi-buy
+New in v45: shapes, and deals per shape. On a product, "Use shapes: Square,
+Heart, Rectangle" sets up a Shape option with the three, each with its own
+price and stock (a heart weighs less, so it can cost less). Each option now
+has its own deal line, so "hearts 2 for £5" works when Heart is a shape inside
+every scent: put the group word on the Heart line of each scent and the deal
+runs across them, while squares stay full price. Three columns on variants
+add themselves on first request.
+
+v44: a Category filter on the admin product list.
+
+v43: multi-buy deals. Admin -> Products -> open a product -> Multi-buy
 deal: a group word (e.g. hearts), a quantity (2) and a price (5.00). Every
 product with the same group word is in the same deal, mix and match, and
 saving one updates the rest. Customers see "Any 2 hearts for £5" on the

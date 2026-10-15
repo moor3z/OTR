@@ -1,7 +1,7 @@
 // Server-side basket pricing. The browser only ever sends variant IDs and
 // quantities; names, prices, availability and totals all come from the database.
 import { httpError } from './util.js';
-import { dealOf } from './db.js';
+import { dealFor } from './db.js';
 
 export const MAX_LINES = 40;
 export const MAX_QTY = 20;
@@ -25,6 +25,7 @@ export async function priceBasket(db, settings, rawItems) {
     const marks = ids.map(() => '?').join(',');
     const res = await db.prepare(
       `SELECT v.id AS variant_id, v.label, v.price_pence, v.stock,
+              v.deal_group AS v_deal_group, v.deal_qty AS v_deal_qty, v.deal_pence AS v_deal_pence,
               p.id AS product_id, p.name, p.image_url, p.hidden, p.sold_out,
               p.deal_group, p.deal_qty, p.deal_pence,
               (SELECT COUNT(*) FROM variants x WHERE x.product_id = p.id) AS variant_count
@@ -42,7 +43,8 @@ export async function priceBasket(db, settings, rawItems) {
       lines.push({ variant_id: id, qty, ok: false, problem: 'gone', message: 'This item is no longer available.' });
       continue;
     }
-    const deal = dealOf(r);
+    const deal = dealFor({ id: r.variant_id, deal_group: r.v_deal_group, deal_qty: r.v_deal_qty, deal_pence: r.v_deal_pence },
+                         { id: r.product_id, deal_group: r.deal_group, deal_qty: r.deal_qty, deal_pence: r.deal_pence });
     const line = {
       variant_id: id, product_id: r.product_id, name: r.name,
       label: r.variant_count > 1 ? r.label : '',

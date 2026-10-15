@@ -17,10 +17,10 @@ export const onRequestPost = handle(async ({ env, request }) => {
      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,?,?,?,?,?)`)
     .bind(id, p.name, p.category, p.scents.join(','), p.short_desc, p.description, p.weight, p.usage, p.safety,
       p.image_url, p.option_name, p.hidden, p.sold_out, p.featured, p.sort, new Date().toISOString(), p.deal_group, p.deal_qty, p.deal_pence)];
-  stmts.push(...spreadDeal(db, p, id));
+  stmts.push(...spreadDeal(db, p, id, variants));
   for (const v of variants)
-    stmts.push(db.prepare(`INSERT INTO variants(id,product_id,label,price_pence,stock,sort) VALUES(?,?,?,?,?,?)`)
-      .bind(newVariantId(id), id, v.label, v.price_pence, v.stock, v.sort));
+    stmts.push(db.prepare(`INSERT INTO variants(id,product_id,label,price_pence,stock,sort,deal_group,deal_qty,deal_pence) VALUES(?,?,?,?,?,?,?,?,?)`)
+      .bind(newVariantId(id), id, v.label, v.price_pence, v.stock, v.sort, v.deal_group, v.deal_qty, v.deal_pence));
   await db.batch(stmts);
   const [product] = await loadProducts(db, { includeHidden: true, id });
   return json({ product }, 201);

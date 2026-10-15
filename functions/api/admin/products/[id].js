@@ -13,14 +13,14 @@ export const onRequestPut = handle(async ({ env, request, params }) => {
     `UPDATE products SET name=?,category=?,scents=?,short_desc=?,description=?,weight=?,usage=?,safety=?,image_url=?,option_name=?,hidden=?,sold_out=?,featured=?,sort=?,is_sample=0,deal_group=?,deal_qty=?,deal_pence=? WHERE id=?`)
     .bind(p.name, p.category, p.scents.join(','), p.short_desc, p.description, p.weight, p.usage, p.safety,
       p.image_url, p.option_name, p.hidden, p.sold_out, p.featured, p.sort, p.deal_group, p.deal_qty, p.deal_pence, id)];
-  stmts.push(...spreadDeal(db, p, id));
+  stmts.push(...spreadDeal(db, p, id, variants));
   stmts.push(keepIds.length
     ? db.prepare(`DELETE FROM variants WHERE product_id=? AND id NOT IN (${keepIds.map(() => '?').join(',')})`).bind(id, ...keepIds)
     : db.prepare(`DELETE FROM variants WHERE product_id=?`).bind(id));
   for (const v of variants) {
     stmts.push(v.id
-      ? db.prepare(`UPDATE variants SET label=?,price_pence=?,stock=?,sort=? WHERE id=? AND product_id=?`).bind(v.label, v.price_pence, v.stock, v.sort, v.id, id)
-      : db.prepare(`INSERT INTO variants(id,product_id,label,price_pence,stock,sort) VALUES(?,?,?,?,?,?)`).bind(newVariantId(id), id, v.label, v.price_pence, v.stock, v.sort));
+      ? db.prepare(`UPDATE variants SET label=?,price_pence=?,stock=?,sort=?,deal_group=?,deal_qty=?,deal_pence=? WHERE id=? AND product_id=?`).bind(v.label, v.price_pence, v.stock, v.sort, v.deal_group, v.deal_qty, v.deal_pence, v.id, id)
+      : db.prepare(`INSERT INTO variants(id,product_id,label,price_pence,stock,sort,deal_group,deal_qty,deal_pence) VALUES(?,?,?,?,?,?,?,?,?)`).bind(newVariantId(id), id, v.label, v.price_pence, v.stock, v.sort, v.deal_group, v.deal_qty, v.deal_pence));
   }
   await db.batch(stmts);
   const [product] = await loadProducts(db, { includeHidden: true, id });

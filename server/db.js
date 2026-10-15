@@ -19,7 +19,8 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS variants (
      id TEXT PRIMARY KEY, product_id TEXT NOT NULL, label TEXT NOT NULL,
      price_pence INTEGER NOT NULL, stock INTEGER NOT NULL DEFAULT 0,
-     sort INTEGER NOT NULL DEFAULT 0)`,
+     sort INTEGER NOT NULL DEFAULT 0,
+     deal_group TEXT NOT NULL DEFAULT '', deal_qty INTEGER NOT NULL DEFAULT 0, deal_pence INTEGER NOT NULL DEFAULT 0)`,
   `CREATE INDEX IF NOT EXISTS idx_variants_product ON variants(product_id)`,
   `CREATE TABLE IF NOT EXISTS images (
      id TEXT PRIMARY KEY, mime TEXT NOT NULL, data BLOB NOT NULL, created_at TEXT NOT NULL)`,
@@ -80,6 +81,9 @@ const ADDED_COLUMNS = [
   ['products', 'deal_group', `TEXT NOT NULL DEFAULT ''`],
   ['products', 'deal_qty', `INTEGER NOT NULL DEFAULT 0`],
   ['products', 'deal_pence', `INTEGER NOT NULL DEFAULT 0`],
+  ['variants', 'deal_group', `TEXT NOT NULL DEFAULT ''`],
+  ['variants', 'deal_qty', `INTEGER NOT NULL DEFAULT 0`],
+  ['variants', 'deal_pence', `INTEGER NOT NULL DEFAULT 0`],
   ['orders', 'discount_pence', `INTEGER NOT NULL DEFAULT 0`],
   ['orders', 'deals', `TEXT NOT NULL DEFAULT '[]'`],
 ];
@@ -232,31 +236,38 @@ export async function loadProducts(db, { includeHidden = false, id = null } = {}
   return prods.results.map((p) => shapeProduct(p, byProduct[p.id] || [], includeHidden));
 }
 
-// The multi-buy deal on a product, or null. Products sharing a deal_group
-// mix and match ("any 2 hearts for £5"); a product with a quantity and price
-// but no group has a deal of its own.
-export function dealOf(p) {
-  const qty = Number(p.deal_qty) || 0, pence = Number(p.deal_pence) || 0;
+// The multi-buy deal on a product or on one of its options, or null. Anything
+// sharing a deal_group mixes and matches ("any 2 hearts for £5", whichever
+// scent); a quantity and price with no group is a deal of its own. An option
+// (variant) can carry its own deal, which beats the product's: that is how
+// "hearts 2 for £5" works when Heart is a shape option inside each scent.
+export function dealOf(row, prefix = 'p') {
+  const qty = Number(row.deal_qty) || 0, pence = Number(row.deal_pence) || 0;
   if (qty < 2 || pence <= 0) return null;
-  const group = String(p.deal_group || '').trim();
+  const group = String(row.deal_group || '').trim();
   const price = pence % 100 ? '£' + (pence / 100).toFixed(2) : '£' + (pence / 100);
   return {
-    key: group ? 'g:' + group.toLowerCase() : 'p:' + p.id,
+    key: group ? 'g:' + group.toLowerCase() : prefix + ':' + row.id,
     group, qty, pence,
     label: group ? `Any ${qty} ${group} for ${price}` : `${qty} for ${price}`,
   };
 }
+export const dealFor = (variant, product) => dealOf(variant, 'v') || dealOf(product, 'p');
 
 function shapeProduct(p, variants, admin) {
   const vs = variants.map((v) => ({
     id: v.id, label: v.label, price_pence: v.price_pence,
     available: !p.sold_out && v.stock > 0,
-    ...(admin ? { stock: v.stock } : { low_stock: v.stock > 0 && v.stock <= 3 }),
+    deal: dealFor(v, p),
+    ...(admin ? { stock: v.stock, own_deal: dealOf(v, 'v') } : { low_stock: v.stock > 0 && v.stock <= 3 }),
   }));
+  // What the shop card can say in one line: the product's deal, or the
+  // option deals (de-duplicated) when the deals live on the options.
+  const dealLabels = [...new Set(vs.map((v) => v.deal && v.deal.label).filter(Boolean))];
   const out = {
     id: p.id, name: p.name, category: p.category,
     scents: p.scents ? p.scents.split(',').filter(Boolean) : [],
-    deal: dealOf(p),
+    deal: dealOf(p), deal_labels: dealLabels,
     short_desc: p.short_desc, description: p.description, weight: p.weight,
     usage: p.usage, safety: p.safety, image_url: p.image_url, option_name: p.option_name,
     featured: !!p.featured, sold_out: !!p.sold_out,
