@@ -206,6 +206,18 @@ r = await putProduct('coconut-breeze-melts', { shapes: ['hearts'] });
 ok('shapes on a non-snap-bar are dropped', r.status === 200 && r.body.product.shapes.length === 0);
 r = await j('/api/config');
 ok('the shop is told the shapes', r.body.shapes?.length === 4 && r.body.shape_category === 'snap-bars');
+await putProduct('fresh-linen-snap-bar', { shapes: ['hearts', 'square'] });
+r = await post('/api/quote', { items: [{ variant_id: V, qty: 1, shape: 'hearts' }, { variant_id: V, qty: 2, shape: 'square' }] });
+ok('two shapes of one scent are two lines, labelled', r.body.lines.length === 2 && r.body.lines[0].label === 'Hearts' && r.body.lines[1].label === 'Square' && r.body.subtotal_pence === 1050, JSON.stringify(r.body.lines.map((l) => [l.label, l.qty])));
+r = await post('/api/quote', { items: [{ variant_id: V, qty: 20, shape: 'hearts' }, { variant_id: V, qty: 20, shape: 'square' }] });
+ok('the shapes share the scent\'s stock', !r.body.ok && r.body.lines.some((l) => l.problem === 'too_many' && /across all shapes/.test(l.message)), JSON.stringify(r.body.lines.map((l) => l.message)));
+r = await post('/api/quote', { items: [{ variant_id: V, qty: 1, shape: 'circle' }] });
+ok('a shape the scent does not come in is refused', !r.body.ok && r.body.lines[0].problem === 'gone');
+r = await post('/api/checkout', { customer, items: [{ variant_id: V, qty: 1, shape: 'hearts' }] });
+const shapeSession = sessions[sessions.length - 1];
+const shapeOrder = await orderByRef(shapeSession.client_reference_id);
+ok('the order and the Stripe line carry the shape', r.status === 200 && shapeSession.form['line_items[0][price_data][product_data][name]'] === 'Fresh Linen Snap Bar – Hearts' && shapeOrder.items[0]?.shape === 'hearts' && shapeOrder.items[0]?.label === 'Hearts', JSON.stringify([shapeSession.form['line_items[0][price_data][product_data][name]'], shapeOrder.items[0]]));
+await j(`/api/admin/orders/${shapeSession.client_reference_id}`, { method: 'DELETE' });
 await putProduct('fresh-linen-snap-bar', { shapes: [] });
 
 // Sample packs: a list of label ids plus a panel size, saved as a whole.

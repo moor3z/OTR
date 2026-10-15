@@ -40,7 +40,7 @@ export const onRequestPost = handle(async ({ env, request }) => {
   const mode = paymentMode(env);
   const id = randomId(16), token = randomId(24), ref = orderRef(), now = new Date().toISOString();
   const items = quote.lines.map((l) => ({
-    variant_id: l.variant_id, product_id: l.product_id, name: l.name, label: l.label,
+    variant_id: l.variant_id, product_id: l.product_id, name: l.name, label: l.label, shape: l.shape || '',
     unit_pence: l.unit_pence, qty: l.qty, line_pence: l.line_pence,
   }));
   const address = { line1: v.line1, line2: v.line2, city: v.city, county: v.county, postcode: v.postcode, country: 'GB' };

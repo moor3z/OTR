@@ -23,6 +23,9 @@ export const getConfig = () => (configPromise ||= api('/api/config'));
 /* ── Basket storage ─────────────────────────────────────────────────────────
    Only variant IDs and quantities matter; the cached name/price is just so the
    drawer can render instantly. Real prices always come back from /api/quote. */
+// A basket line is a variant plus the shape chosen for it (snap bars), so
+// hearts and squares of one scent sit on separate lines.
+export const lineKey = (i) => i.variant_id + (i.shape ? '|' + i.shape : '');
 export const basket = {
   read() {
     try { const v = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(v) ? v.filter((i) => i && i.variant_id && i.qty > 0) : []; }
@@ -35,17 +38,17 @@ export const basket = {
   count() { return this.read().reduce((n, i) => n + i.qty, 0); },
   add(item, qty = 1) {
     const items = this.read();
-    const found = items.find((i) => i.variant_id === item.variant_id);
+    const found = items.find((i) => lineKey(i) === lineKey(item));
     if (found) found.qty = Math.min(found.qty + qty, 20); else items.push({ ...item, qty: Math.min(qty, 20) });
     this.write(items);
   },
   setQty(id, qty) {
-    const items = this.read().map((i) => (i.variant_id === id ? { ...i, qty } : i)).filter((i) => i.qty > 0);
+    const items = this.read().map((i) => (lineKey(i) === id ? { ...i, qty } : i)).filter((i) => i.qty > 0);
     this.write(items);
   },
-  remove(id) { this.write(this.read().filter((i) => i.variant_id !== id)); },
+  remove(id) { this.write(this.read().filter((i) => lineKey(i) !== id)); },
   clear() { this.write([]); },
-  payload() { return this.read().map(({ variant_id, qty }) => ({ variant_id, qty })); },
+  payload() { return this.read().map(({ variant_id, qty, shape }) => ({ variant_id, qty, ...(shape ? { shape } : {}) })); },
 };
 
 export function toast(message) {
@@ -58,13 +61,13 @@ export function toast(message) {
 
 /* ── Product card (used on home, shop and related products) ───────────────── */
 export function productCard(p) {
-  const single = p.variants.length === 1;
+  const single = p.variants.length === 1, hasShapes = (p.shapes || []).length > 0;
   const price = single ? gbp(p.from_pence) : `From ${gbp(p.from_pence)}`;
   const href = `/products/${encodeURIComponent(p.id)}`;
   let action;
   if (!p.available) action = `<button class="btn" disabled>Sold out</button>`;
-  else if (single) action = `<button class="btn btn-primary" data-add="${esc(p.id)}">Add to Basket</button>`;
-  else action = `<a class="btn btn-ghost" href="${href}">Choose ${esc((p.option_name || 'option').toLowerCase())}</a>`;
+  else if (single && !hasShapes) action = `<button class="btn btn-primary" data-add="${esc(p.id)}">Add to Basket</button>`;
+  else action = `<a class="btn btn-ghost" href="${href}">Choose ${esc(single ? 'shape' : (p.option_name || 'option').toLowerCase())}</a>`;
   return `<li><article class="card${p.available ? '' : ' is-out'}">
     <a class="card-media" href="${href}" tabindex="-1" aria-hidden="true">
       <img src="${esc(p.image_url || '/assets/ph/blank.svg')}" alt="" loading="lazy" decoding="async" width="400" height="400">
@@ -89,9 +92,10 @@ export function wireAddButtons(root, getProduct) {
   });
 }
 
-export function addToBasket(p, v, qty) {
-  basket.add({ variant_id: v.id, product_id: p.id, name: p.name, label: p.variants.length > 1 ? v.label : '', unit_pence: v.price_pence, image_url: p.image_url }, qty);
-  openDrawer(`${p.name} added to your basket.`);
+export function addToBasket(p, v, qty, shape = null) {
+  const label = [p.variants.length > 1 ? v.label : '', shape ? shape.name : ''].filter(Boolean).join(' · ');
+  basket.add({ variant_id: v.id, product_id: p.id, name: p.name, label, shape: shape ? shape.id : '', unit_pence: v.price_pence, image_url: p.image_url }, qty);
+  openDrawer(`${p.name}${shape ? ` (${shape.name})` : ''} added to your basket.`);
 }
 
 /* ── Header and footer ────────────────────────────────────────────────────── */
@@ -148,7 +152,7 @@ function updateCount() {
 let drawer;
 export function lineHtml(l, { problem } = {}) {
   const max = Math.min(l.max ?? 20, 20);
-  return `<li class="line" data-id="${esc(l.variant_id)}">
+  return `<li class="line" data-id="${esc(lineKey(l))}">
     <img src="${esc(l.image_url || '/assets/ph/blank.svg')}" alt="" width="76" height="76" loading="lazy">
     <div>
       <div class="line-top">
@@ -175,7 +179,7 @@ export function wireLines(root, onChange) {
     const id = li.dataset.id;
     const step = e.target.closest('[data-step]');
     if (step) {
-      const item = basket.read().find((i) => i.variant_id === id); if (!item) return;
+      const item = basket.read().find((i) => lineKey(i) === id); if (!item) return;
       basket.setQty(id, Math.max(1, Math.min(20, item.qty + Number(step.dataset.step)))); onChange();
     } else if (e.target.closest('[data-remove]')) { basket.remove(id); onChange(); }
   });

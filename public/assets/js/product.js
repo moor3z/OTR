@@ -1,4 +1,4 @@
-import { api, getConfig, productCard, wireAddButtons, addToBasket, gbp, esc, $ } from './site.js?v=47';
+import { api, getConfig, productCard, wireAddButtons, addToBasket, gbp, esc, $ } from './site.js?v=48';
 
 const id = decodeURIComponent(location.pathname.split('/')[2] || '') || new URLSearchParams(location.search).get('id') || '';
 const root = $('#product-root');
@@ -10,7 +10,9 @@ function render(p, cfg) {
   const cat = cfg.categories.find((c) => c.id === p.category);
   $('#crumb-cat').innerHTML = cat ? `<a href="/shop?category=${cat.id}">${esc(cat.name)}</a>` : '';
   const multi = p.variants.length > 1;
+  const shapes = (cfg.shapes || []).filter((s) => (p.shapes || []).includes(s.id));
   let chosen = p.variants.find((v) => v.available) || p.variants[0];
+  let shape = shapes[0] || null;
   let qty = 1;
 
   root.innerHTML = `<div class="product">
@@ -22,6 +24,9 @@ function render(p, cfg) {
       <p>${esc(p.short_desc)}</p>
       ${multi ? `<fieldset class="options"><legend>${esc(p.option_name || 'Option')}</legend><div class="options-list">
         ${p.variants.map((v) => `<label class="option"><input type="radio" name="variant" value="${esc(v.id)}"${v === chosen ? ' checked' : ''}${v.available ? '' : ' disabled'}><span>${esc(v.label)}${v.available ? '' : ' (sold out)'}</span></label>`).join('')}
+      </div></fieldset>` : ''}
+      ${shapes.length ? `<fieldset class="options"><legend>Shape</legend><div class="options-list">
+        ${shapes.map((s) => `<label class="option"><input type="radio" name="shape" value="${esc(s.id)}"${s === shape ? ' checked' : ''}><span>${esc(s.name)}</span></label>`).join('')}
       </div></fieldset>` : ''}
       <div class="buy-row">
         <div class="qty" role="group" aria-label="Quantity">
@@ -48,10 +53,13 @@ function render(p, cfg) {
     $('#minus').disabled = qty <= 1; $('#plus').disabled = qty >= 20 || !chosen.available;
     $('#stock-note').textContent = chosen.available && chosen.low_stock ? 'Only a few left.' : '';
   };
-  root.addEventListener('change', (e) => { if (e.target.name === 'variant') { chosen = p.variants.find((v) => v.id === e.target.value); update(); } });
+  root.addEventListener('change', (e) => {
+    if (e.target.name === 'variant') { chosen = p.variants.find((v) => v.id === e.target.value); update(); }
+    if (e.target.name === 'shape') shape = shapes.find((s) => s.id === e.target.value) || null;
+  });
   $('#minus').addEventListener('click', () => { qty = Math.max(1, qty - 1); update(); });
   $('#plus').addEventListener('click', () => { qty = Math.min(20, qty + 1); update(); });
-  $('#add').addEventListener('click', () => { if (chosen.available) addToBasket(p, chosen, qty); });
+  $('#add').addEventListener('click', () => { if (chosen.available) addToBasket(p, chosen, qty, shape); });
   update();
 }
 

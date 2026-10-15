@@ -1,7 +1,7 @@
 // Server-side basket pricing. The browser only ever sends variant IDs and
 // quantities; names, prices, availability and totals all come from the database.
 import { httpError } from './util.js';
-import { dealFor } from './db.js';
+import { dealFor, SHAPES } from './db.js';
 
 export const MAX_LINES = 40;
 export const MAX_QTY = 20;
@@ -10,16 +10,22 @@ export async function priceBasket(db, settings, rawItems) {
   if (!Array.isArray(rawItems)) throw httpError(400, 'Basket must be a list of items.');
   if (rawItems.length > MAX_LINES) throw httpError(400, 'Too many different items in the basket.');
 
-  // Merge duplicate lines, validate shapes
+  // Merge duplicate lines, validate shapes. A line is a variant plus the shape
+  // the customer picked (snap bars only), so two shapes of one scent are two
+  // lines that share the scent's stock.
   const wanted = new Map();
   for (const it of rawItems) {
     const id = typeof it?.variant_id === 'string' ? it.variant_id.slice(0, 120) : '';
     const qty = Number(it?.qty);
+    const shape = typeof it?.shape === 'string' ? it.shape.slice(0, 40) : '';
     if (!id || !Number.isInteger(qty) || qty < 1) throw httpError(400, 'Invalid basket item.');
-    wanted.set(id, (wanted.get(id) || 0) + qty);
+    const k = `${id}\u0000${shape}`;
+    wanted.set(k, { id, shape, qty: (wanted.get(k)?.qty || 0) + qty });
   }
+  const perVariant = new Map();
+  for (const w of wanted.values()) perVariant.set(w.id, (perVariant.get(w.id) || 0) + w.qty);
 
-  const ids = [...wanted.keys()];
+  const ids = [...perVariant.keys()];
   let rows = [];
   if (ids.length) {
     const marks = ids.map(() => '?').join(',');
@@ -27,7 +33,7 @@ export async function priceBasket(db, settings, rawItems) {
       `SELECT v.id AS variant_id, v.label, v.price_pence, v.stock,
               v.deal_group AS v_deal_group, v.deal_qty AS v_deal_qty, v.deal_pence AS v_deal_pence,
               p.id AS product_id, p.name, p.image_url, p.hidden, p.sold_out,
-              p.deal_group, p.deal_qty, p.deal_pence,
+              p.deal_group, p.deal_qty, p.deal_pence, p.shape AS shapes,
               (SELECT COUNT(*) FROM variants x WHERE x.product_id = p.id) AS variant_count
          FROM variants v JOIN products p ON p.id = v.product_id
         WHERE v.id IN (${marks})`).bind(...ids).all();
@@ -37,26 +43,32 @@ export async function priceBasket(db, settings, rawItems) {
 
   const lines = [];
   let subtotal = 0;
-  for (const [id, qty] of wanted) {
+  for (const { id, shape, qty } of wanted.values()) {
     const r = found.get(id);
     if (!r || r.hidden) {
-      lines.push({ variant_id: id, qty, ok: false, problem: 'gone', message: 'This item is no longer available.' });
+      lines.push({ variant_id: id, shape, qty, ok: false, problem: 'gone', message: 'This item is no longer available.' });
       continue;
     }
+    const shapeName = shape ? (SHAPES.find((s) => s.id === shape) || {}).name : '';
+    const shapeOk = !shape || ((r.shapes || '').split(',').includes(shape) && shapeName);
     const deal = dealFor({ id: r.variant_id, deal_group: r.v_deal_group, deal_qty: r.v_deal_qty, deal_pence: r.v_deal_pence },
                          { id: r.product_id, deal_group: r.deal_group, deal_qty: r.deal_qty, deal_pence: r.deal_pence });
     const line = {
       variant_id: id, product_id: r.product_id, name: r.name,
-      label: r.variant_count > 1 ? r.label : '',
+      label: [r.variant_count > 1 ? r.label : '', shapeName].filter(Boolean).join(' · '),
+      shape, shape_name: shapeName || '',
       image_url: r.image_url, unit_pence: r.price_pence, qty, ok: true,
       deal_key: deal ? deal.key : '', deal_label: deal ? deal.label : '',
     };
     if (deal) line._deal = deal;
-    if (r.sold_out || r.stock <= 0) {
+    const total = perVariant.get(id); // all shapes of this scent draw on the same stock
+    if (!shapeOk) {
+      Object.assign(line, { ok: false, problem: 'gone', message: 'That shape is no longer available for this scent.' });
+    } else if (r.sold_out || r.stock <= 0) {
       Object.assign(line, { ok: false, problem: 'sold_out', message: 'Sold out.' });
-    } else if (qty > Math.min(r.stock, MAX_QTY)) {
-      const max = Math.min(r.stock, MAX_QTY);
-      Object.assign(line, { ok: false, problem: 'too_many', max, message: `Only ${max} available.` });
+    } else if (qty > MAX_QTY || total > r.stock) {
+      const max = Math.max(0, Math.min(r.stock - (total - qty), MAX_QTY));
+      Object.assign(line, { ok: false, problem: 'too_many', max, message: total > r.stock && total !== qty ? `Only ${r.stock} of this scent available across all shapes.` : `Only ${max} available.` });
     }
     line.line_pence = line.unit_pence * qty;
     if (line.ok) subtotal += line.line_pence;

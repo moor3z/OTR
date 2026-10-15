@@ -1,6 +1,12 @@
-OTR - COMPLETE CURRENT PROJECT (version 47)
+OTR - COMPLETE CURRENT PROJECT (version 48)
 
-New in v47: Shape tick boxes under Category for snap bars (Hearts, 5 piece snap
+New in v48: customers pick the shape. A snap bar with shapes ticked shows a
+Shape choice on its product page (and "Choose shape" on the shop card instead
+of Add to Basket). Hearts and squares of one scent sit on separate basket
+lines, share the scent's stock, and the shape prints on the order, the
+packing slip, the emails and the Stripe line.
+
+v47: Shape tick boxes under Category for snap bars (Hearts, 5 piece snap
 bar, Square, Circle) - tick every shape the scent comes in. The Snap Bars page in the shop gets a "Filter by shape"
 row showing only the shapes on sale, and the admin product list can filter
 by shape too. One column on products adds itself on first request.
