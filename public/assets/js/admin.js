@@ -117,7 +117,7 @@ async function printOrder(o, mode) {
 
 /* ── Products ───────────────────────────────────────────────────────────── */
 let products = [];
-const pf = { category: 'all', shape: 'all', scent: 'all', status: 'all', q: '', sort: 'position' };
+const pf = { category: 'all', shape: 'all', scent: 'all', status: 'all', q: '', sort: 'added' };
 const ago = (iso) => {
   if (!iso) return '';
   const s = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -152,7 +152,7 @@ function showProducts(reload = true) {
         ${pf.category === SHAPE_CATEGORY ? `<p class="filter-label">Shape</p><div class="chips" style="margin:0 0 .75rem;padding:4px 0">${[['all', 'All'], ...SHAPES, ['', 'No shape set']].map(([v, l]) => chip('shape', v, l)).join('')}</div>` : ''}
         <p class="filter-label">Scent</p><div class="chips" style="margin:0 0 .75rem;padding:4px 0">${[['all', 'All'], ['allyear', 'All year round'], ['halloween', 'Halloween & Autumn'], ['christmas', 'Christmas & Winter'], ['fresh', 'Fresh'], ['floral', 'Floral'], ['fruity', 'Fruity'], ['sweet', 'Sweet']].map(([v, l]) => chip('scent', v, l)).join('')}</div>
         <p class="filter-label">Status</p><div class="chips" style="margin:0 0 .75rem;padding:4px 0">${[['all', 'All'], ['recent', 'Changed this week'], ['live', 'On sale'], ['soldout', 'Sold out'], ['hidden', 'Hidden'], ['todo', 'Needs price or photo']].map(([v, l]) => chip('status', v, l)).join('')}</div>
-        <div class="field-inline"><label for="pf-sort" style="margin:0;white-space:nowrap">Sort by</label><select id="pf-sort" style="width:auto"><option value="position">Position</option><option value="updated">Recently changed</option><option value="added">Recently added</option><option value="name">Name A to Z</option></select></div>
+        <div class="field-inline"><label for="pf-sort" style="margin:0;white-space:nowrap">Sort by</label><select id="pf-sort" style="width:auto"><option value="added">Recently added</option><option value="updated">Recently changed</option><option value="position">Position (as on the shop)</option><option value="name">Name A to Z</option></select></div>
       </div>
       <p class="muted small" role="status">${list.length} of ${products.length} products</p>
       ${list.length ? `<ul class="rows">${list.map((p) => `<li class="row"><img src="${esc(p.image_url || '/assets/ph/blank.svg')}" alt="">
