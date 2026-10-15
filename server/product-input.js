@@ -18,7 +18,8 @@ export function parseProduct(body, productId) {
     image_url: clean(body.image_url, 500), option_name: clean(body.option_name, 40),
     hidden: body.hidden ? 1 : 0, sold_out: body.sold_out ? 1 : 0, featured: body.featured ? 1 : 0,
     sort: Number.isInteger(body.sort) ? body.sort : 0,
-    shape: clean(body.shape, 40),
+    // Shapes a snap bar comes in, stored comma-separated like scents.
+    shapes: (Array.isArray(body.shapes) ? body.shapes : typeof body.shape === 'string' ? [body.shape] : []).map((s) => clean(s, 40)),
     // Multi-buy: "any 2 hearts for £5". Group is a plain word like "hearts";
     // blank means the deal is for this product alone. Both numbers or neither.
     deal_group: clean(body.deal_group, 40).replace(/\s+/g, ' '),
@@ -31,8 +32,9 @@ export function parseProduct(body, productId) {
   } else {
     p.deal_group = '';
   }
-  // A shape only means anything on a snap bar, and only one of the known ones.
-  if (p.category !== SHAPE_CATEGORY || !SHAPES.some((s) => s.id === p.shape)) p.shape = '';
+  // Shapes only mean anything on a snap bar, and only the known ones count.
+  p.shapes = p.category === SHAPE_CATEGORY ? SHAPES.map((s) => s.id).filter((id) => p.shapes.includes(id)) : [];
+  p.shape = p.shapes.join(',');
   if (p.name.length < 2) fields.name = 'Enter a product name.';
   if (!CATEGORIES.some((c) => c.id === p.category)) fields.category = 'Choose a category.';
   if (!okImage(p.image_url)) fields.image_url = 'Image must be an uploaded image or an https:// address.';

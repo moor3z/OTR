@@ -198,15 +198,15 @@ await putProduct('vanilla-cloud-snap-bar', { option_name: '', variants: [mk('Def
 await putProduct('lavender-dreams-snap-bar', { option_name: '', variants: [mk('Default', 350)] });
 
 // Shape on a snap bar: one of the known shapes, and only on snap bars.
-r = await putProduct('fresh-linen-snap-bar', { shape: 'hearts' });
-ok('a snap bar can be given a shape', r.status === 200 && r.body.product.shape === 'hearts');
-r = await putProduct('fresh-linen-snap-bar', { shape: 'triangle' });
-ok('an unknown shape is dropped', r.status === 200 && r.body.product.shape === '');
-r = await putProduct('coconut-breeze-melts', { shape: 'hearts' });
-ok('a shape on a non-snap-bar is dropped', r.status === 200 && r.body.product.shape === '');
+r = await putProduct('fresh-linen-snap-bar', { shapes: ['square', 'hearts'] });
+ok('a snap bar can come in several shapes', r.status === 200 && r.body.product.shapes.join() === 'hearts,square', JSON.stringify(r.body.product.shapes));
+r = await putProduct('fresh-linen-snap-bar', { shapes: ['triangle', 'circle'] });
+ok('an unknown shape is dropped, a known one kept', r.status === 200 && r.body.product.shapes.join() === 'circle');
+r = await putProduct('coconut-breeze-melts', { shapes: ['hearts'] });
+ok('shapes on a non-snap-bar are dropped', r.status === 200 && r.body.product.shapes.length === 0);
 r = await j('/api/config');
 ok('the shop is told the shapes', r.body.shapes?.length === 4 && r.body.shape_category === 'snap-bars');
-await putProduct('fresh-linen-snap-bar', { shape: '' });
+await putProduct('fresh-linen-snap-bar', { shapes: [] });
 
 // Sample packs: a list of label ids plus a panel size, saved as a whole.
 const ids = clp.labels.slice(0, 3).map((l) => l.id);

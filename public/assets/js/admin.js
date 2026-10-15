@@ -124,7 +124,7 @@ function showProducts(reload = true) {
     const q = pf.q.toLowerCase();
     const list = products.filter((p) =>
       (pf.category === 'all' || p.category === pf.category) &&
-      (pf.category !== SHAPE_CATEGORY || pf.shape === 'all' || p.shape === pf.shape) &&
+      (pf.category !== SHAPE_CATEGORY || pf.shape === 'all' || (pf.shape === '' ? !(p.shapes || []).length : (p.shapes || []).includes(pf.shape))) &&
       (pf.scent === 'all' || (pf.scent === 'allyear' ? !p.scents.includes('halloween') && !p.scents.includes('christmas') : p.scents.includes(pf.scent))) &&
       (pf.status === 'all' || (pf.status === 'live' ? !p.hidden && p.available : pf.status === 'hidden' ? p.hidden : pf.status === 'todo' ? p.variants.some((v) => !v.price_pence) || !p.image_url : pf.status === 'soldout' ? !p.hidden && (p.sold_out || !p.available) : true)) &&
       (!q || p.name.toLowerCase().includes(q)));
@@ -140,7 +140,7 @@ function showProducts(reload = true) {
       </div>
       <p class="muted small" role="status">${list.length} of ${products.length} products</p>
       ${list.length ? `<ul class="rows">${list.map((p) => `<li class="row"><img src="${esc(p.image_url || '/assets/ph/blank.svg')}" alt="">
-        <div><span class="row-title">${esc(p.name)}</span> ${p.is_sample ? '<span class="tag sample">Sample</span>' : ''}${p.hidden ? '<span class="tag hidden">Hidden</span>' : ''}${p.variants.some((v) => !v.price_pence) ? '<span class="tag warn">Needs price</span>' : ''}${!p.image_url ? '<span class="tag">No photo</span>' : ''}${p.sold_out ? '<span class="tag warn">Marked sold out</span>' : !p.available ? '<span class="tag warn">Out of stock</span>' : ''}${p.scents.filter((s) => s === 'halloween' || s === 'christmas').map((s) => `<span class="tag">${s[0].toUpperCase() + s.slice(1)}</span>`).join('')}${p.shape ? `<span class="tag">${esc((SHAPES.find(([id]) => id === p.shape) || [, p.shape])[1])}</span>` : ''}${(p.deal_labels || []).map((l) => `<span class="tag paid">${esc(l)}</span>`).join('')}
+        <div><span class="row-title">${esc(p.name)}</span> ${p.is_sample ? '<span class="tag sample">Sample</span>' : ''}${p.hidden ? '<span class="tag hidden">Hidden</span>' : ''}${p.variants.some((v) => !v.price_pence) ? '<span class="tag warn">Needs price</span>' : ''}${!p.image_url ? '<span class="tag">No photo</span>' : ''}${p.sold_out ? '<span class="tag warn">Marked sold out</span>' : !p.available ? '<span class="tag warn">Out of stock</span>' : ''}${p.scents.filter((s) => s === 'halloween' || s === 'christmas').map((s) => `<span class="tag">${s[0].toUpperCase() + s.slice(1)}</span>`).join('')}${(p.shapes || []).map((sh) => `<span class="tag">${esc((SHAPES.find(([id]) => id === sh) || [, sh])[1])}</span>`).join('')}${(p.deal_labels || []).map((l) => `<span class="tag paid">${esc(l)}</span>`).join('')}
           <p class="row-sub">${p.variants.map((v) => `${p.variants.length > 1 ? esc(v.label) + ' ' : ''}${gbp(v.price_pence)}, ${v.stock} in stock`).join(' | ')}</p></div>
         <button class="btn btn-ghost btn-sm" data-product="${esc(p.id)}">Edit</button></li>`).join('')}</ul>` : `<div class="empty"><p>${products.length ? 'No products match those filters.' : 'No products yet. Add your first one.'}</p></div>`}`;
     const search = $('#pf-q');
@@ -176,7 +176,7 @@ function openProduct(p) {
     <h3 class="form-section">1. The basics</h3>
     ${field('p-name', 'Product name', '', `<input id="p-name" type="text" value="${esc(p.name)}" required placeholder="e.g. Cherry Vanilla Snap Bar">`)}
     ${field('p-cat', 'Category', 'Which shop section it appears in', `<select id="p-cat">${CATEGORIES.map(([id, n]) => `<option value="${id}"${id === p.category ? ' selected' : ''}>${n}</option>`).join('')}</select>`)}
-    <div id="shape-wrap"${(p.category || CATEGORIES[0][0]) === SHAPE_CATEGORY ? '' : ' hidden'}>${field('p-shape', 'Shape', 'Customers can filter snap bars by shape', `<select id="p-shape"><option value="">Choose a shape</option>${SHAPES.map(([id, n]) => `<option value="${id}"${id === p.shape ? ' selected' : ''}>${n}</option>`).join('')}</select>`)}</div>
+    <fieldset class="field" id="shape-wrap" style="border:0;padding:0"${(p.category || CATEGORIES[0][0]) === SHAPE_CATEGORY ? '' : ' hidden'}><legend>Shape <span class="hint">Tick every shape this comes in. Customers can filter snap bars by shape.</span></legend><div class="checks">${SHAPES.map(([id, n]) => `<label><input type="checkbox" name="shape" value="${id}"${(p.shapes || []).includes(id) ? ' checked' : ''}>${n}</label>`).join('')}</div></fieldset>
     <fieldset class="field" style="border:0;padding:0"><legend>Seasonal? <span class="hint">Tick one to put it on the Seasonal page as well. It stays in its category too.</span></legend><div class="checks">
       <label><input type="checkbox" name="scent" value="halloween"${p.scents.includes('halloween') ? ' checked' : ''}>Halloween &amp; Autumn</label>
       <label><input type="checkbox" name="scent" value="christmas"${p.scents.includes('christmas') ? ' checked' : ''}>Christmas &amp; Winter</label></div></fieldset>
@@ -261,7 +261,8 @@ function openProduct(p) {
     const isMulti = $('#p-multi').checked;
     const rows = [...$('#variants').children];
     const body = {
-      name: $('#p-name').value, category: $('#p-cat').value, sort: parseInt($('#p-sort').value, 10) || 0, shape: $('#p-shape').value,
+      name: $('#p-name').value, category: $('#p-cat').value, sort: parseInt($('#p-sort').value, 10) || 0,
+      shapes: [...form.querySelectorAll('[name=shape]:checked')].map((c) => c.value),
       scents: [...form.querySelectorAll('[name=scent]:checked')].map((c) => c.value), image_url: $('#p-image-url').value,
       short_desc: $('#p-short').value, description: $('#p-desc').value, option_name: isMulti ? $('#p-option').value : '', weight: $('#p-weight').value,
       usage: $('#p-usage').value, safety: $('#p-safety').value, featured: $('#p-featured').checked, sold_out: $('#p-soldout').checked, hidden: $('#p-hidden').checked,

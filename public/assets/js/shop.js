@@ -1,4 +1,4 @@
-import { api, getConfig, productCard, wireAddButtons, esc, $ } from './site.js?v=46';
+import { api, getConfig, productCard, wireAddButtons, esc, $ } from './site.js?v=47';
 
 const params = new URLSearchParams(location.search);
 const state = {
@@ -32,7 +32,7 @@ function render() {
   document.querySelectorAll('#scents .chip').forEach((b) => b.setAttribute('aria-pressed', String(state.scents.has(b.dataset.scent))));
   // Shape chips only on the snap bars page, and only for shapes that are actually on sale.
   const onShapes = state.category === shapeCategory;
-  const have = new Set(products.filter((p) => p.category === shapeCategory && p.shape).map((p) => p.shape));
+  const have = new Set(products.filter((p) => p.category === shapeCategory).flatMap((p) => p.shapes || []));
   $('#shape-tools').hidden = !onShapes || !have.size;
   if (onShapes && have.size) {
     if (state.shape !== 'all' && !have.has(state.shape)) state.shape = 'all';
@@ -49,7 +49,7 @@ function render() {
   let list = products.filter((p) =>
     (state.category === 'all' || (state.category === 'seasonal' ? isSeasonal(p) : p.category === state.category)) &&
     (!state.scents.size || p.scents.some((s) => state.scents.has(s))) &&
-    (!onShapes || state.shape === 'all' || p.shape === state.shape) &&
+    (!onShapes || state.shape === 'all' || (p.shapes || []).includes(state.shape)) &&
     (!q || `${p.name} ${p.short_desc} ${p.scents.join(' ')}`.toLowerCase().includes(q)));
   const by = { 'price-asc': (a, b) => a.from_pence - b.from_pence, 'price-desc': (a, b) => b.from_pence - a.from_pence,
     'name-asc': (a, b) => a.name.localeCompare(b.name), 'name-desc': (a, b) => b.name.localeCompare(a.name) }[state.sort];

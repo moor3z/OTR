@@ -278,7 +278,8 @@ function shapeProduct(p, variants, admin) {
   const out = {
     id: p.id, name: p.name, category: p.category,
     scents: p.scents ? p.scents.split(',').filter(Boolean) : [],
-    deal: dealOf(p), deal_labels: dealLabels, shape: p.shape || '',
+    deal: dealOf(p), deal_labels: dealLabels,
+    shapes: p.shape ? p.shape.split(',').filter(Boolean) : [],
     short_desc: p.short_desc, description: p.description, weight: p.weight,
     usage: p.usage, safety: p.safety, image_url: p.image_url, option_name: p.option_name,
     featured: !!p.featured, sold_out: !!p.sold_out,

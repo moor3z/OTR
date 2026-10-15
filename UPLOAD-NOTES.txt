@@ -1,7 +1,7 @@
-OTR - COMPLETE CURRENT PROJECT (version 46)
+OTR - COMPLETE CURRENT PROJECT (version 47)
 
-New in v46: a Shape box under Category for snap bars (Hearts, 5 piece snap
-bar, Square, Circle). The Snap Bars page in the shop gets a "Filter by shape"
+New in v47: Shape tick boxes under Category for snap bars (Hearts, 5 piece snap
+bar, Square, Circle) - tick every shape the scent comes in. The Snap Bars page in the shop gets a "Filter by shape"
 row showing only the shapes on sale, and the admin product list can filter
 by shape too. One column on products adds itself on first request.
 
