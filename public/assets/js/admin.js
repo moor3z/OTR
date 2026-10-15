@@ -117,17 +117,32 @@ async function printOrder(o, mode) {
 
 /* ── Products ───────────────────────────────────────────────────────────── */
 let products = [];
-const pf = { category: 'all', shape: 'all', scent: 'all', status: 'all', q: '' }; // product list filters, kept while you edit
+const pf = { category: 'all', shape: 'all', scent: 'all', status: 'all', q: '', sort: 'position' };
+const ago = (iso) => {
+  if (!iso) return '';
+  const s = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (s < 60) return 'just now';
+  if (s < 3600) return `${Math.floor(s / 60)} min ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)} hr ago`;
+  if (s < 86400 * 7) return `${Math.floor(s / 86400)} day${Math.floor(s / 86400) === 1 ? '' : 's'} ago`;
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+};
+const recent = (p) => Date.now() - new Date(p.updated_at || p.created_at || 0).getTime() < 7 * 86400 * 1000; // product list filters, kept while you edit
 function showProducts(reload = true) {
   return (reload ? api('/products').then((d) => (products = d.products)) : Promise.resolve()).then(() => {
     const samples = products.filter((p) => p.is_sample).length;
     const q = pf.q.toLowerCase();
-    const list = products.filter((p) =>
+    let list = products.filter((p) =>
       (pf.category === 'all' || p.category === pf.category) &&
       (pf.category !== SHAPE_CATEGORY || pf.shape === 'all' || (pf.shape === '' ? !(p.shapes || []).length : (p.shapes || []).includes(pf.shape))) &&
       (pf.scent === 'all' || (pf.scent === 'allyear' ? !p.scents.includes('halloween') && !p.scents.includes('christmas') : p.scents.includes(pf.scent))) &&
       (pf.status === 'all' || (pf.status === 'live' ? !p.hidden && p.available : pf.status === 'hidden' ? p.hidden : pf.status === 'todo' ? p.variants.some((v) => !v.price_pence) || !p.image_url : pf.status === 'soldout' ? !p.hidden && (p.sold_out || !p.available) : true)) &&
-      (!q || p.name.toLowerCase().includes(q)));
+      (!q || p.name.toLowerCase().includes(q)) &&
+      (pf.status !== 'recent' || recent(p)));
+    const t = (p) => new Date(p.updated_at || p.created_at || 0).getTime();
+    if (pf.sort === 'updated') list = [...list].sort((a, b) => t(b) - t(a));
+    else if (pf.sort === 'added') list = [...list].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+    else if (pf.sort === 'name') list = [...list].sort((a, b) => a.name.localeCompare(b.name));
     const chip = (group, value, label) => `<button type="button" class="chip" data-pf="${group}" data-v="${value}" aria-pressed="${pf[group] === value}">${label}</button>`;
     panel.innerHTML = `<div class="bar"><h1>Products</h1><button class="btn btn-primary btn-sm" data-new-product>Add product</button></div>
       ${samples ? `<div class="notice notice-demo"><p><strong>${samples} sample product${samples === 1 ? '' : 's'} with made-up prices.</strong> Edit them into real products (saving removes the Sample tag) or clear them out.</p><button class="btn btn-ghost btn-sm" data-delete-samples>Delete all sample products</button></div>` : ''}
@@ -136,13 +151,16 @@ function showProducts(reload = true) {
         <p class="filter-label">Category</p><div class="chips" style="margin:0 0 .75rem;padding:4px 0">${[['all', 'All'], ...CATEGORIES].map(([v, l]) => chip('category', v, l)).join('')}</div>
         ${pf.category === SHAPE_CATEGORY ? `<p class="filter-label">Shape</p><div class="chips" style="margin:0 0 .75rem;padding:4px 0">${[['all', 'All'], ...SHAPES, ['', 'No shape set']].map(([v, l]) => chip('shape', v, l)).join('')}</div>` : ''}
         <p class="filter-label">Scent</p><div class="chips" style="margin:0 0 .75rem;padding:4px 0">${[['all', 'All'], ['allyear', 'All year round'], ['halloween', 'Halloween & Autumn'], ['christmas', 'Christmas & Winter'], ['fresh', 'Fresh'], ['floral', 'Floral'], ['fruity', 'Fruity'], ['sweet', 'Sweet']].map(([v, l]) => chip('scent', v, l)).join('')}</div>
-        <p class="filter-label">Status</p><div class="chips" style="margin:0;padding:4px 0">${[['all', 'All'], ['live', 'On sale'], ['soldout', 'Sold out'], ['hidden', 'Hidden'], ['todo', 'Needs price or photo']].map(([v, l]) => chip('status', v, l)).join('')}</div>
+        <p class="filter-label">Status</p><div class="chips" style="margin:0 0 .75rem;padding:4px 0">${[['all', 'All'], ['recent', 'Changed this week'], ['live', 'On sale'], ['soldout', 'Sold out'], ['hidden', 'Hidden'], ['todo', 'Needs price or photo']].map(([v, l]) => chip('status', v, l)).join('')}</div>
+        <div class="field-inline"><label for="pf-sort" style="margin:0;white-space:nowrap">Sort by</label><select id="pf-sort" style="width:auto"><option value="position">Position</option><option value="updated">Recently changed</option><option value="added">Recently added</option><option value="name">Name A to Z</option></select></div>
       </div>
       <p class="muted small" role="status">${list.length} of ${products.length} products</p>
       ${list.length ? `<ul class="rows">${list.map((p) => `<li class="row"><img src="${esc(p.image_url || '/assets/ph/blank.svg')}" alt="">
         <div><span class="row-title">${esc(p.name)}</span> ${p.is_sample ? '<span class="tag sample">Sample</span>' : ''}${p.hidden ? '<span class="tag hidden">Hidden</span>' : ''}${p.variants.some((v) => !v.price_pence) ? '<span class="tag warn">Needs price</span>' : ''}${!p.image_url ? '<span class="tag">No photo</span>' : ''}${p.sold_out ? '<span class="tag warn">Marked sold out</span>' : !p.available ? '<span class="tag warn">Out of stock</span>' : ''}${p.scents.filter((s) => s === 'halloween' || s === 'christmas').map((s) => `<span class="tag">${s[0].toUpperCase() + s.slice(1)}</span>`).join('')}${(p.shapes || []).map((sh) => `<span class="tag">${esc((SHAPES.find(([id]) => id === sh) || [, sh])[1])}</span>`).join('')}${(p.deal_labels || []).map((l) => `<span class="tag paid">${esc(l)}</span>`).join('')}
-          <p class="row-sub">${p.variants.map((v) => `${p.variants.length > 1 ? esc(v.label) + ' ' : ''}${gbp(v.price_pence)}, ${v.stock} in stock`).join(' | ')}</p></div>
+          <p class="row-sub">${p.variants.map((v) => `${p.variants.length > 1 ? esc(v.label) + ' ' : ''}${gbp(v.price_pence)}, ${v.stock} in stock`).join(' | ')}${p.updated_at || p.created_at ? ` <span class="muted">· ${p.updated_at ? 'updated' : 'added'} ${ago(p.updated_at || p.created_at)}</span>` : ''}</p></div>
         <button class="btn btn-ghost btn-sm" data-product="${esc(p.id)}">Edit</button></li>`).join('')}</ul>` : `<div class="empty"><p>${products.length ? 'No products match those filters.' : 'No products yet. Add your first one.'}</p></div>`}`;
+    $('#pf-sort').value = pf.sort;
+    $('#pf-sort').onchange = (e) => { pf.sort = e.target.value; showProducts(false); };
     const search = $('#pf-q');
     search.oninput = () => { const pos = search.selectionStart; pf.q = search.value; showProducts(false).then(() => { const n = $('#pf-q'); n.focus(); n.setSelectionRange(pos, pos); }); };
   });

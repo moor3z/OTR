@@ -1,6 +1,9 @@
-OTR - COMPLETE CURRENT PROJECT (version 49)
+OTR - COMPLETE CURRENT PROJECT (version 50)
 
-New in v49: each shape has its own price and stock. Tick the shapes a snap
+New in v50: admin Products shows when each product was last changed, sorts
+by Recently changed / Recently added, and has a "Changed this week" chip.
+
+v49: each shape has its own price and stock. Tick the shapes a snap
 bar comes in under Category, and a price row appears for each under Price and
 stock (the existing price moves to the first shape). Customers pick the shape
 on the product page and pay that shape's price; the shop card says "From £x"

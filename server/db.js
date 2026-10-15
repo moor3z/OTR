@@ -16,7 +16,7 @@ const SCHEMA = [
      featured INTEGER NOT NULL DEFAULT 0, is_sample INTEGER NOT NULL DEFAULT 0,
      sort INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL,
      deal_group TEXT NOT NULL DEFAULT '', deal_qty INTEGER NOT NULL DEFAULT 0, deal_pence INTEGER NOT NULL DEFAULT 0,
-     shape TEXT NOT NULL DEFAULT '')`,
+     shape TEXT NOT NULL DEFAULT '', updated_at TEXT NOT NULL DEFAULT '')`,
   `CREATE TABLE IF NOT EXISTS variants (
      id TEXT PRIMARY KEY, product_id TEXT NOT NULL, label TEXT NOT NULL,
      price_pence INTEGER NOT NULL, stock INTEGER NOT NULL DEFAULT 0,
@@ -84,6 +84,7 @@ const ADDED_COLUMNS = [
   ['products', 'deal_qty', `INTEGER NOT NULL DEFAULT 0`],
   ['products', 'deal_pence', `INTEGER NOT NULL DEFAULT 0`],
   ['products', 'shape', `TEXT NOT NULL DEFAULT ''`],
+  ['products', 'updated_at', `TEXT NOT NULL DEFAULT ''`],
   ['variants', 'deal_group', `TEXT NOT NULL DEFAULT ''`],
   ['variants', 'deal_qty', `INTEGER NOT NULL DEFAULT 0`],
   ['variants', 'deal_pence', `INTEGER NOT NULL DEFAULT 0`],
@@ -292,6 +293,6 @@ function shapeProduct(p, variants, admin) {
     from_pence: vs.length ? Math.min(...vs.map((v) => v.price_pence)) : 0,
     variants: vs,
   };
-  if (admin) Object.assign(out, { hidden: !!p.hidden, is_sample: !!p.is_sample, sort: p.sort });
+  if (admin) Object.assign(out, { hidden: !!p.hidden, is_sample: !!p.is_sample, sort: p.sort, created_at: p.created_at, updated_at: p.updated_at || '' });
   return out;
 }
