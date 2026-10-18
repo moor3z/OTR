@@ -143,6 +143,11 @@ function showProducts(reload = true) {
     if (pf.sort === 'updated') list = [...list].sort((a, b) => t(b) - t(a));
     else if (pf.sort === 'added') list = [...list].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
     else if (pf.sort === 'name') list = [...list].sort((a, b) => a.name.localeCompare(b.name));
+    else if (pf.sort === 'price-asc' || pf.sort === 'price-desc') {
+      // A product's price is its cheapest option; unpriced products go last either way.
+      const price = (p) => { const ps = p.variants.map((v) => v.price_pence).filter((n) => n > 0); return ps.length ? Math.min(...ps) : Infinity; };
+      list = [...list].sort((a, b) => { const x = price(a), y = price(b); if (x === y) return a.name.localeCompare(b.name); if (x === Infinity) return 1; if (y === Infinity) return -1; return pf.sort === 'price-asc' ? x - y : y - x; });
+    }
     const chip = (group, value, label) => `<button type="button" class="chip" data-pf="${group}" data-v="${value}" aria-pressed="${pf[group] === value}">${label}</button>`;
     panel.innerHTML = `<div class="bar"><h1>Products</h1><button class="btn btn-primary btn-sm" data-new-product>Add product</button></div>
       ${samples ? `<div class="notice notice-demo"><p><strong>${samples} sample product${samples === 1 ? '' : 's'} with made-up prices.</strong> Edit them into real products (saving removes the Sample tag) or clear them out.</p><button class="btn btn-ghost btn-sm" data-delete-samples>Delete all sample products</button></div>` : ''}
@@ -152,7 +157,7 @@ function showProducts(reload = true) {
         ${pf.category === SHAPE_CATEGORY ? `<p class="filter-label">Shape</p><div class="chips" style="margin:0 0 .75rem;padding:4px 0">${[['all', 'All'], ...SHAPES, ['', 'No shape set']].map(([v, l]) => chip('shape', v, l)).join('')}</div>` : ''}
         <p class="filter-label">Scent</p><div class="chips" style="margin:0 0 .75rem;padding:4px 0">${[['all', 'All'], ['allyear', 'All year round'], ['halloween', 'Halloween & Autumn'], ['christmas', 'Christmas & Winter'], ['fresh', 'Fresh'], ['floral', 'Floral'], ['fruity', 'Fruity'], ['sweet', 'Sweet']].map(([v, l]) => chip('scent', v, l)).join('')}</div>
         <p class="filter-label">Status</p><div class="chips" style="margin:0 0 .75rem;padding:4px 0">${[['all', 'All'], ['recent', 'Changed this week'], ['live', 'On sale'], ['soldout', 'Sold out'], ['hidden', 'Hidden'], ['todo', 'Needs price or photo']].map(([v, l]) => chip('status', v, l)).join('')}</div>
-        <div class="field-inline"><label for="pf-sort" style="margin:0;white-space:nowrap">Sort by</label><select id="pf-sort" style="width:auto"><option value="added">Recently added</option><option value="updated">Recently changed</option><option value="position">Position (as on the shop)</option><option value="name">Name A to Z</option></select></div>
+        <div class="field-inline"><label for="pf-sort" style="margin:0;white-space:nowrap">Sort by</label><select id="pf-sort" style="width:auto"><option value="added">Recently added</option><option value="updated">Recently changed</option><option value="position">Position (as on the shop)</option><option value="price-asc">Price, low to high</option><option value="price-desc">Price, high to low</option><option value="name">Name A to Z</option></select></div>
       </div>
       <p class="muted small" role="status">${list.length} of ${products.length} products</p>
       ${list.length ? `<ul class="rows">${list.map((p) => `<li class="row"><img src="${esc(p.image_url || '/assets/ph/blank.svg')}" alt="">
