@@ -172,10 +172,10 @@ const variantRow = (v = {}, multi = false) => `<div class="variant${multi ? '' :
   <div><label>In stock<input type="number" min="0" step="1" data-v="stock" value="${v.stock ?? 0}" required></label></div>
   <button type="button" class="link-btn v-remove" data-remove-variant aria-label="Remove this option">Remove</button>
   <div class="v-deal">
-    <div><label>Deal group for this option <span class="hint">e.g. hearts</span><input type="text" maxlength="40" list="deal-groups" data-v="deal_group" value="${esc(v.own_deal?.group || '')}" placeholder="leave blank for none"></label></div>
+    <p class="v-deal-note">Deal on this option only <span class="hint">— leave blank for none</span></p>
+    <div class="v-deal-group"><label>Deal group <span class="hint">e.g. hearts</span><input type="text" maxlength="40" list="deal-groups" data-v="deal_group" value="${esc(v.own_deal?.group || '')}" placeholder="hearts"></label></div>
     <div><label>Any<input type="number" min="2" max="20" step="1" data-v="deal_qty" value="${v.own_deal ? v.own_deal.qty : ''}" placeholder="2"></label></div>
     <div><label>for £<input type="text" inputmode="decimal" data-v="deal_pence" value="${v.own_deal ? (v.own_deal.pence / 100).toFixed(2) : ''}" placeholder="5.00"></label></div>
-    <span class="v-deal-note">Deal on this option only</span>
   </div></div>`;
 
 let adminDefaults = { usage: '', safety: '' };

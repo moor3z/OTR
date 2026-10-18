@@ -32,8 +32,18 @@ dialog.editor::backdrop { background: rgba(46, 20, 55, .55); }
 .variant { display: grid; grid-template-columns: 1.4fr 1fr 1fr auto; gap: .5rem; align-items: end; margin-bottom: .5rem; } .variant label { font-size: .875rem; }
 .variant.single { grid-template-columns: 1fr 1fr; } .variant.single .v-label, .variant.single .v-remove { display: none; }
 /* Per-option deal line, shown only when the product has options */
-.v-deal { grid-column: 1 / -1; display: grid; grid-template-columns: 1.4fr 1fr 1fr auto; gap: .5rem; align-items: end; padding: .25rem .5rem .5rem; margin-top: -.25rem; background: var(--paper, #faf7fb); border-radius: 0 0 8px 8px; }
-.v-deal .v-deal-note { font-size: .8125rem; color: var(--muted); align-self: center; }
+.v-deal { grid-column: 1 / -1; display: grid; grid-template-columns: 2fr 1fr 1fr; gap: .5rem; align-items: end; padding: .375rem .625rem .625rem; margin-top: -.25rem; background: var(--paper, #faf7fb); border-radius: 0 0 8px 8px; }
+.v-deal .v-deal-note { grid-column: 1 / -1; margin: 0; font-size: .8125rem; font-weight: 600; color: var(--plum); }
+.v-deal .v-deal-note .hint { font-weight: 400; color: var(--muted); }
+/* Phones: the price row stacks its name over price and stock; the deal line stacks its group over the two numbers. */
+@media (max-width: 640px) {
+  .variant { grid-template-columns: 1fr 1fr; }
+  .variant .v-label { grid-column: 1 / -1; }
+  .variant.single { grid-template-columns: 1fr 1fr; }
+  .v-deal { grid-template-columns: 1fr 1fr; }
+  .v-deal .v-deal-group { grid-column: 1 / -1; }
+  .variant label .hint { display: block; }
+}
 .variant.single .v-deal { display: none; }
 .shape-preset { margin: .25rem 0 .75rem; }
 .variant.is-shape input[readonly] { background: var(--paper, #faf7fb); color: var(--muted); }

@@ -1,6 +1,7 @@
-OTR - COMPLETE CURRENT PROJECT (version 51)
+OTR - COMPLETE CURRENT PROJECT (version 52)
 
-New in v51: admin Products opens sorted by Recently added. v50: shows when each product was last changed, sorts
+New in v52: the product form lays out properly on a phone - option rows and
+deal lines stack instead of squashing into four columns. v51: admin Products opens sorted by Recently added. v50: shows when each product was last changed, sorts
 by Recently changed / Recently added, and has a "Changed this week" chip.
 
 v49: each shape has its own price and stock. Tick the shapes a snap
