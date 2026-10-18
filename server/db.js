@@ -220,6 +220,7 @@ export const CATEGORIES = [
   { id: 'sample-boxes', name: 'Sample Boxes' },
   { id: 'gift-sets', name: 'Gift Sets' },
   { id: 'accessories', name: 'Accessories' },
+  { id: 'broken-biscuits', name: 'Broken Biscuits' },
 ];
 export const SCENTS = ['fresh', 'floral', 'fruity', 'sweet', 'halloween', 'christmas'];
 // Shapes a snap bar comes in. Only the Snap Bars category uses this; the shop

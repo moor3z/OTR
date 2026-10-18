@@ -7,6 +7,7 @@ const DESC = {
   'sample-boxes': 'Try before you commit. Sample boxes of our most popular wax melt scents, perfect for finding a favourite.',
   'gift-sets': 'Wax melt gift sets, boxed and ready to give. Birthdays, thank-yous and treats.',
   accessories: 'Wax melt burners, tealights and storage tins to go with your melts.',
+  'broken-biscuits': 'Perfectly scented, slightly imperfect. Melts that cracked, chipped or broke on the way out of the mould, at a lower price. They melt just the same.',
   seasonal: 'Limited-edition seasonal wax melts: Halloween and autumn scents, Christmas and winter scents.',
 };
 

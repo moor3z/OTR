@@ -1,6 +1,12 @@
-OTR - COMPLETE CURRENT PROJECT (version 52)
+OTR - COMPLETE CURRENT PROJECT (version 53)
 
-New in v52: the product form lays out properly on a phone - option rows and
+New in v53: a Broken Biscuits category - cracked, chipped and broken melts
+at a lower price. It is in the admin Category list, the shop menu tiles on
+every page, the homepage "Shop by type" row, the shop filters and the
+sitemap, with its own photo. public/seasonal.html is gone from the repo as
+the notes always asked (the /seasonal page is served by a function).
+
+v52: the product form lays out properly on a phone - option rows and
 deal lines stack instead of squashing into four columns. v51: admin Products opens sorted by Recently added. v50: shows when each product was last changed, sorts
 by Recently changed / Recently added, and has a "Changed this week" chip.
 
@@ -63,7 +69,6 @@ WHAT TO DO
 Upload all of these to GitHub, replacing what is there:
   public/   functions/   server/   tools/   tests/   README.md
 
-Make sure public/seasonal.html is NOT in the repo.
 No Cloudflare settings, environment variables or database changes.
 
 CHECK AFTER DEPLOY

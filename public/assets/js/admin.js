@@ -6,7 +6,7 @@ const gbp = (p) => '£' + (p / 100).toFixed(2);
 const toPence = (s) => { const n = Number(String(s).replace(/[£,\s]/g, '')); return Number.isFinite(n) ? Math.round(n * 100) : NaN; };
 const when = (iso) => iso ? new Date(iso).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : '';
 const panel = $('#panel'), editor = $('#editor');
-const CATEGORIES = [['snap-bars', 'Snap Bars'], ['wax-melt-shapes', 'Wax Melt Shapes'], ['sample-boxes', 'Sample Boxes'], ['gift-sets', 'Gift Sets'], ['accessories', 'Accessories']];
+const CATEGORIES = [['snap-bars', 'Snap Bars'], ['wax-melt-shapes', 'Wax Melt Shapes'], ['sample-boxes', 'Sample Boxes'], ['gift-sets', 'Gift Sets'], ['accessories', 'Accessories'], ['broken-biscuits', 'Broken Biscuits']];
 const SCENTS = ['fresh', 'floral', 'fruity', 'sweet', 'halloween', 'christmas'];
 const SHAPES = [['hearts', 'Hearts'], ['5-piece', '5 piece snap bar'], ['square', 'Square'], ['circle', 'Circle']], SHAPE_CATEGORY = 'snap-bars';
 const FULFILMENT = ['unfulfilled', 'packed', 'dispatched', 'delivered', 'cancelled'];
