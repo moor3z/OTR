@@ -143,6 +143,7 @@ function showProducts(reload = true) {
     if (pf.sort === 'updated') list = [...list].sort((a, b) => t(b) - t(a));
     else if (pf.sort === 'added') list = [...list].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
     else if (pf.sort === 'name') list = [...list].sort((a, b) => a.name.localeCompare(b.name));
+    else if (pf.sort === 'position') list = [...list].sort((a, b) => { const x = a.sort > 0 ? a.sort : Infinity, y = b.sort > 0 ? b.sort : Infinity; return x === y ? a.name.localeCompare(b.name) : x - y; });
     else if (pf.sort === 'price-asc' || pf.sort === 'price-desc') {
       // A product's price is its cheapest option; unpriced products go last either way.
       const price = (p) => { const ps = p.variants.map((v) => v.price_pence).filter((n) => n > 0); return ps.length ? Math.min(...ps) : Infinity; };
@@ -162,7 +163,7 @@ function showProducts(reload = true) {
       <p class="muted small" role="status">${list.length} of ${products.length} products</p>
       ${list.length ? `<ul class="rows">${list.map((p) => `<li class="row"><img src="${esc(p.image_url || '/assets/ph/blank.svg')}" alt="">
         <div><span class="row-title">${esc(p.name)}</span> ${p.is_sample ? '<span class="tag sample">Sample</span>' : ''}${p.hidden ? '<span class="tag hidden">Hidden</span>' : ''}${p.variants.some((v) => !v.price_pence) ? '<span class="tag warn">Needs price</span>' : ''}${!p.image_url ? '<span class="tag">No photo</span>' : ''}${p.sold_out ? '<span class="tag warn">Marked sold out</span>' : !p.available ? '<span class="tag warn">Out of stock</span>' : ''}${p.scents.filter((s) => s === 'halloween' || s === 'christmas').map((s) => `<span class="tag">${s[0].toUpperCase() + s.slice(1)}</span>`).join('')}${(p.shapes || []).map((sh) => `<span class="tag">${esc((SHAPES.find(([id]) => id === sh) || [, sh])[1])}</span>`).join('')}${(p.deal_labels || []).map((l) => `<span class="tag paid">${esc(l)}</span>`).join('')}
-          <p class="row-sub">${p.variants.map((v) => `${p.variants.length > 1 ? esc(v.label) + ' ' : ''}${gbp(v.price_pence)}, ${v.stock} in stock`).join(' | ')}${p.updated_at || p.created_at ? ` <span class="muted">· ${p.updated_at ? 'updated' : 'added'} ${ago(p.updated_at || p.created_at)}</span>` : ''}</p></div>
+          <p class="row-sub">${p.variants.map((v) => `${p.variants.length > 1 ? esc(v.label) + ' ' : ''}${gbp(v.price_pence)}, ${v.stock} in stock`).join(' | ')}${p.updated_at || p.created_at ? ` <span class="muted">· ${p.updated_at ? 'updated' : 'added'} ${ago(p.updated_at || p.created_at)}</span>` : ''} <span class="muted">· ${p.sort > 0 ? `position ${p.sort}` : 'no position'}</span></p></div>
         <button class="btn btn-ghost btn-sm" data-product="${esc(p.id)}">Edit</button></li>`).join('')}</ul>` : `<div class="empty"><p>${products.length ? 'No products match those filters.' : 'No products yet. Add your first one.'}</p></div>`}`;
     $('#pf-sort').value = pf.sort;
     $('#pf-sort').onchange = (e) => { pf.sort = e.target.value; showProducts(false); };
