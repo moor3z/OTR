@@ -4,7 +4,7 @@
 import re, glob, os
 ROOT = os.path.join(os.path.dirname(__file__), '..', 'public')
 CATS = [('snap-bars', 'Snap Bars'), ('wax-melt-shapes', 'Melt Shapes'), ('sample-boxes', 'Sample Boxes'), ('gift-sets', 'Gift Sets'), ('accessories', 'Accessories'), ('broken-biscuits', 'Broken Biscuits'), ('seasonal', 'Seasonal')]
-PHOTO = {'broken-biscuits'}  # full-bleed photos rather than cut-outs
+PHOTO = set()  # categories whose image is a full-bleed photo rather than a cut-out
 BASKET = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9h14l-1.4 10.2a2 2 0 0 1-2 1.8H8.4a2 2 0 0 1-2-1.8L5 9Z"/><path d="M9 9V7a3 3 0 0 1 6 0v2"/></svg>'
 MENU = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>'
 CLOSE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>'
