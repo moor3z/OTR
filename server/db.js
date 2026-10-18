@@ -240,7 +240,8 @@ export async function loadProducts(db, { includeHidden = false, id = null } = {}
   if (!includeHidden) where.push(`hidden=0`);
   if (id) { where.push(`id=?`); args.push(id); }
   if (where.length) sql += ` WHERE ` + where.join(' AND ');
-  sql += ` ORDER BY sort, name`;
+  // Position 0 means "not placed": numbered products (1, 2, 3…) come first, the rest follow by name.
+  sql += ` ORDER BY CASE WHEN sort > 0 THEN 0 ELSE 1 END, sort, name`;
   const [prods, vars] = await db.batch([
     db.prepare(sql).bind(...args),
     id ? db.prepare(`SELECT * FROM variants WHERE product_id=? ORDER BY sort`).bind(id)

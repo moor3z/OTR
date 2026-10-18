@@ -1,6 +1,11 @@
-OTR - COMPLETE CURRENT PROJECT (version 57)
+OTR - COMPLETE CURRENT PROJECT (version 58)
 
-New in v57: a calmer desktop menu. The bar is Shop, Seasonal, Blog, Contact
+New in v58: Position now works the way you would expect. Products given a
+Position of 1, 2, 3, 4 come first in that order; products left at 0 have no
+position and follow on after them. Before, 0 counted as "first", so numbering a
+product 1 pushed it behind everything that had never been numbered.
+
+v57: a calmer desktop menu. The bar is Shop, Seasonal, Blog, Contact
 and the basket; Shop drops down the seven picture tiles with an All products
 link. The Home pill is gone (the logo is Home). Phones are unchanged.
 

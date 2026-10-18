@@ -236,5 +236,20 @@ ok('two packs with the same id are rejected', r.status === 422);
 r = await j('/api/admin/clp', { method: 'PUT', body: JSON.stringify({ packs: [] }) });
 ok('the pack list can be cleared', r.status === 200 && r.body.packs.length === 0 && r.body.labels.length === 59);
 
+// Position: numbered products first (1, 2, 3…), the rest (0) after them by name
+{
+  const all = (await j('/api/admin/products')).body.products;
+  const saved = all.map((p) => ({ id: p.id, sort: p.sort }));
+  const [a, b, c] = all.filter((p) => !p.hidden).slice(-3);
+  const put = (p, sort) => j(`/api/admin/products/${p.id}`, { method: 'PUT', body: JSON.stringify({ ...p, sort }) });
+  for (const p of all) await put(p, 0);
+  const base = (await j('/api/products')).body.products.map((p) => p.id);
+  await put(c, 1); await put(a, 2);
+  const ids = (await j('/api/products')).body.products.map((p) => p.id);
+  ok('position 1 shows before position 2', ids[0] === c.id && ids[1] === a.id, ids.slice(0, 3).join(','));
+  ok('position 0 products follow the numbered ones in their usual order', ids.slice(2).join() === base.filter((i) => i !== c.id && i !== a.id).join());
+  for (const p of all) await put(p, saved.find((s) => s.id === p.id).sort);
+}
+
 console.log(`\n${pass} passed, ${failN} failed`);
 process.exit(failN ? 1 : 0);

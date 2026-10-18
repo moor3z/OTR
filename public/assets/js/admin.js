@@ -228,9 +228,9 @@ function openProduct(p) {
       ${field('p-weight', 'Weight or size', 'Shown on the product page, e.g. 50g snap bar or Bag of 6 hearts, 45g', `<input id="p-weight" type="text" value="${esc(p.weight)}">`)}
       ${field('p-usage', 'Usage instructions', 'Standard wording is filled in. Change it only if this product is used differently.', `<textarea id="p-usage">${esc(p.usage)}</textarea>`)}
       ${field('p-safety', 'Safety information', 'Standard wording is filled in. Add any warnings or allergens specific to this scent from its CLP label.', `<textarea id="p-safety">${esc(p.safety)}</textarea>`)}
-      ${field('p-sort', 'Position in lists', 'Lower numbers show first. Leave as is unless you want to move it.', `<input id="p-sort" type="number" step="1" value="${p.sort ?? 0}">`)}
+      ${field('p-sort', 'Position in lists', '1 shows first, then 2, 3 and so on. 0 means no position: it goes after the numbered ones.', `<input id="p-sort" type="number" step="1" min="0" value="${p.sort ?? 0}">`)}
       <details class="where"><summary>What does Position do?</summary>
-        <p class="small">Products are laid out in order of their Position number, lowest first, on the shop page and the homepage. Two products with the same number are sorted by name. Give a product a low number, such as 1, to push it to the front, or a high number, such as 900, to send it to the back. Customers can still re-sort by price or name.</p>
+        <p class="small">Products with a Position number are laid out first, 1 then 2 then 3, on the shop page and the homepage. Products left at 0 have no position and follow on after them in name order. So to put four products at the front, give them 1, 2, 3 and 4 and leave everything else at 0. Customers can still re-sort by price or name.</p>
         <img src="/assets/img/help/positions.webp" alt="" loading="lazy"></details>
     </details>
 

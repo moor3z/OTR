@@ -1,6 +1,6 @@
-import { postCard } from './blog.js?v=57';
-import { format } from './page.js?v=57';
-import { api, getConfig, productCard, wireAddButtons, gbp, esc, $ } from './site.js?v=57';
+import { postCard } from './blog.js?v=58';
+import { format } from './page.js?v=58';
+import { api, getConfig, productCard, wireAddButtons, gbp, esc, $ } from './site.js?v=58';
 
 getConfig().then((c) => {
   if (c.hero_headline) $('#hero-headline').innerHTML = c.hero_headline.split(/\s*\|\s*|\n/).map(esc).join('<br>'); // "|" or a new line = line break

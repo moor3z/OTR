@@ -1,6 +1,6 @@
-import { api, esc, $ } from './site.js?v=57';
-import { format } from './page.js?v=57';
-import { postCard, postDate } from './blog.js?v=57';
+import { api, esc, $ } from './site.js?v=58';
+import { format } from './page.js?v=58';
+import { postCard, postDate } from './blog.js?v=58';
 
 const slug = decodeURIComponent(location.pathname.split('/')[2] || '') || new URLSearchParams(location.search).get('slug') || '';
 const root = $('#post-root');
