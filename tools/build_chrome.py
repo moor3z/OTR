@@ -23,7 +23,11 @@ HEADER = f'''<!-- chrome:start -->
   <div class="site-menu" id="site-menu">
     <nav class="site-nav" aria-label="Shop">
       <a class="nav-home" href="/">Home</a>
-      <div class="nav-grid">{tiles}</div>
+      <div class="nav-shop">
+        <button class="nav-shop-btn" type="button" aria-expanded="false" aria-controls="shop-panel">Shop</button>
+        <div class="nav-grid" id="shop-panel">{tiles}<a class="nav-all" href="/shop">All products &rarr;</a></div>
+      </div>
+      <div class="nav-desk"><a href="/shop?category=seasonal">Seasonal</a><a href="/blog">Blog</a><a href="/contact">Contact</a></div>
       <div class="nav-more"><a href="/shop">All products</a><a href="/blog">Blog</a><a href="/faq">FAQs</a><a href="/delivery-returns">Delivery &amp; returns</a><a href="/contact">Contact</a></div>
     </nav>
   </div>

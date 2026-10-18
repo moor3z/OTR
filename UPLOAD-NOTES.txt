@@ -1,6 +1,10 @@
-OTR - COMPLETE CURRENT PROJECT (version 56)
+OTR - COMPLETE CURRENT PROJECT (version 57)
 
-New in v55: Broken Biscuits tile uses the new heap photo, cut out on a clear
+New in v57: a calmer desktop menu. The bar is Shop, Seasonal, Blog, Contact
+and the basket; Shop drops down the seven picture tiles with an All products
+link. The Home pill is gone (the logo is Home). Phones are unchanged.
+
+v55: Broken Biscuits tile uses the new heap photo, cut out on a clear
 background like the other categories. v53: a Broken Biscuits category - cracked, chipped and broken melts
 at a lower price. It is in the admin Category list, the shop menu tiles on
 every page, the homepage "Shop by type" row, the shop filters and the

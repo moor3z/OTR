@@ -124,6 +124,21 @@ function renderChrome() {
   document.addEventListener('click', (e) => { if (menu.classList.contains('is-open') && !e.composedPath().includes($('.site-header'))) setMenu(false); });
   menu.addEventListener('click', (e) => { if (e.target.closest('a')) setMenu(false); });
 
+  // Desktop "Shop" dropdown (the button only exists on wide screens, but the wiring is harmless elsewhere)
+  const shop = $('.nav-shop'), shopBtn = $('.nav-shop-btn');
+  if (shop && shopBtn) {
+    let closeTimer;
+    const setShop = (open) => { shop.classList.toggle('is-open', open); shopBtn.setAttribute('aria-expanded', String(open)); };
+    const fine = matchMedia('(hover: hover) and (pointer: fine)');
+    shopBtn.addEventListener('click', () => setShop(!shop.classList.contains('is-open')));
+    shop.addEventListener('mouseenter', () => { if (fine.matches) { clearTimeout(closeTimer); setShop(true); } });
+    shop.addEventListener('mouseleave', () => { if (fine.matches) closeTimer = setTimeout(() => setShop(false), 180); });
+    shop.addEventListener('focusout', (e) => { if (!shop.contains(e.relatedTarget)) setShop(false); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && shop.classList.contains('is-open')) { setShop(false); shopBtn.focus(); } });
+    document.addEventListener('click', (e) => { if (shop.classList.contains('is-open') && !e.composedPath().includes(shop)) setShop(false); });
+    if (!$('.nav-desk a[aria-current="page"]') && (shop.querySelector('.nav-tile[aria-current="page"]') || (here === '/shop' && !cat))) shopBtn.setAttribute('aria-current', 'true');
+  }
+
   $('#basket-btn').addEventListener('click', () => openDrawer());
   updateCount();
   document.addEventListener('basket:change', updateCount);
