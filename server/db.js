@@ -1,7 +1,7 @@
 // Database access (Cloudflare D1 / SQLite). The schema is created automatically
 // on first request, and sample content is seeded if the database is empty.
 import { SAMPLE_PRODUCTS, DEFAULT_SETTINGS, DEFAULT_PAGES } from './seed.js';
-import { FAQ_PAGE, BLOG_POSTS, ABOUT_COPY, POLICY_PAGES, SHOP_EMAIL, SCENT_PRODUCTS, MORE_SCENTS, CONTACT_COPY, DEFAULT_USAGE, DEFAULT_SAFETY } from './content.js';
+import { FAQ_PAGE, BLOG_POSTS, ABOUT_COPY, POLICY_PAGES, SHOP_EMAIL, SCENT_PRODUCTS, MORE_SCENTS, CONTACT_COPY, DEFAULT_USAGE, DEFAULT_SAFETY, LOCAL_DELIVERY_SECTION } from './content.js';
 import { CLP_LABELS, CLP_BUSINESS } from './clp-data.js';
 
 const SCHEMA = [
@@ -124,7 +124,7 @@ const LOCAL_SETUP = {
 async function migrateContent(db) {
   const row = await db.prepare(`SELECT value FROM settings WHERE key='content_version'`).first();
   const have = Number(row?.value || 0);
-  if (have >= 12) return;
+  if (have >= 13) return;
   const now = new Date();
   const stmts = [];
   if (have < 2) { // FAQ page and starter blog posts
@@ -202,7 +202,14 @@ async function migrateContent(db) {
     for (const [k, v] of Object.entries(LOCAL_SETUP))
       stmts.push(db.prepare(`INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value WHERE settings.value=?`).bind(k, v, DEFAULT_SETTINGS[k] ?? ''));
   }
-  stmts.push(db.prepare(`INSERT INTO settings(key,value) VALUES('content_version','12') ON CONFLICT(key) DO UPDATE SET value='12'`));
+  if (have < 13) { // Delivery & returns page: a section on local delivery and collection, slotted in before "Dispatch and delivery times"
+    const iso = now.toISOString();
+    stmts.push(db.prepare(`UPDATE pages SET body=replace(body, '## Dispatch and delivery times', ? || char(10) || char(10) || '## Dispatch and delivery times'), updated_at=?
+      WHERE slug='delivery-returns' AND instr(body, '## Local delivery and collection')=0 AND instr(body, '## Dispatch and delivery times')>0`).bind(LOCAL_DELIVERY_SECTION, iso));
+    stmts.push(db.prepare(`UPDATE pages SET body=body || char(10) || char(10) || ?, updated_at=?
+      WHERE slug='delivery-returns' AND instr(body, '## Local delivery and collection')=0`).bind(LOCAL_DELIVERY_SECTION, iso));
+  }
+  stmts.push(db.prepare(`INSERT INTO settings(key,value) VALUES('content_version','13') ON CONFLICT(key) DO UPDATE SET value='13'`));
   await db.batch(stmts);
 }
 

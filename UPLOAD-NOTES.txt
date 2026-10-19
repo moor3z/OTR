@@ -1,6 +1,12 @@
-OTR - COMPLETE CURRENT PROJECT (version 60)
+OTR - COMPLETE CURRENT PROJECT (version 61)
 
-New in v60: local delivery and collection. Checkout now asks "How would you
+New in v61: the Delivery & returns page gets a "Local delivery and
+collection" section (the £4 / 10 miles / times, and the Sutton Way address
+and Sunday morning collection), slotted in before "Dispatch and delivery
+times" by content migration 13. It is added once; Michelle can edit it under
+Pages like the rest of the page.
+
+v60: local delivery and collection. Checkout now asks "How would you
 like your order?": post (as before), Local delivery (£4, within 10 miles of
 CH65 7DN, on Sunday 12.30pm to 2pm, Tuesday 6pm to 8pm or Thursday 6pm to
 8pm) or Collection (free, from 18 Sutton Way, Whitby, Ellesmere Port, Sunday

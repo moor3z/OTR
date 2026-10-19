@@ -319,5 +319,10 @@ ok('the pack list can be cleared', r.status === 200 && r.body.packs.length === 0
   ok('settings restored', (await j('/api/admin/settings')).body.settings.local_enabled === '1');
 }
 
+{
+  const html = await (await fetch(BASE + '/delivery-returns')).text();
+  ok('Delivery & returns page explains local delivery and collection', html.includes('Local delivery and collection') && html.includes('18 Sutton Way') && html.includes('within 10 miles'));
+}
+
 console.log(`\n${pass} passed, ${failN} failed`);
 process.exit(failN ? 1 : 0);

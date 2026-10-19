@@ -1,5 +1,5 @@
-import { api, basket, gbp, esc, $ } from './site.js?v=60';
-import { totalsHtml, dealHints } from './basket.js?v=60';
+import { api, basket, gbp, esc, $ } from './site.js?v=61';
+import { totalsHtml, dealHints } from './basket.js?v=61';
 
 const form = $('#checkout-form'), btn = $('#pay-btn'), errBox = $('#form-error');
 const SAVED = 'otr_checkout_details';
