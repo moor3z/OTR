@@ -1,4 +1,4 @@
-import { api, basket, lineHtml, wireLines, gbp, esc, $ } from './site.js?v=59';
+import { api, basket, lineHtml, wireLines, gbp, esc, $ } from './site.js?v=60';
 
 const root = $('#basket-root');
 let seq = 0;
@@ -20,6 +20,14 @@ export function dealHints(q) {
     if (d.need) return `<p class="deal-hint"><strong>${esc(d.label)}</strong> — add ${d.need} more ${thing} to get it${d.bundles ? ` again` : ''}.</p>`;
     return `<p class="deal-hint is-on"><strong>${esc(d.label)}</strong> applied — you save ${gbp(d.saving_pence)}.</p>`;
   }).join('');
+}
+
+// "Or collect for free / local delivery £4" — the choice itself is made at checkout.
+function otherWays(q) {
+  const opts = (q.options || []).filter((o) => o.id !== 'post');
+  if (!opts.length) return '';
+  const bits = opts.map((o) => o.id === 'collect' ? 'collect for free' : `local delivery ${o.pence ? gbp(o.pence) : 'free'} within ${o.radius_miles} miles${o.from ? ' of ' + esc(o.from) : ''}`);
+  return `<p class="small muted" style="margin:.75rem 0 0">Nearby? You can ${bits.join(', or ')}. Choose at checkout.</p>`;
 }
 
 async function render() {
@@ -50,6 +58,7 @@ async function render() {
       ${dealHints(q)}
       ${q.to_free_delivery_pence > 0 ? `<p class="free-hint">Spend ${gbp(q.to_free_delivery_pence)} more for free UK delivery.</p>` : q.free_delivery ? `<p class="free-hint">You have free UK delivery.</p>` : ''}
       ${totalsHtml(q)}
+      ${otherWays(q)}
       ${q.ok ? `<a class="btn btn-primary btn-block" href="/checkout">Checkout</a>` : `<button class="btn btn-block" disabled>Checkout</button>`}
       <p class="small muted" style="margin:.75rem 0 0">No account needed. UK delivery only.</p>
     </aside></div>`;

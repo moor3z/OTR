@@ -1,7 +1,7 @@
 import { getDb } from '../../../../server/db.js';
 import { handle, json, fail, readJson } from '../../../../server/util.js';
 
-const FULFILMENT = ['unfulfilled', 'packed', 'dispatched', 'delivered', 'cancelled'];
+const FULFILMENT = ['unfulfilled', 'packed', 'ready to collect', 'dispatched', 'delivered', 'collected', 'cancelled'];
 const safeDeals = (s) => { try { const d = JSON.parse(s || '[]'); return Array.isArray(d) ? d : []; } catch { return []; } };
 const shape = (o) => ({ ...o, token: undefined, items: JSON.parse(o.items), address: JSON.parse(o.address), deals: safeDeals(o.deals), discount_pence: o.discount_pence || 0 });
 

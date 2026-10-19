@@ -7,5 +7,6 @@ import { handle, json, readJson } from '../../server/util.js';
 export const onRequestPost = handle(async ({ env, request }) => {
   const db = await getDb(env);
   const body = await readJson(request);
-  return json(await priceBasket(db, await getSettings(db), body.items || []));
+  const method = typeof body.method === 'string' ? body.method : 'post';
+  return json(await priceBasket(db, await getSettings(db), body.items || [], method));
 });

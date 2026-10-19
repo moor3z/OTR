@@ -1,18 +1,25 @@
-import { api, basket, gbp, esc, $ } from './site.js?v=59';
+import { api, basket, gbp, esc, $ } from './site.js?v=60';
 
 const root = $('#status-root'), view = root.dataset.view;
 const token = new URLSearchParams(location.search).get('token') || '';
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
+const howText = (o) => o.method === 'collect'
+  ? `<p style="margin-inline:auto"><strong>Collect from</strong> ${esc((o.collection_address || '').replace(/\r?\n/g, ', '))}${o.slot ? ` — <strong>${esc(o.slot)}</strong>` : ''}.${o.collection_note ? ' ' + esc(o.collection_note) : ''} We will let you know when it is ready.</p>`
+  : o.method === 'local'
+    ? `<p style="margin-inline:auto"><strong>Local delivery</strong>${o.slot ? `, ${esc(o.slot)}` : ''}.${o.local_note ? ' ' + esc(o.local_note) : ' We will deliver it by hand.'}</p>`
+    : o.dispatch_estimate ? `<p class="muted" style="margin-inline:auto">${esc(o.dispatch_estimate)}</p>` : '';
+const howLabel = (o) => o.method === 'collect' ? 'Collection' : o.method === 'local' ? 'Local delivery' : 'Delivery';
+
 const summary = (o) => `<div class="summary-box"><h2>Order ${esc(o.ref)}</h2>
   <ul class="lines">${o.items.map((i) => `<li style="display:flex;justify-content:space-between;gap:1rem;padding:.4rem 0"><span>${esc(i.name)}${i.label ? ` (${esc(i.label)})` : ''} × ${i.qty}</span><strong>${gbp(i.line_pence)}</strong></li>`).join('')}</ul>
-  <dl class="totals">${o.discount_pence > 0 ? `<div class="saving"><dt>Multi-buy saving${o.deals && o.deals.length ? ` (${esc(o.deals.map((d) => d.label).join(', '))})` : ''}</dt><dd>&minus;${gbp(o.discount_pence)}</dd></div>` : ''}<div><dt>Subtotal</dt><dd>${gbp(o.subtotal_pence)}</dd></div><div><dt>Delivery</dt><dd>${o.delivery_pence ? gbp(o.delivery_pence) : 'Free'}</dd></div>
+  <dl class="totals">${o.discount_pence > 0 ? `<div class="saving"><dt>Multi-buy saving${o.deals && o.deals.length ? ` (${esc(o.deals.map((d) => d.label).join(', '))})` : ''}</dt><dd>&minus;${gbp(o.discount_pence)}</dd></div>` : ''}<div><dt>Subtotal</dt><dd>${gbp(o.subtotal_pence)}</dd></div><div><dt>${howLabel(o)}</dt><dd>${o.delivery_pence ? gbp(o.delivery_pence) : 'Free'}</dd></div>
   <div class="grand"><dt>Total</dt><dd>${gbp(o.total_pence)}</dd></div></dl></div>`;
 
 const views = {
   paid: (o) => `<div class="status-icon" aria-hidden="true">✓</div><h1>Thank you, your order is confirmed</h1>
     <p style="margin-inline:auto">Payment received. We will send updates to ${esc(o.email_hint)}.</p>
-    ${o.dispatch_estimate ? `<p class="muted" style="margin-inline:auto">${esc(o.dispatch_estimate)}</p>` : ''}${summary(o)}
+    ${howText(o)}${summary(o)}
     <p style="margin:1.5rem auto 0"><a class="btn btn-ghost" href="/shop">Keep shopping</a></p>`,
   confirming: (o) => `<div class="status-icon wait" aria-hidden="true">…</div><h1>We're confirming your payment</h1>
     <p style="margin-inline:auto">This usually takes a few seconds. You can leave this page. Once the payment is confirmed your order ${esc(o.ref)} is locked in.</p>

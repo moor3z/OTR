@@ -1,10 +1,12 @@
 // End-to-end API tests. Run against `wrangler pages dev` started with:
 //   -b STRIPE_SECRET_KEY=sk_test_mock -b STRIPE_WEBHOOK_SECRET=whsec_mock -b STRIPE_API_BASE=http://localhost:8799
 //   -b RESEND_API_KEY=re_mock -b "EMAIL_FROM=Shop <test@local>" -b RESEND_API_BASE=http://localhost:8798 -b ADMIN_DEV_BYPASS=true
+//   -b POSTCODES_API_BASE=http://localhost:8797
 // The stand-in Stripe and Resend servers are started by this file, so nothing else needs running.
 import { createHmac } from 'node:crypto';
 import './mock-stripe.mjs';
 import './mock-resend.mjs';
+import { setFail as postcodesDown } from './mock-postcodes.mjs';
 import { sessions } from './mock-stripe.mjs';
 
 const BASE = process.env.BASE || 'http://localhost:8788', SECRET = 'whsec_mock';
@@ -249,6 +251,72 @@ ok('the pack list can be cleared', r.status === 200 && r.body.packs.length === 0
   ok('position 1 shows before position 2', ids[0] === c.id && ids[1] === a.id, ids.slice(0, 3).join(','));
   ok('position 0 products follow the numbered ones in their usual order', ids.slice(2).join() === base.filter((i) => i !== c.id && i !== a.id).join());
   for (const p of all) await put(p, saved.find((s) => s.id === p.id).sort);
+}
+
+// Local delivery and collection
+{
+  const LV = (await prodById('fresh-linen-snap-bar')).variants[0].id; // re-created by the shape tests above
+  const cfg = (await j('/api/config')).body;
+  const ids = (cfg.fulfilment || []).map((o) => o.id);
+  ok('config offers post, local delivery and collection', ids.join() === 'post,local,collect', ids.join());
+  const local = cfg.fulfilment.find((o) => o.id === 'local'), collect = cfg.fulfilment.find((o) => o.id === 'collect');
+  ok('local delivery is £4 within 10 miles with three times', local.pence === 400 && local.radius_miles === 10 && local.slots.length === 3, JSON.stringify(local));
+  ok('collection is free from Sutton Way on Sunday mornings', collect.pence === 0 && collect.address.startsWith('18 Sutton Way') && collect.slots[0] === 'Sunday 10am to 12pm');
+
+  r = await post('/api/quote', { items: [{ variant_id: LV, qty: 1 }], method: 'local' });
+  ok('quote for local delivery charges £4 and no free-delivery nudge', r.body.delivery_pence === 400 && r.body.total_pence === 750 && r.body.to_free_delivery_pence === 0 && r.body.delivery_name === 'Local delivery', JSON.stringify(r.body));
+  r = await post('/api/quote', { items: [{ variant_id: 'rainbow-gift-box--1', qty: 2 }], method: 'local' });
+  ok('free-delivery threshold does not apply to local delivery', r.body.delivery_pence === 400);
+  r = await post('/api/quote', { items: [{ variant_id: LV, qty: 1 }], method: 'collect' });
+  ok('quote for collection is free', r.body.delivery_pence === 0 && r.body.total_pence === 350);
+  r = await post('/api/quote', { items: [{ variant_id: LV, qty: 1 }], method: 'teleport' });
+  ok('unknown method quotes as post', r.body.method === 'post' && r.body.delivery_pence === 395);
+
+  const near = { ...customer, postcode: 'CH1 1AA', phone: '07700 900123' };
+  r = await post('/api/checkout', { customer: near, items: [{ variant_id: LV, qty: 1 }], method: 'local', slot: 'Tuesday 6pm to 8pm' });
+  const ls = sessions.at(-1);
+  ok('local delivery within 10 miles is accepted', r.status === 200, JSON.stringify(r.body));
+  ok('Stripe is charged £4 local delivery with the time on it', ls.amount_total === 750 && ls.form['shipping_options[0][shipping_rate_data][display_name]'] === 'Local delivery (Tuesday 6pm to 8pm)', JSON.stringify(ls.form).slice(0, 300));
+  const lo = await orderByRef(ls.client_reference_id);
+  ok('the order records local delivery, the time and the distance', lo.fulfil_method === 'local' && lo.fulfil_slot === 'Tuesday 6pm to 8pm' && lo.distance_miles > 5 && lo.distance_miles < 9, JSON.stringify([lo.fulfil_method, lo.fulfil_slot, lo.distance_miles]));
+
+  r = await post('/api/checkout', { customer: { ...near, postcode: 'M1 1AA' }, items: [{ variant_id: LV, qty: 1 }], method: 'local', slot: 'Tuesday 6pm to 8pm' });
+  ok('an address 30 miles away is refused local delivery, with the distance explained', r.status === 422 && r.body.fields.method && /miles/.test(r.body.error), JSON.stringify(r.body));
+  r = await post('/api/checkout', { customer: { ...near, postcode: 'ZZ9 9ZZ' }, items: [{ variant_id: LV, qty: 1 }], method: 'local', slot: 'Tuesday 6pm to 8pm' });
+  ok('an unknown postcode is refused local delivery', r.status === 422 && r.body.fields.postcode);
+  r = await post('/api/checkout', { customer: near, items: [{ variant_id: LV, qty: 1 }], method: 'local', slot: 'Monday midnight' });
+  ok('a time that is not on the list is refused', r.status === 422 && r.body.fields.slot);
+  r = await post('/api/checkout', { customer: { ...near, phone: '' }, items: [{ variant_id: LV, qty: 1 }], method: 'local', slot: 'Tuesday 6pm to 8pm' });
+  ok('local delivery needs a phone number', r.status === 422 && r.body.fields.phone);
+  postcodesDown(true);
+  r = await post('/api/checkout', { customer: near, items: [{ variant_id: LV, qty: 1 }], method: 'local', slot: 'Tuesday 6pm to 8pm' });
+  postcodesDown(false);
+  ok('if the postcode service is down, local delivery is refused rather than guessed', r.status === 422 && /could not check/i.test(r.body.error), JSON.stringify(r.body));
+
+  r = await post('/api/checkout', { customer: { email: 'c@example.com', name: 'Col Lector', phone: '07700 900111' }, items: [{ variant_id: LV, qty: 1 }], method: 'collect', slot: 'Sunday 10am to 12pm' });
+  const cs = sessions.at(-1);
+  ok('collection needs no address and costs nothing extra', r.status === 200 && cs.amount_total === 350, JSON.stringify(r.body));
+  ok('Stripe shows Collection with the time and is sent no shipping address', cs.form['shipping_options[0][shipping_rate_data][display_name]'] === 'Collection (Sunday 10am to 12pm)' && !('payment_intent_data[shipping][address][line1]' in cs.form));
+  const co = await orderByRef(cs.client_reference_id);
+  ok('the order records collection and the time', co.fulfil_method === 'collect' && co.fulfil_slot === 'Sunday 10am to 12pm' && co.address.line1 === '');
+  r = await post('/api/checkout', { customer: { email: 'c@example.com', name: 'Col Lector' }, items: [{ variant_id: LV, qty: 1 }], method: 'collect', slot: 'Sunday 10am to 12pm' });
+  ok('collection needs a phone number', r.status === 422 && r.body.fields.phone);
+  const st = await webhook(paidEvent('evt_collect_1', cs));
+  const paidCo = await orderByRef(cs.client_reference_id);
+  ok('a collection order is paid and the status page says where to collect', st === 200 && paidCo.status === 'paid');
+  r = await post('/api/checkout', { customer: { email: 'c@example.com', name: 'Col Lector', phone: '07700 900111' }, items: [{ variant_id: LV, qty: 1 }], method: 'collect' });
+  ok('collection without choosing a time is refused', r.status === 422 && r.body.fields.slot);
+
+  // Admin can switch collection off, and it must disappear from checkout.
+  const sBefore = (await j('/api/admin/settings')).body.settings;
+  r = await j('/api/admin/settings', { method: 'PUT', body: JSON.stringify({ collection_enabled: '0' }) });
+  ok('collection can be switched off', r.status === 200 && r.body.settings.collection_enabled === '0');
+  r = await post('/api/checkout', { customer: { email: 'c@example.com', name: 'Col Lector', phone: '07700 900111' }, items: [{ variant_id: LV, qty: 1 }], method: 'collect', slot: 'Sunday 10am to 12pm' });
+  ok('collection is refused once switched off', r.status === 422 && r.body.fields.method);
+  r = await j('/api/admin/settings', { method: 'PUT', body: JSON.stringify({ local_enabled: '1', local_postcode: '' }) });
+  ok('local delivery cannot be switched on without a postcode', r.status === 422 && r.body.fields.local_postcode);
+  await j('/api/admin/settings', { method: 'PUT', body: JSON.stringify({ collection_enabled: sBefore.collection_enabled, local_enabled: sBefore.local_enabled, local_postcode: sBefore.local_postcode }) });
+  ok('settings restored', (await j('/api/admin/settings')).body.settings.local_enabled === '1');
 }
 
 console.log(`\n${pass} passed, ${failN} failed`);

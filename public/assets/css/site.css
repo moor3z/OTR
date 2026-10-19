@@ -203,6 +203,15 @@ input[type='text'], input[type='email'], input[type='tel'], input[type='search']
 textarea { min-height: 120px; }
 input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid var(--plum); outline-offset: 1px; border-color: var(--plum); }
 .field { margin-bottom: 1.125rem; }
+.how { border: 0; padding: 0; margin: 0 0 1.5rem; min-width: 0; }
+.how legend { padding: 0; margin-bottom: .75rem; }
+.how-opt { display: grid; grid-template-columns: auto 1fr auto; gap: .25rem .75rem; align-items: start; padding: .875rem 1rem; border: 2px solid #cdbfd4; border-radius: var(--r-sm); background: #fff; margin-bottom: .625rem; cursor: pointer; }
+.how-opt:has(input:checked) { border-color: var(--plum); box-shadow: 0 0 0 1px var(--plum) inset; background: var(--blush); }
+.how-opt input { width: 1.25rem; height: 1.25rem; margin: .2rem 0 0; accent-color: var(--plum); grid-row: span 2; }
+.how-opt .how-name { font-weight: 600; color: var(--plum); margin: 0; }
+.how-opt .how-price { font-weight: 700; color: var(--plum); white-space: nowrap; }
+.how-opt .how-sub { grid-column: 2 / span 2; margin: 0; color: var(--muted); font-size: .9375rem; }
+.how-opt .how-sub b { color: var(--ink); font-weight: 600; }
 .field-error { color: var(--danger); font-weight: 500; font-size: .9375rem; margin: .375rem 0 0; }
 [aria-invalid='true'] { border-color: var(--danger) !important; }
 .row-2 { display: grid; gap: 0 1rem; } @media (min-width: 560px) { .row-2 { grid-template-columns: 1fr 1fr; } }

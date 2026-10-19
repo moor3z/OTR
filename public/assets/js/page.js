@@ -1,4 +1,4 @@
-import { api, esc, $ } from './site.js?v=59';
+import { api, esc, $ } from './site.js?v=60';
 
 // Tiny safe formatter for the editable pages: "## Heading", "- list item",
 // blank line = new paragraph. Everything is escaped first; no HTML is allowed in.

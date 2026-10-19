@@ -2,11 +2,12 @@
 // quantities; names, prices, availability and totals all come from the database.
 import { httpError } from './util.js';
 import { dealFor, SHAPES } from './db.js';
+import { fulfilmentOptions } from './fulfil.js';
 
 export const MAX_LINES = 40;
 export const MAX_QTY = 20;
 
-export async function priceBasket(db, settings, rawItems) {
+export async function priceBasket(db, settings, rawItems, method = 'post') {
   if (!Array.isArray(rawItems)) throw httpError(400, 'Basket must be a list of items.');
   if (rawItems.length > MAX_LINES) throw httpError(400, 'Too many different items in the basket.');
 
@@ -81,18 +82,22 @@ export async function priceBasket(db, settings, rawItems) {
   const itemsTotal = subtotal;
   subtotal -= discount;
 
-  const threshold = parseInt(settings.free_delivery_threshold_pence, 10) || 0;
-  const rate = Math.max(0, parseInt(settings.delivery_pence, 10) || 0);
+  // Delivery depends on how the customer wants the order: posted (free over the
+  // threshold), delivered locally (flat charge) or collected (nothing to pay).
+  const options = fulfilmentOptions(settings);
+  const chosen = options.find((o) => o.id === method) || options[0];
+  const threshold = chosen.id === 'post' ? chosen.free_over_pence : 0;
   const free = threshold > 0 && subtotal >= threshold;
-  const delivery = subtotal === 0 ? 0 : free ? 0 : rate;
+  const delivery = subtotal === 0 ? 0 : free ? 0 : chosen.pence;
 
   return {
     lines, ok: lines.length > 0 && lines.every((l) => l.ok),
     items_pence: itemsTotal, discount_pence: discount, deals,
     subtotal_pence: subtotal, delivery_pence: delivery, total_pence: subtotal + delivery,
-    delivery_name: settings.delivery_name, free_delivery: free,
+    method: chosen.id, delivery_name: chosen.name, free_delivery: free,
     free_delivery_threshold_pence: threshold,
     to_free_delivery_pence: threshold > 0 && !free ? threshold - subtotal : 0,
+    options,
   };
 }
 

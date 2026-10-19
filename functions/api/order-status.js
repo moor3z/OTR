@@ -9,7 +9,7 @@ export const onRequestGet = handle(async ({ env, request }) => {
   const token = new URL(request.url).searchParams.get('token') || '';
   if (!/^[a-f0-9]{48}$/.test(token)) return fail(400, 'Missing or invalid order link.');
   const db = await getDb(env);
-  const o = await db.prepare(`SELECT ref,mode,status,email,items,subtotal_pence,delivery_pence,total_pence,discount_pence,deals FROM orders WHERE token=?`).bind(token).first();
+  const o = await db.prepare(`SELECT ref,mode,status,email,items,subtotal_pence,delivery_pence,total_pence,discount_pence,deals,fulfil_method,fulfil_slot FROM orders WHERE token=?`).bind(token).first();
   if (!o) return fail(404, 'Order not found.');
   const [user, domain] = o.email.split('@');
   const s = await getSettings(db);
@@ -20,5 +20,9 @@ export const onRequestGet = handle(async ({ env, request }) => {
     subtotal_pence: o.subtotal_pence, delivery_pence: o.delivery_pence, total_pence: o.total_pence,
     discount_pence: o.discount_pence || 0, deals: safeDeals(o.deals),
     dispatch_estimate: s.dispatch_estimate,
+    method: o.fulfil_method || 'post', slot: o.fulfil_slot || '',
+    collection_address: (o.fulfil_method === 'collect') ? s.collection_address : '',
+    collection_note: (o.fulfil_method === 'collect') ? s.collection_note : '',
+    local_note: (o.fulfil_method === 'local') ? s.local_note : '',
   });
 });

@@ -1,6 +1,19 @@
-OTR - COMPLETE CURRENT PROJECT (version 59)
+OTR - COMPLETE CURRENT PROJECT (version 60)
 
-New in v59: admin Products can sort by price, low to high or high to low
+New in v60: local delivery and collection. Checkout now asks "How would you
+like your order?": post (as before), Local delivery (£4, within 10 miles of
+CH65 7DN, on Sunday 12.30pm to 2pm, Tuesday 6pm to 8pm or Thursday 6pm to
+8pm) or Collection (free, from 18 Sutton Way, Whitby, Ellesmere Port, Sunday
+10am to 12pm). The customer picks a time. For local delivery the distance
+from the shop postcode to theirs is checked (postcodes.io, free, no key) and
+anyone further than 10 miles is asked to choose post. Collection takes a name
+and phone number only, no address. Orders, emails, the thank-you page and the
+packing slip all say which one and the time. Everything is editable or can
+be switched off in Admin -> Delivery & settings. Three columns on orders add
+themselves on first request; the times and address are put in once by the
+content migration (version 12) and never overwrite later edits.
+
+v59: admin Products can sort by price, low to high or high to low
 (a product counts as its cheapest option; unpriced ones go last).
 
 v58: Position now works the way you would expect. Products given a
@@ -85,6 +98,10 @@ Upload all of these to GitHub, replacing what is there:
 No Cloudflare settings, environment variables or database changes.
 
 CHECK AFTER DEPLOY
+  Checkout shows the three choices; pick Local delivery, enter a Chester
+  postcode and a phone number -> accepted; try a Manchester one -> refused
+  with the distance. Pick Collection -> address fields vanish, total has no
+  delivery. Admin -> Delivery & settings shows the times and address filled in.
   Admin -> Products -> a heart -> "Multi-buy deal": group hearts, 2, 5.00, Save
   Do a second heart the same way (the price fills itself from the group)
   Shop: both cards show "Any 2 hearts for £5"; put one in the basket and the

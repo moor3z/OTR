@@ -1,5 +1,6 @@
 import { getDb, getSettings, CATEGORIES, SCENTS, SHAPES, SHAPE_CATEGORY } from '../../server/db.js';
 import { handle, json, paymentMode } from '../../server/util.js';
+import { fulfilmentOptions } from '../../server/fulfil.js';
 
 export const onRequestGet = handle(async ({ env }) => {
   const db = await getDb(env);
@@ -10,6 +11,7 @@ export const onRequestGet = handle(async ({ env }) => {
     delivery_pence: parseInt(s.delivery_pence, 10) || 0,
     free_delivery_threshold_pence: parseInt(s.free_delivery_threshold_pence, 10) || 0,
     delivery_name: s.delivery_name, dispatch_estimate: s.dispatch_estimate,
+    fulfilment: fulfilmentOptions(s),
     handmade_note: s.handmade_note, fragrance_note: s.fragrance_note,
     announcement: s.announcement, hero_headline: s.hero_headline, hero_sub: s.hero_sub,
     intro_title: s.intro_title, intro_text: s.intro_text,

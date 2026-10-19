@@ -90,6 +90,19 @@ export const DEFAULT_SETTINGS = {
   free_delivery_threshold_pence: '3000', // '' or '0' = no free-delivery offer
   delivery_name: 'UK standard delivery',
   dispatch_estimate: 'Sample estimate: dispatched within 2–3 working days',
+  // Local delivery by hand and collection from the shop. Both off until switched
+  // on in Admin → Delivery & settings. Times are one per line.
+  local_enabled: '0',
+  local_pence: '400',
+  local_radius_miles: '10',
+  local_postcode: '',            // the shop's own postcode, used for the distance check
+  local_area: '',                // how the area is described to customers, e.g. "Ellesmere Port"
+  local_times: '',
+  local_note: '',
+  collection_enabled: '0',
+  collection_address: '',
+  collection_times: '',
+  collection_note: '',
   // Homepage copy
   announcement: '',
   hero_headline: 'A little melt. | A lot of happiness.',

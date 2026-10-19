@@ -91,6 +91,9 @@ const ADDED_COLUMNS = [
   ['variants', 'shape', `TEXT NOT NULL DEFAULT ''`],
   ['orders', 'discount_pence', `INTEGER NOT NULL DEFAULT 0`],
   ['orders', 'deals', `TEXT NOT NULL DEFAULT '[]'`],
+  ['orders', 'fulfil_method', `TEXT NOT NULL DEFAULT 'post'`],
+  ['orders', 'fulfil_slot', `TEXT NOT NULL DEFAULT ''`],
+  ['orders', 'distance_miles', `REAL`],
 ];
 async function addColumns(db) {
   const have = {};
@@ -103,12 +106,25 @@ async function addColumns(db) {
   if (stmts.length) await db.batch(stmts);
 }
 
+// Michelle's local delivery and collection arrangements, put in once (content
+// version 12). Anything she changes afterwards in the admin area stays changed.
+const LOCAL_SETUP = {
+  local_enabled: '1', local_pence: '400', local_radius_miles: '10',
+  local_postcode: 'CH65 7DN', local_area: 'Ellesmere Port',
+  local_times: 'Sunday 12.30pm to 2pm\nTuesday 6pm to 8pm\nThursday 6pm to 8pm',
+  local_note: '',
+  collection_enabled: '1',
+  collection_address: '18 Sutton Way\nWhitby\nEllesmere Port\nCH65 7DN',
+  collection_times: 'Sunday 10am to 12pm',
+  collection_note: '',
+};
+
 // One-off content additions for databases created before a feature existed.
 // INSERT OR IGNORE means nothing you have edited is ever overwritten.
 async function migrateContent(db) {
   const row = await db.prepare(`SELECT value FROM settings WHERE key='content_version'`).first();
   const have = Number(row?.value || 0);
-  if (have >= 11) return;
+  if (have >= 12) return;
   const now = new Date();
   const stmts = [];
   if (have < 2) { // FAQ page and starter blog posts
@@ -181,7 +197,12 @@ async function migrateContent(db) {
         .bind(label.id, JSON.stringify(label), iso));
     stmts.push(db.prepare(`INSERT OR IGNORE INTO clp_settings(key,value) VALUES('business',?)`).bind(JSON.stringify(CLP_BUSINESS)));
   }
-  stmts.push(db.prepare(`INSERT INTO settings(key,value) VALUES('content_version','11') ON CONFLICT(key) DO UPDATE SET value='11'`));
+  if (have < 12) { // local delivery and collection, with the shop's own times. Editable in Admin → Delivery & settings.
+    // Fills a blank or untouched default; never overwrites something already edited.
+    for (const [k, v] of Object.entries(LOCAL_SETUP))
+      stmts.push(db.prepare(`INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value WHERE settings.value=?`).bind(k, v, DEFAULT_SETTINGS[k] ?? ''));
+  }
+  stmts.push(db.prepare(`INSERT INTO settings(key,value) VALUES('content_version','12') ON CONFLICT(key) DO UPDATE SET value='12'`));
   await db.batch(stmts);
 }
 

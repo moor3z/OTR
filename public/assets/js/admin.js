@@ -9,7 +9,7 @@ const panel = $('#panel'), editor = $('#editor');
 const CATEGORIES = [['snap-bars', 'Snap Bars'], ['wax-melt-shapes', 'Wax Melt Shapes'], ['sample-boxes', 'Sample Boxes'], ['gift-sets', 'Gift Sets'], ['accessories', 'Accessories'], ['broken-biscuits', 'Broken Biscuits']];
 const SCENTS = ['fresh', 'floral', 'fruity', 'sweet', 'halloween', 'christmas'];
 const SHAPES = [['hearts', 'Hearts'], ['5-piece', '5 piece snap bar'], ['square', 'Square'], ['circle', 'Circle']], SHAPE_CATEGORY = 'snap-bars';
-const FULFILMENT = ['unfulfilled', 'packed', 'dispatched', 'delivered', 'cancelled'];
+const FULFILMENT = ['unfulfilled', 'packed', 'ready to collect', 'dispatched', 'delivered', 'collected', 'cancelled'];
 
 async function api(path, { method = 'GET', body, raw, type } = {}) {
   const res = await fetch('/api/admin' + path, {
@@ -38,13 +38,15 @@ async function showOrders() {
     <label class="visually-hidden" for="view">Show</label><select id="view" style="width:auto">
       <option value="paid">Paid orders</option><option value="other">Unpaid, expired and demo</option><option value="all">Everything</option></select></div>
     ${orders.length ? `<ul class="rows">${orders.map((o) => `<li class="row order">
-      <div><span class="row-title">${esc(o.ref)}</span> ${statusTag(o)} <span class="tag">${esc(o.fulfilment)}</span>
+      <div><span class="row-title">${esc(o.ref)}</span> ${statusTag(o)} <span class="tag">${esc(o.fulfilment)}</span>${howTag(o)}
         <p class="row-sub">${esc(o.name)}, ${o.item_count} item${o.item_count === 1 ? '' : 's'}, ${gbp(o.total_pence)}, ${when(o.paid_at || o.created_at)}</p></div>
       <button class="btn btn-ghost btn-sm" data-order="${esc(o.id)}">Open</button></li>`).join('')}</ul>`
       : `<div class="empty"><p>${orderView === 'paid' ? 'No paid orders yet. They appear here as soon as Stripe confirms a payment.' : 'Nothing to show.'}</p></div>`}`;
   $('#view').value = orderView;
   $('#view').onchange = (e) => { orderView = e.target.value; showOrders().catch(fail); };
 }
+const howTag = (o) => o.fulfil_method === 'collect' ? ` <span class="tag how">Collect${o.fulfil_slot ? ': ' + esc(o.fulfil_slot) : ''}</span>` : o.fulfil_method === 'local' ? ` <span class="tag how">Local${o.fulfil_slot ? ': ' + esc(o.fulfil_slot) : ''}</span>` : '';
+const howName = (o) => o.fulfil_method === 'collect' ? 'Collection' : o.fulfil_method === 'local' ? 'Local delivery' : 'Delivery';
 const statusTag = (o) => `<span class="tag ${o.status === 'paid' ? 'paid' : o.status === 'review' || o.status === 'failed' ? 'warn' : ''}">${esc(o.status)}${o.mode === 'test' ? ' (test)' : ''}</span>`;
 
 async function openOrder(id) {
@@ -53,10 +55,11 @@ async function openOrder(id) {
   editor.innerHTML = `<form method="dialog" id="order-form"><h2 id="editor-title">Order ${esc(o.ref)}</h2><div class="form-msg"></div>
     <p>${statusTag(o)} ${o.status === 'paid' ? `Paid ${when(o.paid_at)}` : `Created ${when(o.created_at)}. Not paid, do not send.`}</p>
     <dl class="kv"><dt>Customer</dt><dd>${esc(o.name)}<br><a href="mailto:${esc(o.email)}">${esc(o.email)}</a>${o.phone ? `<br>${esc(o.phone)}` : ''}</dd>
-      <dt>Deliver to</dt><dd>${[o.name, a.line1, a.line2, a.city, a.county, a.postcode].filter(Boolean).map(esc).join('<br>')}</dd>
+      ${o.fulfil_method === 'collect' ? `<dt>Collection</dt><dd><strong>${esc(o.fulfil_slot || 'Time not chosen')}</strong><br>${esc(o.name)} is collecting${o.phone ? `, ${esc(o.phone)}` : ''}</dd>`
+        : `<dt>${o.fulfil_method === 'local' ? 'Local delivery' : 'Deliver to'}</dt><dd>${o.fulfil_method === 'local' ? `<strong>${esc(o.fulfil_slot || 'Time not chosen')}</strong>${o.distance_miles != null ? ` <span class="muted">(about ${o.distance_miles} miles)</span>` : ''}<br>` : ''}${[o.name, a.line1, a.line2, a.city, a.county, a.postcode].filter(Boolean).map(esc).join('<br>')}</dd>`}
       ${o.payment_intent ? `<dt>Stripe ref</dt><dd>${esc(o.payment_intent)}<br><a class="btn btn-ghost btn-sm" style="margin-top:.375rem" href="https://dashboard.stripe.com/${o.mode === 'live' ? '' : 'test/'}payments/${encodeURIComponent(o.payment_intent)}" target="_blank" rel="noopener">Open payment in Stripe</a></dd>` : ''}</dl>
     <ul class="rows">${o.items.map((i) => `<li class="row order"><div><span class="row-title">${esc(i.name)}${i.label ? ` (${esc(i.label)})` : ''}</span><p class="row-sub">${i.qty} × ${gbp(i.unit_pence)}</p></div><strong>${gbp(i.line_pence)}</strong></li>`).join('')}</ul>
-    <dl class="kv">${o.discount_pence > 0 ? `<dt>Multi-buy saving</dt><dd>&minus;${gbp(o.discount_pence)}${o.deals && o.deals.length ? ` <span class="muted">(${esc(o.deals.map((d) => d.label).join(', '))})</span>` : ''}</dd>` : ''}<dt>Subtotal</dt><dd>${gbp(o.subtotal_pence)}</dd><dt>Delivery</dt><dd>${gbp(o.delivery_pence)}</dd><dt><strong>Total</strong></dt><dd><strong>${gbp(o.total_pence)}</strong></dd></dl>
+    <dl class="kv">${o.discount_pence > 0 ? `<dt>Multi-buy saving</dt><dd>&minus;${gbp(o.discount_pence)}${o.deals && o.deals.length ? ` <span class="muted">(${esc(o.deals.map((d) => d.label).join(', '))})</span>` : ''}</dd>` : ''}<dt>Subtotal</dt><dd>${gbp(o.subtotal_pence)}</dd><dt>${howName(o)}</dt><dd>${o.delivery_pence ? gbp(o.delivery_pence) : 'Free'}</dd><dt><strong>Total</strong></dt><dd><strong>${gbp(o.total_pence)}</strong></dd></dl>
     <div class="field"><label for="fulfilment">Fulfilment status</label><select id="fulfilment">${FULFILMENT.map((f) => `<option${f === o.fulfilment ? ' selected' : ''}>${f}</option>`).join('')}</select></div>
     <div class="field"><label for="note">Private note</label><textarea id="note">${esc(o.admin_note)}</textarea></div>
     <div class="editor-actions"><button class="btn btn-primary" type="submit" value="save">Save order</button><button class="btn btn-ghost" type="button" data-close>Close</button>
@@ -85,17 +88,19 @@ let shopSettings = null;
 async function printOrder(o, mode) {
   if (!shopSettings) { try { shopSettings = (await api('/settings')).settings; } catch { shopSettings = {}; } }
   const a = o.address;
-  const to = [o.name, a.line1, a.line2, a.city, a.county, a.postcode].filter(Boolean).map(esc);
+  const to = o.fulfil_method === 'collect'
+    ? [o.name, `COLLECTION${o.fulfil_slot ? ' – ' + o.fulfil_slot : ''}`, ...(o.phone ? [o.phone] : [])].map(esc)
+    : [...(o.fulfil_method === 'local' ? [`LOCAL DELIVERY${o.fulfil_slot ? ' – ' + o.fulfil_slot : ''}`] : []), o.name, a.line1, a.line2, a.city, a.county, a.postcode].filter(Boolean).map(esc);
   const from = [shopSettings.business_name, ...(shopSettings.business_address || '').split(/\n/)].filter(Boolean).map(esc);
   const win = window.open('', '_blank', 'width=800,height=700');
   if (!win) { flash('Allow pop-ups for this site to print.'); return; }
   const label = `<div class="label"><div class="to">${to.join('<br>')}</div><div class="foot"><span>Order ${esc(o.ref)}</span>${from.length ? `<span>From: ${from.join(', ')}</span>` : ''}</div></div>`;
   const slip = `<div class="slip"><div class="head"><div><h1>${esc(shopSettings.business_name || 'Over The Rainbow')}</h1>${from.slice(1).length ? `<p>${from.slice(1).join('<br>')}</p>` : ''}</div>
       <div class="right"><strong>Order ${esc(o.ref)}</strong><br>${when(o.paid_at || o.created_at)}</div></div>
-    <h2>Deliver to</h2><p>${to.join('<br>')}${o.phone ? `<br>${esc(o.phone)}` : ''}</p>
+    <h2>${o.fulfil_method === 'collect' ? 'Collection' : 'Deliver to'}</h2><p>${to.join('<br>')}${o.phone && o.fulfil_method !== 'collect' ? `<br>${esc(o.phone)}` : ''}</p>
     <h2>Items</h2><table><tr><th>Item</th><th>Qty</th><th class="r">Price</th></tr>
       ${o.items.map((i) => `<tr><td>${esc(i.name)}${i.label ? ` – ${esc(i.label)}` : ''}</td><td>${i.qty}</td><td class="r">${gbp(i.line_pence)}</td></tr>`).join('')}
-      <tr class="tot"><td colspan="2">Delivery</td><td class="r">${o.delivery_pence ? gbp(o.delivery_pence) : 'Free'}</td></tr>
+      <tr class="tot"><td colspan="2">${howName(o)}</td><td class="r">${o.delivery_pence ? gbp(o.delivery_pence) : 'Free'}</td></tr>
       <tr class="tot"><td colspan="2"><strong>Total paid</strong></td><td class="r"><strong>${gbp(o.total_pence)}</strong></td></tr></table>
     <p class="thanks">Thank you for your order! Any problems, email ${esc(shopSettings.contact_email || '')}.</p></div>`;
   win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${mode === 'label' ? 'Label' : 'Packing slip'} ${esc(o.ref)}</title><style>
@@ -351,11 +356,21 @@ async function showSettings() {
   const [{ settings: s }, me] = await Promise.all([api('/settings'), api('/me')]);
   const text = (k, label, hint = '', area = false) => `<div class="field"><label for="s-${k}">${label}${hint ? ` <span class="hint">${hint}</span>` : ''}</label>${area ? `<textarea id="s-${k}" data-k="${k}">${esc(s[k])}</textarea>` : `<input id="s-${k}" data-k="${k}" type="text" value="${esc(s[k])}">`}</div>`;
   const money = (k, label, hint) => `<div class="field"><label for="s-${k}">${label} <span class="hint">${hint}</span></label><input id="s-${k}" data-money="${k}" type="text" inputmode="decimal" value="${s[k] && s[k] !== '0' ? (s[k] / 100).toFixed(2) : ''}"></div>`;
+  const onoff = (k, label, hint) => `<div class="field checks"><label for="s-${k}"><input id="s-${k}" data-flag="${k}" type="checkbox"${s[k] === '1' ? ' checked' : ''}>${label}${hint ? ` <span class="hint">${hint}</span>` : ''}</label></div>`;
   panel.innerHTML = `<div class="bar"><h1>Delivery &amp; settings</h1></div><form id="settings-form"><div class="form-msg"></div>
     <div class="panel-card"><h2>Status</h2><dl class="kv"><dt>Payments</dt><dd>${{ demo: 'Demo mode. Stripe keys are not set, so no payments can be taken.', test: 'Stripe TEST mode. Only test cards work; no real money moves.', live: 'Stripe LIVE mode. Real payments.' }[me.payment_mode]}</dd>
       <dt>Order emails</dt><dd>${me.email_configured ? 'On' : 'Off. No email provider is configured.'}</dd></dl></div>
     <div class="panel-card"><h2>Delivery (UK only)</h2>${where(['delivery-1', 'delivery-2'], ['Delivery name and charge, in the basket and at checkout', 'Free delivery message (only shown when a threshold is set)', 'Dispatch estimate, on every product page and in order emails'])}<div class="row-2">${money('delivery_pence', 'Delivery charge (£)', 'Flat rate per order')}${money('free_delivery_threshold_pence', 'Free delivery over (£)', 'Leave blank for no free delivery')}</div>
       ${text('delivery_name', 'Delivery name', 'Shown in the basket and on Stripe')}${text('dispatch_estimate', 'Dispatch estimate', 'Shown on product pages and confirmations')}</div>
+    <div class="panel-card"><h2>Local delivery by hand</h2><p class="muted small">An extra choice at checkout for customers who live nearby. The distance from your postcode to theirs is checked when they order, so anyone further away is asked to choose post instead. Customers pick one of the times you list.</p>
+      ${onoff('local_enabled', 'Offer local delivery', 'Switch off and the choice disappears from checkout')}
+      <div class="row-2">${money('local_pence', 'Local delivery charge (£)', 'Flat rate, no free-delivery threshold')}${text('local_radius_miles', 'How far you deliver (miles)', 'As the crow flies from your postcode')}</div>
+      <div class="row-2">${text('local_postcode', 'Your postcode', 'Where you deliver from. Only used for the distance check')}${text('local_area', 'Area name', 'How customers see it, e.g. Ellesmere Port')}</div>
+      ${text('local_times', 'Delivery times', 'One per line, e.g. Sunday 12.30pm to 2pm', true)}${text('local_note', 'Note for customers', 'Optional. Shown at checkout and in the confirmation')}</div>
+    <div class="panel-card"><h2>Collection</h2><p class="muted small">Lets customers pay online and pick the order up. Free, and no delivery address is asked for, just a name and phone number. Customers pick one of the times you list.</p>
+      ${onoff('collection_enabled', 'Offer collection', 'Switch off and the choice disappears from checkout')}
+      ${text('collection_address', 'Collection address', 'Shown at checkout and in the confirmation email', true)}
+      ${text('collection_times', 'Collection times', 'One per line, e.g. Sunday 10am to 12pm', true)}${text('collection_note', 'Note for customers', 'Optional, e.g. Please message when you are on your way')}</div>
     <div class="panel-card"><h2>Homepage wording</h2>${where(['wording-1', 'wording-2'], ['Announcement bar, across the top of every page (blank = hidden)', 'Headline', 'Line under the headline', 'About section title', 'About section text'])}${text('announcement', 'Announcement bar', 'Leave blank to hide')}${text('hero_headline', 'Headline', 'Use | where you want a new line')}${text('hero_sub', 'Line under the headline')}${text('intro_title', 'About section title')}${text('intro_text', 'About section text', '', true)}</div>
     <div class="panel-card"><h2>Product notices</h2><p class="muted small">Both appear as drop-down sections at the bottom of every product page, and on the FAQ page.</p>
       ${text('handmade_note', 'Handmade, so not perfect', 'Sets expectations about small marks and variations', true)}${text('fragrance_note', 'About our fragrance names', 'Needed if any scent name refers to a designer brand', true)}</div>
@@ -367,6 +382,7 @@ async function showSettings() {
     const body = {};
     panel.querySelectorAll('[data-k]').forEach((i) => (body[i.dataset.k] = i.value));
     for (const i of panel.querySelectorAll('[data-money]')) { const p = i.value.trim() === '' ? 0 : toPence(i.value); body[i.dataset.money] = Number.isNaN(p) ? 'x' : String(p); }
+    panel.querySelectorAll('[data-flag]').forEach((i) => (body[i.dataset.flag] = i.checked ? '1' : '0'));
     try { await api('/settings', { method: 'PUT', body }); flash('Settings saved'); showSettings(); } catch (err) { fieldErrors(e.target, err); }
   };
 }
@@ -488,6 +504,7 @@ function showHelp() {
 
   <div class="panel-card"><h2>Wording and pages</h2>
   ${step('Put a notice on the shop', ['' + tab('settings') + ' → <strong>Announcement bar</strong>. Type the message, for example “Last Christmas orders: 18 December”.', 'Click <strong>Save settings</strong>. It shows in the pink bar at the top of every page. Clear the box and Save to remove it.'], 'h-notice')}
+  ${step('Local delivery and collection', ['Customers choose at checkout: post, <strong>Local delivery</strong> (£4, within 10 miles of your postcode, on one of your delivery times) or <strong>Collection</strong> (free, from Sutton Way on a time you list). The times, charge, radius and address are all in ' + tab('settings') + '.', 'When someone picks local delivery, the distance from your postcode to theirs is checked as they order. Anyone outside the radius is told how far away they are and asked to choose post instead, so you never get a £4 delivery to Manchester.', 'Orders show a pink <strong>Local</strong> or <strong>Collect</strong> tag with the time they chose. Collection orders have no address, just a name and phone number. The packing slip says COLLECTION or LOCAL DELIVERY at the top so it does not get posted by mistake.', 'When it is ready, set the status to <strong>ready to collect</strong> and let them know, then <strong>collected</strong> or <strong>delivered</strong> once it is done.', 'Going away for a week? Untick <strong>Offer local delivery</strong> or <strong>Offer collection</strong> and the choice disappears from checkout until you tick it again.'], 'h-local')}
   ${step('Change the delivery charge, homepage wording or business details', ['' + tab('settings') + '. Each section has a “Where does this appear on the shop?” link with a picture showing exactly what each box changes.', 'Edit, then <strong>Save settings</strong> at the bottom.'])}
   ${step('Edit the Contact, Delivery, Privacy, Terms or FAQ pages', ['' + tab('pages') + ' → <strong>Edit</strong>.', 'Leave a blank line between paragraphs.', 'Start a line with <code>## </code> for a heading, <code>- </code> for a bullet point.', 'On the FAQ page: <code>Q: </code> then the question, answer on the next line. The first five questions also show on the homepage.', 'Untick <strong>Still a placeholder</strong> once the page is finished. <strong>Save</strong>.'], 'h-pages')}
   ${step('Write a blog post', ['' + tab('blog') + ' → <strong>Add post</strong>.', 'Title, a one-line summary, a photo, and the post itself (same formatting as pages).', 'Untick <strong>Published</strong> to keep it as a draft and come back later. Tick it when it is ready.'], 'h-blog')}

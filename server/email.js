@@ -35,7 +35,13 @@ export async function sendOrderEmails(env, order, settings) {
   const items = JSON.parse(order.items);
   const addr = JSON.parse(order.address);
   const shop = settings.business_name || 'Over The Rainbow';
-  const addrLines = [order.name, addr.line1, addr.line2, addr.city, addr.county, addr.postcode, 'United Kingdom'].filter(Boolean);
+  const method = order.fulfil_method || 'post', slot = order.fulfil_slot || '';
+  const addrLines = method === 'collect'
+    ? [order.name, 'Collecting from:', ...String(settings.collection_address || '').split(/\r?\n/).filter(Boolean), ...(slot ? [slot] : []), ...(settings.collection_note ? [settings.collection_note] : [])]
+    : [order.name, addr.line1, addr.line2, addr.city, addr.county, addr.postcode, 'United Kingdom'].filter(Boolean);
+  const howLabel = method === 'collect' ? 'Collection' : method === 'local' ? 'Local delivery' : 'Delivery';
+  const howHeading = method === 'collect' ? 'Collection' : method === 'local' ? `Local delivery${slot ? ', ' + slot : ''}` : 'Delivering to';
+  const afterNote = method === 'post' ? settings.dispatch_estimate : method === 'local' ? (settings.local_note || `We will deliver by hand${slot ? ' on ' + slot : ''}.`) : '';
   let dealNames = ''; try { dealNames = JSON.parse(order.deals || '[]').map((d) => d.label).join(', '); } catch { /* an old order without deals */ }
   const rows = items.map((i) =>
     `<tr><td style="padding:6px 0">${escapeHtml(i.name)}${i.label ? ' – ' + escapeHtml(i.label) : ''} × ${i.qty}</td>
@@ -45,18 +51,18 @@ export async function sendOrderEmails(env, order, settings) {
     <p>${intro}</p>
     <table style="width:100%;border-collapse:collapse">${rows}
       ${order.discount_pence > 0 ? `<tr><td style="padding:6px 0;border-top:1px solid #ddd">Multi-buy saving${dealNames ? ' (' + escapeHtml(dealNames) + ')' : ''}</td><td style="padding:6px 0;border-top:1px solid #ddd;text-align:right">&minus;${gbp(order.discount_pence)}</td></tr>` : ''}
-      <tr><td style="padding:6px 0;border-top:1px solid #ddd">Delivery</td><td style="padding:6px 0;border-top:1px solid #ddd;text-align:right">${order.delivery_pence ? gbp(order.delivery_pence) : 'Free'}</td></tr>
+      <tr><td style="padding:6px 0;border-top:1px solid #ddd">${howLabel}</td><td style="padding:6px 0;border-top:1px solid #ddd;text-align:right">${order.delivery_pence ? gbp(order.delivery_pence) : 'Free'}</td></tr>
       <tr><td style="padding:6px 0"><strong>Total paid</strong></td><td style="padding:6px 0;text-align:right"><strong>${gbp(order.total_pence)}</strong></td></tr>
     </table>
-    <p><strong>Delivering to</strong><br>${addrLines.map(escapeHtml).join('<br>')}</p>
+    <p><strong>${howHeading}</strong><br>${addrLines.map(escapeHtml).join('<br>')}</p>
     ${order.phone ? `<p><strong>Phone</strong><br>${escapeHtml(order.phone)}</p>` : ''}
-    ${settings.dispatch_estimate ? `<p>${escapeHtml(settings.dispatch_estimate)}</p>` : ''}
+    ${afterNote ? `<p>${escapeHtml(afterNote)}</p>` : ''}
     <p>${escapeHtml(shop)}</p></div>`;
   const text = (heading, intro) => [heading, '', intro, '',
     ...items.map((i) => `${i.name}${i.label ? ' – ' + i.label : ''} x ${i.qty}  ${gbp(i.line_pence)}`),
     ...(order.discount_pence > 0 ? [`Multi-buy saving${dealNames ? ' (' + dealNames + ')' : ''}  -${gbp(order.discount_pence)}`] : []),
-    `Delivery  ${order.delivery_pence ? gbp(order.delivery_pence) : 'Free'}`, `Total paid  ${gbp(order.total_pence)}`, '',
-    'Delivering to:', ...addrLines, ...(order.phone ? ['', `Phone: ${order.phone}`] : []), '', settings.dispatch_estimate || '', shop].join('\n');
+    `${howLabel}  ${order.delivery_pence ? gbp(order.delivery_pence) : 'Free'}`, `Total paid  ${gbp(order.total_pence)}`, '',
+    howHeading + ':', ...addrLines, ...(order.phone ? ['', `Phone: ${order.phone}`] : []), '', afterNote || '', shop].join('\n');
 
   const customerIntro = `Order <strong>${escapeHtml(order.ref)}</strong> is confirmed and paid.`;
   const messages = [{
@@ -69,7 +75,7 @@ export async function sendOrderEmails(env, order, settings) {
     const alertIntro = `${escapeHtml(order.name)} (${escapeHtml(order.email)}) has paid for order <strong>${escapeHtml(order.ref)}</strong>. Open the admin area to update its status.`;
     messages.push({
       from: env.EMAIL_FROM, to: [settings.order_notify_email], reply_to: order.email,
-      subject: `New paid order ${order.ref} – ${gbp(order.total_pence)}`,
+      subject: `New paid order ${order.ref} – ${gbp(order.total_pence)}${method === 'collect' ? ' (collection' : method === 'local' ? ' (local delivery' : ''}${method !== 'post' ? (slot ? ', ' + slot : '') + ')' : ''}`,
       html: body('New paid order', alertIntro), text: text('New paid order', `${order.name} (${order.email}) has paid for order ${order.ref}.`),
     });
   }
