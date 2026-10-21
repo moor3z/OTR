@@ -1,6 +1,11 @@
-OTR - COMPLETE CURRENT PROJECT (version 61)
+OTR - COMPLETE CURRENT PROJECT (version 62)
 
-New in v61: the Delivery & returns page gets a "Local delivery and
+New in v62: a yellow "Leave a review" button at the bottom of the phone
+menu. Paste the Google or Facebook review link into Admin -> Delivery &
+settings -> Business details -> "Leave a review link" and the button opens
+it in a new tab; until then it goes to the Contact page.
+
+v61: the Delivery & returns page gets a "Local delivery and
 collection" section (the £4 / 10 miles / times, and the Sutton Way address
 and Sunday morning collection), slotted in before "Dispatch and delivery
 times" by content migration 13. It is added once; Michelle can edit it under

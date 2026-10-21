@@ -152,6 +152,7 @@ function renderChrome() {
       b.textContent = 'Demo mode: payments are not connected. No orders will be taken.';
       document.body.prepend(b);
     }
+    if (c.review_url) document.querySelectorAll('.nav-review').forEach((a) => { a.href = c.review_url; a.target = '_blank'; a.rel = 'noopener'; });
     if (c.contact_email) $('#footer-contact').innerHTML = `<a href="mailto:${esc(c.contact_email)}">${esc(c.contact_email)}</a>`;
   }).catch(() => {});
 }

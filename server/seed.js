@@ -116,6 +116,7 @@ export const DEFAULT_SETTINGS = {
   contact_phone: '',
   business_address: '',
   order_notify_email: '',
+  review_url: '',   // Google / Facebook review link; "Leave a review" in the phone menu goes here
   // Notices shown on every product page and on the FAQ page. Editable in
   // Admin → Delivery & settings.
   handmade_note:

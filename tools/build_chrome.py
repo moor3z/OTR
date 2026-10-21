@@ -28,7 +28,7 @@ HEADER = f'''<!-- chrome:start -->
         <div class="nav-grid" id="shop-panel">{tiles}<a class="nav-all" href="/shop">All products &rarr;</a></div>
       </div>
       <div class="nav-desk"><a href="/shop?category=seasonal">Seasonal</a><a href="/blog">Blog</a><a href="/contact">Contact</a></div>
-      <div class="nav-more"><a href="/shop">All products</a><a href="/blog">Blog</a><a href="/faq">FAQs</a><a href="/delivery-returns">Delivery &amp; returns</a><a href="/contact">Contact</a></div>
+      <div class="nav-more"><a href="/shop">All products</a><a href="/blog">Blog</a><a href="/faq">FAQs</a><a href="/delivery-returns">Delivery &amp; returns</a><a href="/contact">Contact</a><a class="nav-review" href="/contact">Leave a review <span aria-hidden="true">★</span></a></div>
     </nav>
   </div>
 </div></header>

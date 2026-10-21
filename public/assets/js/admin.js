@@ -375,7 +375,7 @@ async function showSettings() {
     <div class="panel-card"><h2>Product notices</h2><p class="muted small">Both appear as drop-down sections at the bottom of every product page, and on the FAQ page.</p>
       ${text('handmade_note', 'Handmade, so not perfect', 'Sets expectations about small marks and variations', true)}${text('fragrance_note', 'About our fragrance names', 'Needed if any scent name refers to a designer brand', true)}</div>
     <div class="panel-card"><h2>Business details</h2>${where(['business-1', 'business-2'], ['Contact page: email, phone and address', 'Footer on every page: contact email'])}
-      ${text('business_name', 'Business name')}${text('contact_email', 'Public contact email')}${text('contact_phone', 'Public phone number', 'Optional')}${text('business_address', 'Business address', '', true)}${text('order_notify_email', 'Send new-order alerts to', 'Needs an email provider')}</div>
+      ${text('business_name', 'Business name')}${text('contact_email', 'Public contact email')}${text('contact_phone', 'Public phone number', 'Optional')}${text('business_address', 'Business address', '', true)}${text('order_notify_email', 'Send new-order alerts to', 'Needs an email provider')}${text('review_url', 'Leave a review link', 'Your Google or Facebook review link. The "Leave a review" button in the phone menu opens it; until it is set, the button goes to the Contact page')}</div>
     <button class="btn btn-primary" type="submit">Save settings</button></form>`;
   $('#settings-form').onsubmit = async (e) => {
     e.preventDefault();

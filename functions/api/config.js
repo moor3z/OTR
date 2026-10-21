@@ -17,5 +17,6 @@ export const onRequestGet = handle(async ({ env }) => {
     intro_title: s.intro_title, intro_text: s.intro_text,
     business_name: s.business_name, contact_email: s.contact_email,
     contact_phone: s.contact_phone, business_address: s.business_address,
+    review_url: s.review_url || '',
   }, 200, { 'cache-control': 'public, max-age=30' });
 });

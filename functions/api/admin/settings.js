@@ -31,6 +31,7 @@ export const onRequestPut = handle(async ({ env, request }) => {
       if (val && !POSTCODE_RE.test(val)) { fields[key] = 'Enter a full UK postcode, like CH65 7DN.'; continue; }
       if (val) val = val.slice(0, -3) + ' ' + val.slice(-3);
     }
+    if (key === 'review_url' && val && !/^https?:\/\/\S+$/i.test(val)) { fields[key] = 'Paste the full link, starting with https://'; continue; }
     if (key.endsWith('_email') && val && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(val)) { fields[key] = 'Enter a valid email address.'; continue; }
     stmts.push(db.prepare(`INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value`).bind(key, val));
   }
