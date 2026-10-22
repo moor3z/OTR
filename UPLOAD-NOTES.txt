@@ -1,6 +1,9 @@
-OTR - COMPLETE CURRENT PROJECT (version 64)
+OTR - COMPLETE CURRENT PROJECT (version 65)
 
-New in v64: a 105 x 74 mm size for A4 sticker sheets (8 per sheet, 2 x 4,
+New in v65: the label preview shrinks to fit a phone screen instead of
+cutting the left edge off (it says "Shrunk to 72%"; printing is unaffected).
+
+v64: a 105 x 74 mm size for A4 sticker sheets (8 per sheet, 2 x 4,
 no gaps) printed on the colour inkjet. It is the default: every fragrance
 fits at 8 pt, the warning diamonds print red, and the size is over the CLP
 minimum. The print puts each label exactly on its sticker, with the nudge

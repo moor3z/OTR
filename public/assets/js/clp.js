@@ -335,9 +335,14 @@ function renderFitCount(){
 function renderPreview(){
   const demo=!draft;
   const s=draft||DEMO;
-  $("#stage").innerHTML=labelHTML(s,{demo});
-  $("#previewSub").textContent=demo?"A worked example so you can see the layout.":"Shown at roughly life size.";
-  const el=$(".lbl",$("#stage"));
+  const stage=$("#stage");
+  stage.innerHTML='<div class="pv">'+labelHTML(s,{demo})+'</div>';
+  const el=$(".lbl",stage), pv=$(".pv",stage);
+  /* A 105 mm label is wider than a phone screen: shrink the preview to fit
+     rather than cutting the left edge off. The label itself is unchanged. */
+  const room=stage.clientWidth-36, k=Math.min(1,room/Math.max(1,pv.offsetWidth));
+  pv.style.transform=k<1?"scale("+k+")":""; pv.style.height=k<1?(pv.offsetHeight*k)+"px":"";
+  $("#previewSub").textContent=demo?"A worked example so you can see the layout.":k<1?"Shrunk to "+Math.round(k*100)+"% to fit your screen; it prints full size.":"Shown at roughly life size.";
   requestAnimationFrame(()=>{
     const over=el.scrollHeight>el.clientHeight+1;
     el.classList.toggle("overflowing",over);
@@ -822,3 +827,4 @@ renderBiz(); renderScents(); renderEditor(); renderPreview(); renderQty(); setTa
     renderPreview();
   }
 })();
+let rsT=null; addEventListener("resize",()=>{ clearTimeout(rsT); rsT=setTimeout(renderPreview,150); });

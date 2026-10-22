@@ -159,7 +159,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{border-color:var
 /* ---------- preview column ---------- */
 .sticky{position:sticky;top:calc(env(safe-area-inset-top,0px) + 62px)}
 @media (max-width:999px){.sticky{position:static}}
-.stage{background:repeating-linear-gradient(45deg,var(--sunk) 0 9px,transparent 9px 18px);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;justify-content:center;overflow-x:auto}
+.stage{background:repeating-linear-gradient(45deg,var(--sunk) 0 9px,transparent 9px 18px);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;justify-content:safe center;overflow:hidden}
+.stage .pv{flex:none;transform-origin:top left}
 .ctrlrow{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:13px}
 .ctrlrow .field{margin:0;flex:1 1 120px;min-width:0}
 .swatch{display:flex;align-items:center;gap:8px;font-size:.87rem;font-weight:600;color:var(--plum);cursor:pointer}
@@ -553,6 +554,6 @@ body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20
 <div id="sheet-out"><div class="sheetgrid" id="sheetGrid"></div></div>
 <div id="measure" aria-hidden="true"></div>
 
-<script type="module" src="/assets/js/clp.js?v=64"></script>
+<script type="module" src="/assets/js/clp.js?v=65"></script>
 </body>
 </html>
