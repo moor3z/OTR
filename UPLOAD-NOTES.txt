@@ -1,6 +1,19 @@
-OTR - COMPLETE CURRENT PROJECT (version 62)
+OTR - COMPLETE CURRENT PROJECT (version 63)
 
-New in v62: a yellow "Leave a review" button at the bottom of the phone
+New in v63: the CLP label maker is set up for the Phomemo M110 label
+printer. The label sizes are now just its three rolls - 50 x 80, 50 x 30 and
+40 x 30 mm - and the old A4 / Avery sticker-sheet sizes, the gap control and
+the nudge boxes are gone. Printing sends one label per page at the roll size,
+so the printer feeds one sticker per label; choose the Phomemo and the matching
+paper size in the print box, 100% scale. All 36 fragrances without a warning
+symbol fit the 50 x 80 roll at 7 pt.
+
+Important: the Phomemo prints black only, and CLP requires the diamond around
+a warning symbol to be RED. So the 23 fragrances with a symbol cannot be
+properly labelled on it - the page says so on each one and lists them under
+Print labels. Those need a colour printer or pre-printed red-diamond labels.
+
+v62: a yellow "Leave a review" button at the bottom of the phone
 menu. Paste the Google or Facebook review link into Admin -> Delivery &
 settings -> Business details -> "Leave a review link" and the button opens
 it in a new tab; until then it goes to the Contact page.

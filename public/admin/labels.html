@@ -10,6 +10,7 @@
 @font-face{font-family:'Bricolage Grotesque';src:url('/assets/fonts/bricolage-grotesque-latin-wght-normal.woff2') format('woff2');font-weight:200 800;font-display:swap}
 @font-face{font-family:'DM Sans';src:url('/assets/fonts/dm-sans-latin-wght-normal.woff2') format('woff2');font-weight:100 1000;font-display:swap}
 </style>
+<style id="rollPage">@page{size:50mm 80mm;margin:0}</style>
 <style>
 /* Layout: a branded workbench on the left, a true-size paper label on the right.
    The chrome follows the Over The Rainbow palette; the label itself is always
@@ -169,7 +170,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{border-color:var
   width:var(--w);height:var(--h);background:var(--paper);color:var(--paper-ink);
   font-family:'DM Sans',Arial,sans-serif;
   font-size:var(--fs);line-height:1.22;
-  padding:2.2mm 2.1mm;display:flex;flex-direction:column;gap:.8mm;
+  padding:2.2mm 2.4mm;display:flex;flex-direction:column;gap:.8mm;
   overflow:hidden;position:relative;flex:none;text-align:center;
   box-shadow:0 2px 10px rgba(46,20,55,.22)
 }
@@ -186,7 +187,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{border-color:var
 .lbl .l-pics svg{width:var(--pic);height:var(--pic);flex:none;display:block}
 .lbl .l-qty{font-weight:600;border-top:.22mm solid var(--paper-ink);padding-top:.7mm;flex:none;line-height:1.2}
 /* Landscape labels */
-.lbl.wide{flex-direction:row;gap:1.6mm;text-align:left;padding:1.8mm 2mm}
+.lbl.wide{flex-direction:row;gap:1.6mm;text-align:left;padding:1.8mm 2.4mm}
 .lbl.wide .l-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:.6mm;height:100%}
 .lbl.wide .l-name{font-size:1.22em}
 .lbl.wide .l-foot{justify-content:flex-start;text-align:left}
@@ -217,14 +218,10 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{border-color:var
 .sheetwrap{margin-top:16px;overflow-x:auto}
 #sheet-out{display:none;background:#fff;padding:7mm;width:210mm;margin:0 auto}
 body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20,55,.2)}
-.sheetgrid{display:grid;gap:var(--gap);justify-content:start}
+.sheetgrid{display:flex;flex-wrap:wrap;gap:4mm;justify-content:flex-start}
 .sheetgrid .lbl{box-shadow:none;outline:.2mm dashed #bbb;outline-offset:0}
-/* Pre-cut sheets: a true-size page with each label at its sticker's position. */
-#sheet-out.precut{padding:0;width:210mm}
-.precut-page{position:relative;width:210mm;height:297mm;overflow:hidden;background:#fff;outline:1px solid var(--line)}
-.precut-page+.precut-page{margin-top:6mm}
-.precut-page .slot{position:absolute}
-.precut-page .lbl{outline:.2mm dashed #ccc}
+/* Roll labels: on screen a wrapped list; in print each one is its own page. */
+.roll-page{flex:none}
 .nofit{box-sizing:border-box;display:flex;align-items:center;justify-content:center;text-align:center;padding:2mm;
   font:600 7pt/1.3 'DM Sans',Arial,sans-serif;color:var(--stop);background:var(--stop-bg);outline:.3mm dashed var(--stop);flex:none}
 @media print{.nofit{visibility:hidden}}
@@ -283,16 +280,14 @@ body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20
   .sheetgrid .lbl{outline:none}
   .lbl{box-shadow:none;break-inside:avoid}
   .strip{box-shadow:none}
-  @page{size:A4;margin:7mm}
-  /* Pack strips are wider than they are tall, so they print on a landscape page. */
-  @page packs{size:A4 landscape;margin:7mm}
-  @page precut{size:A4;margin:0}
-  #sheet-out.precut{page:precut}
-  .precut-page{outline:none;break-after:page;page-break-after:always}
-  .precut-page:last-child{break-after:auto;page-break-after:auto}
-  .precut-page .lbl{outline:none}
+  /* The page size is set by the #rollPage style block: the label itself (one
+     sticker per page) for single labels, or A4 landscape for pack strips. */
+  #sheet-out .sheetgrid{display:block}
+  .roll-page{break-after:page;page-break-after:always;margin:0;padding:0}
+  .roll-page:last-child{break-after:auto;page-break-after:auto}
+  .roll-page .lbl{outline:none;box-shadow:none}
   /* Pinned to the printable width so a long strip wraps instead of being shrunk to fit. */
-  #sheet-out.packs{page:packs;width:283mm!important}
+  #sheet-out.packs{width:283mm!important}
   #sheet-out.packs .sheetgrid{display:block}
   .strip-copy{break-inside:avoid;page-break-inside:avoid}
 }
@@ -328,7 +323,7 @@ body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20
 <nav class="tabs" aria-label="Sections">
   <div class="wrap"><div class="tabrow" role="tablist">
     <button role="tab" id="t-labels" aria-controls="p-labels" aria-selected="true" data-tab="labels">Fragrances</button>
-    <button role="tab" id="t-sheet" aria-controls="p-sheet" aria-selected="false" data-tab="sheet">Print sheet</button>
+    <button role="tab" id="t-sheet" aria-controls="p-sheet" aria-selected="false" data-tab="sheet">Print labels</button>
     <button role="tab" id="t-packs" aria-controls="p-packs" aria-selected="false" data-tab="packs">Sample packs</button>
     <button role="tab" id="t-biz" aria-controls="p-biz" aria-selected="false" data-tab="biz">Business details</button>
     <button role="tab" id="t-guide" aria-controls="p-guide" aria-selected="false" data-tab="guide">How to fill this in</button>
@@ -396,9 +391,9 @@ body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20
     <!-- ============ SHEET ============ -->
     <section class="panel" id="p-sheet" role="tabpanel" aria-labelledby="t-sheet" hidden>
       <div class="card">
-        <h2>Print sheet</h2>
-        <p class="sub">Set how many of each you need, then print this page from your browser onto A4.</p>
-        <div class="note"><strong>To print:</strong> click <strong>Print</strong> below, or press <strong>Ctrl&nbsp;+&nbsp;P</strong> on Windows or <strong>⌘&nbsp;+&nbsp;P</strong> on a Mac. In the print box set <strong>Scale to 100%</strong> and turn <strong>off</strong> "fit to page", or the labels come out the wrong size. Turn off headers and footers too.</div>
+        <h2>Print labels</h2>
+        <p class="sub">Set how many of each you need, then print to the Phomemo M110. Each label is its own page, so the printer feeds one sticker per label.</p>
+        <div class="note"><strong>To print:</strong> connect the Phomemo to the computer (USB, or Bluetooth with the Phomemo driver installed), click <strong>Print</strong> below, and in the print box choose the <strong>Phomemo M110</strong>, set the <strong>paper size to the roll you have loaded</strong> (50 × 80, 50 × 30 or 40 × 30 mm), <strong>margins to none</strong>, <strong>scale 100%</strong>, and headers and footers off. The first print on a new roll is often a test, so print one and check it before printing the lot.</div>
         <div class="sheetctrls" style="margin-top:14px">
           <div class="field">
             <label class="f" for="sheetSize">Label size</label>
@@ -415,24 +410,12 @@ body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20
                     <option value="9">9 pt</option>
                   </select>
           </div>
-          <div class="field" style="flex:0 0 118px">
-            <label class="f" for="sheetGap">Gap between</label>
-            <select id="sheetGap">
-              <option value="0">None</option>
-              <option value="2" selected>2 mm</option>
-              <option value="4">4 mm</option>
-            </select>
-          </div>
           <button class="btn btn-ghost" id="clearQty" type="button">Clear all</button>
           <button class="btn btn-pri" id="printSheet" type="button">Print</button>
         </div>
-        <div class="sheetctrls" id="nudgeRow" style="margin-top:12px" hidden>
-          <div class="field" style="flex:0 0 150px"><label class="f" for="nudgeX">Nudge right (mm)</label><input type="number" id="nudgeX" min="-10" max="10" step="0.5" value="0"></div>
-          <div class="field" style="flex:0 0 150px"><label class="f" for="nudgeY">Nudge down (mm)</label><input type="number" id="nudgeY" min="-10" max="10" step="0.5" value="0"></div>
-          <p class="hintline" style="flex:1 1 200px;align-self:center;margin:0">Printers are often a millimetre or two out. Minus values move it the other way. Remembered on this device.</p>
-        </div>
         <div id="sheetFit" class="hintline" style="margin-top:10px"></div>
         <div id="sheetWarn" class="note alert" style="margin-top:12px" hidden></div>
+        <div id="picWarn" class="note alert" style="margin-top:12px" hidden></div>
         <table class="qtytable"><thead><tr><th>Fragrance</th><th class="n">How many</th></tr></thead><tbody id="qtyBody"></tbody></table>
       </div>
       <div class="sheetwrap"></div>
@@ -494,7 +477,7 @@ body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20
             <li><div><strong>Download the CLP sheet for the oil</strong><br>From the supplier you bought it from, at the percentage you pour at.</div></li>
             <li><div><strong>Add the fragrance here</strong><br>Copy across the signal word, pictograms, hazard statements, precautionary statements and the "Contains…" allergen line.</div></li>
             <li><div><strong>Check the list on the right</strong><br>It flags anything missing before you print.</div></li>
-            <li><div><strong>Print the sheet onto A4 labels</strong><br>At 100% scale, with "fit to page" turned off.</div></li>
+            <li><div><strong>Print to the Phomemo</strong><br>Under Print labels, with the paper size set to the roll you have loaded and the scale at 100%.</div></li>
           </ol>
 
           <h3>What a GB CLP label has to carry</h3>
@@ -526,9 +509,9 @@ body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20
           <p>Under <strong>Sample packs</strong>, tick the fragrances in the pack and set the panel size: measure the space on the back of the clamshell, and that is one panel. The page works out how many panels the pack needs and warns if a strip is too wide for an A4 sheet. Multi-layer peel-back labels are sold for exactly this, or print the strip on sticker paper and concertina-fold it.</p>
           <p>If a pack needs more panels than you'd like, the levers are: fewer fragrances in the pack, picking melts whose labels are short (the ones with no symbol are a third the length of the ones with one), a taller panel, or a smaller text size — but not below 7 pt.</p>
 
-          <h3>Pre-cut label sheets</h3>
-          <p>Two sizes in the list are standard pre-cut A4 sticker sheets: <strong>63 × 38 mm, 21 per sheet</strong> (the box says 63 × 38; the stickers are 63.5 × 38.1, Avery L7160 size) and <strong>99 × 68 mm, 8 per sheet</strong> (L7165 size). Choose one and the print sheet puts each label exactly on its sticker. Print the first run on plain paper, hold it against a label sheet up to the light, and use the nudge boxes if your printer is a millimetre out.</p>
-          <p>Both are under the 52 × 74 mm CLP minimum, so they are only defensible where the full details are also on the outer packaging. The 21-per-sheet size is small: at 7 pt about half of your fragrances fit, and none of the ones with a warning symbol do. Anything that does not fit is left off the sheet and listed in red rather than printed with its wording cut short.</p>
+          <h3>The Phomemo M110 label printer</h3>
+          <p>The three label sizes are the rolls that come with the printer: <strong>50 × 80 mm</strong> (the big one, every fragrance fits), <strong>50 × 30 mm</strong> and <strong>40 × 30 mm</strong>. The printer is thermal, so no ink, and it prints one sticker per label. Print from a computer with the Phomemo driver installed, choosing the printer and the matching paper size in the print box; the phone app cannot print this page directly.</p>
+          <p>Two things to know. First, it prints <strong>black only</strong>, and CLP requires the diamond frame around a warning symbol to be <strong>red</strong>. So the fragrances with a symbol (the ones that can cause an allergic skin reaction, or are harmful to aquatic life) cannot be properly labelled on this printer: for those, print on a colour printer or buy labels with the red diamond pre-printed. The page tells you which ones. Second, all three rolls are a little under the 52 × 74 mm CLP minimum (the 50 × 80 by 2 mm of width; the small two by a lot), so the small ones are only defensible on small packs where the full details are on the outer packaging too. Anything whose wording does not fit is left off and listed in red rather than printed cut short.</p>
 
           <h3>Not sure?</h3>
           <p>The HSE publishes the GB CLP guidance, and most fragrance suppliers will answer questions about their own sheets. If a sheet says something this page has no box for, put it in the "Anything else" field and it prints at the bottom.</p>
@@ -555,6 +538,6 @@ body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20
 <div id="sheet-out"><div class="sheetgrid" id="sheetGrid"></div></div>
 <div id="measure" aria-hidden="true"></div>
 
-<script type="module" src="/assets/js/clp.js?v=62"></script>
+<script type="module" src="/assets/js/clp.js?v=63"></script>
 </body>
 </html>

@@ -62,16 +62,12 @@ function required(codes){
   return {pictos:[...pics], signal: sigs.includes("Danger")?"Danger":sigs.includes("Warning")?"Warning":""};
 }
 
+/* The label rolls that come with the Phomemo M110 (2-inch thermal label
+   printer, 48 mm printable width). Each label is its own page when printing. */
 const SIZES=[
- {id:"all",label:"76 × 95 mm — fits every one of yours",w:76,h:95,ok:true},
- {id:"most",label:"70 × 90 mm — fits all but Clean Cotton",w:70,h:90,ok:true},
- {id:"roomy",label:"60 × 80 mm",w:60,h:80,ok:true},
- {id:"clp",label:"52 × 74 mm — the CLP minimum",w:52,h:74,ok:true},
- {id:"l7165",label:"99 × 68 mm — sticker sheets, 8 per sheet (Avery L7165 size, 99.1 × 67.7)",w:99.1,h:67.7,ok:false,why:"6 mm under the 74 mm minimum height, though much larger in area",
-  sheet:{cols:2,rows:4,left:4.65,top:13.1,pitchX:101.6,pitchY:67.7}},
- {id:"l7160",label:"63 × 38 mm — your small sticker sheets (21 per sheet, Avery L7160 size, 63.5 × 38.1)",w:63.5,h:38.1,ok:false,why:"under the 52 × 74 mm minimum in both directions",
-  sheet:{cols:3,rows:7,left:7.2,top:15.1,pitchX:66,pitchY:38.1}},
- {id:"small",label:"45 × 60 mm — small packs only",w:45,h:60,ok:false,why:"under the 52 × 74 mm minimum"}
+ {id:"m110-50x80",label:"50 × 80 mm roll — fits every fragrance without a symbol",w:50,h:80,roll:true,ok:false,why:"2 mm narrower than the 52 × 74 mm minimum"},
+ {id:"m110-50x30",label:"50 × 30 mm roll — small, no room for a symbol",w:50,h:30,roll:true,ok:false,why:"well under the 52 × 74 mm minimum"},
+ {id:"m110-40x30",label:"40 × 30 mm roll — smallest",w:40,h:30,roll:true,ok:false,why:"well under the 52 × 74 mm minimum"}
 ];
 const DEMO={id:"__demo",name:"Example Scent",signal:"Warning",pictos:["GHS07","GHS09"],
  h:["H317","H411"],hx:"",p:["P102","P273","P501"],px:"",
@@ -83,7 +79,7 @@ const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&g
 const uid=()=>"f"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const state={
   biz:{name:"Over The Rainbow Wax Melts",addr:"18 Sutton Way\nEllesmere Port\nCH65 7DN",phone:"",email:""},
-  scents:[], packs:[], selId:null, search:"", size:"all", fs:7, redName:false, gap:2, qty:{}, tab:"labels", nudge:{x:0,y:0}
+  scents:[], packs:[], selId:null, search:"", size:"m110-50x80", fs:7, redName:false, gap:2, qty:{}, tab:"labels"
 };
 let draft=null, saveTimer=null, bizTimer=null;
 
@@ -116,7 +112,7 @@ async function send(method,body,what){
 /* local fallback so the page still works signed out */
 const LS="otr-clp-v1";
 function lsRead(){ try{const r=localStorage.getItem(LS);return r?JSON.parse(r):null}catch(e){return null} }
-function lsWrite(){ try{localStorage.setItem(LS,JSON.stringify({biz:state.biz,scents:state.scents,packs:state.packs,nudge:state.nudge}))}catch(e){} }
+function lsWrite(){ try{localStorage.setItem(LS,JSON.stringify({biz:state.biz,scents:state.scents,packs:state.packs}))}catch(e){} }
 
 /* ---------------------------------------------------------------- label */
 function joinPhrases(codes,extra,table){
@@ -225,6 +221,9 @@ function checkList(s,isDemo){
   out.push((s.qty||"").trim()?{s:"ok",t:"Net quantity shown"}:{s:"warn",t:"No net quantity — fine only if it is printed elsewhere on the pack"});
   const sz=SIZES.find(z=>z.id===state.size);
   if(sz&&!sz.ok) out.push({s:"warn",t:"This size is "+(sz.why||"under the 52 × 74 mm minimum")+" — only safe on small packs where the full details are on the outer packaging"});
+  /* A thermal label printer prints black only. CLP pictograms must have a red
+     frame, so a black-framed diamond is not a compliant pictogram. */
+  if(sz&&sz.roll&&(s.pictos||[]).length) out.push({s:"bad",t:"This label has a warning symbol, and CLP requires its diamond frame to be red. The Phomemo prints black only, so print this one on a colour printer, or on pre-printed red-diamond labels"});
   if(state.fs<7) out.push({s:"warn",t:"Text under 7 pt may be too small to count as easily legible"});
   if(isDemo) out.unshift({s:"bad",t:"This is a worked example, not your data. Add a fragrance to replace it."});
   return out;
@@ -307,14 +306,25 @@ function renderFitCount(){
   if(!state.scents.length){ el.textContent=""; return; }
   if(!fitHost){ fitHost=document.createElement("div"); fitHost.style.cssText="position:absolute;left:-9999px;top:0;visibility:hidden"; document.body.append(fitHost); }
   const sz=SIZES.find(z=>z.id===state.size)||SIZES[0];
-  let fits=0;
+  let fits=0, plain=0, plainFit=0;
   for(const s of state.scents){
     fitHost.innerHTML=labelHTML(s,{size:sz});
     const e=fitHost.firstElementChild;
-    if(e.scrollHeight<=e.clientHeight+1) fits++;
+    const ok=e.scrollHeight<=e.clientHeight+1;
+    const hasPic=(s.pictos||[]).some(k=>PICTOS[k]);
+    if(ok) fits++;
+    if(!hasPic){ plain++; if(ok) plainFit++; }
   }
   fitHost.innerHTML="";
   const n=state.scents.length;
+  if(sz.roll&&plain<n){
+    /* On the thermal printer only the symbol-free labels can be printed properly, so count those. */
+    el.textContent=plainFit===plain
+      ? `All ${plain} fragrances without a warning symbol fit this size. The ${n-plain} with a symbol need a colour printer (red diamond).`
+      : `${plainFit} of the ${plain} fragrances without a warning symbol fit this size — ${plain-plainFit} need smaller text. The ${n-plain} with a symbol need a colour printer anyway.`;
+    el.style.color=plainFit===plain?"var(--ok)":"var(--warn)";
+    return;
+  }
   el.textContent=fits===n
     ? `All ${n} of your fragrances fit this size.`
     : `${fits} of your ${n} fragrances fit this size — ${n-fits} need a bigger label or smaller text.`;
@@ -352,39 +362,18 @@ function renderSheet(){
   const labels=[];
   state.scents.forEach(s=>{ const n=Math.min(200,+state.qty[s.id]||0); for(let i=0;i<n;i++) labels.push(labelHTML(s,{size:sz})); });
   const empty='<div style="color:#555;font:400 13px sans-serif;padding:20px">Set how many of each you need above.</div>';
-  $("#nudgeRow").hidden=!sz.sheet;
-  $("#sheetGap").closest(".field").hidden=!!sz.sheet;
   $("#sheetFs").value=String(state.fs);
-  if(sz.sheet){
-    /* Pre-cut label sheet: every label goes exactly where the sticker is, so the
-       page is laid out from its own corner with no printer margin of our own. */
-    const sh=sz.sheet, per=sh.cols*sh.rows, nx=state.nudge.x, ny=state.nudge.y;
-    out.classList.add("precut"); g.style.display="block"; g.style.gridTemplateColumns="";
-    $("#sheetFit").textContent=per+" per A4 sheet ("+sh.cols+" across × "+sh.rows+" down), printed onto the pre-cut positions. "+
-      "Print one on plain paper first and hold it against a label sheet; if it is off, use the nudge boxes.";
-    if(!labels.length){ g.innerHTML=empty; return; }
-    const pages=[];
-    for(let i=0;i<labels.length;i+=per){
-      const slice=labels.slice(i,i+per);
-      pages.push('<div class="precut-page">'+slice.map((h,k)=>{
-        const c=k%sh.cols, r=Math.floor(k/sh.cols);
-        return '<div class="slot" style="left:'+(sh.left+c*sh.pitchX+nx).toFixed(2)+'mm;top:'+(sh.top+r*sh.pitchY+ny).toFixed(2)+'mm">'+h+'</div>';
-      }).join("")+'</div>');
-    }
-    g.innerHTML=pages.join("");
-    dropOverflowing(g,sz);
-    return;
-  }
-  out.classList.remove("precut"); g.style.display="";
-  const gap=+$("#sheetGap").value;
-  const usableW=210-14, usableH=297-14;
-  const cols=Math.max(1,Math.floor((usableW+gap)/(sz.w+gap)));
-  const rows=Math.max(1,Math.floor((usableH+gap)/(sz.h+gap)));
-  $("#sheetFit").textContent=cols*rows+" per A4 sheet ("+cols+" across × "+rows+" down) at "+sz.w+" × "+sz.h+" mm.";
-  g.style.setProperty("--gap",gap+"mm");
-  g.style.gridTemplateColumns="repeat("+cols+", "+sz.w+"mm)";
-  g.innerHTML=labels.join("")||empty;
+  /* One label per page, the page being the label itself, so the Phomemo feeds
+     one sticker per label. The page size follows the chosen roll. */
+  $("#rollPage").textContent="@page{size:"+sz.w+"mm "+sz.h+"mm;margin:0}";
+  const total=labels.length;
+  $("#sheetFit").textContent=(total?total+" label"+(total===1?"":"s")+" to print, one per sticker, ":"")+
+    "on the "+sz.w+" × "+sz.h+" mm roll. In the print box choose the Phomemo M110, set the paper size to "+sz.w+" × "+sz.h+" mm and the scale to 100%.";
+  g.innerHTML=labels.map(h=>'<div class="roll-page">'+h+'</div>').join("")||empty;
   dropOverflowing(g,sz);
+  const withPics=[...new Set(state.scents.filter(s=>(+state.qty[s.id]||0)>0&&(s.pictos||[]).filter(k=>PICTOS[k]).length).map(s=>s.name||"Untitled"))];
+  const pw=$("#picWarn"); pw.hidden=!withPics.length;
+  if(withPics.length) pw.innerHTML='<strong>'+withPics.length+' of these need a red diamond.</strong> The Phomemo prints black only, and CLP requires the frame of a warning symbol to be red, so a black diamond is not a compliant pictogram. Print these on a colour printer or on pre-printed red-diamond stock instead: '+withPics.map(esc).join(", ")+'.';
 }
 /* A label whose wording does not fit is not printed at all: a hazard statement
    with its end cut off is worse than a blank sticker. */
@@ -401,7 +390,7 @@ function dropOverflowing(g,sz){
   });
   const w=$("#sheetWarn");
   w.hidden=!bad.length;
-  if(bad.length) w.innerHTML='<strong>'+bad.length+' fragrance'+(bad.length===1?"":"s")+' left off this sheet</strong> because the wording does not fit at '+
+  if(bad.length) w.innerHTML='<strong>'+bad.length+' fragrance'+(bad.length===1?"":"s")+' not printed</strong> because the wording does not fit at '+
     sz.w+' × '+sz.h+' mm and '+state.fs+' pt — a cut-off hazard statement is not a label. Use a bigger size or smaller text for: '+bad.map(esc).join(", ")+'.';
 }
 
@@ -698,6 +687,7 @@ function renderPackPreview(){
 function renderPackSheet(){
   const out=$("#sheet-out"), g=$("#sheetGrid");
   out.classList.add("packs");
+  $("#rollPage").textContent="@page{size:A4 landscape;margin:7mm}";
   g.style.gridTemplateColumns="1fr"; g.style.setProperty("--gap","4mm");
   if(!packDraft){ g.innerHTML=""; return; }
   const copies=Math.min(50,Math.max(1,+$("#packCopies").value||1));
@@ -728,10 +718,7 @@ $("#sheetSize").addEventListener("change",e=>{state.size=e.target.value;$("#size
 $("#fsize").addEventListener("change",e=>{state.fs=+e.target.value;$("#sheetFs").value=e.target.value;renderPreview();renderSheet()});
 $("#sheetFs").addEventListener("change",e=>{state.fs=+e.target.value;$("#fsize").value=e.target.value;renderPreview();renderSheet()});
 $("#redName").addEventListener("change",e=>{state.redName=e.target.checked;renderPreview();renderSheet()});
-$("#sheetGap").addEventListener("change",renderSheet);
-["x","y"].forEach(k=>$("#nudge"+k.toUpperCase()).addEventListener("change",e=>{
-  state.nudge[k]=Math.max(-10,Math.min(10,Math.round((+e.target.value||0)*10)/10)); e.target.value=state.nudge[k]; lsWrite(); renderSheet();
-}));
+
 $("#scentSearch").addEventListener("input",e=>{state.search=e.target.value;renderScents()});
 $("#addScent").addEventListener("click",()=>{
   const n=blank(); state.scents.push(n); select(n.id); persist(n); renderQty();
@@ -787,8 +774,7 @@ $("#ioLoad").addEventListener("click",()=>{
 
 /* ---------------------------------------------------------------- boot */
 const cached=lsRead();
-if(cached){ if(cached.biz) state.biz={...state.biz,...cached.biz}; if(Array.isArray(cached.scents)) state.scents=cached.scents; if(Array.isArray(cached.packs)) state.packs=cached.packs; if(cached.nudge) state.nudge={x:+cached.nudge.x||0,y:+cached.nudge.y||0}; }
-$("#nudgeX").value=state.nudge.x; $("#nudgeY").value=state.nudge.y;
+if(cached){ if(cached.biz) state.biz={...state.biz,...cached.biz}; if(Array.isArray(cached.scents)) state.scents=cached.scents; if(Array.isArray(cached.packs)) state.packs=cached.packs; }
 renderBiz(); renderScents(); renderEditor(); renderPreview(); renderQty(); setTab("labels");
 
 (async()=>{
