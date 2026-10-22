@@ -65,6 +65,8 @@ function required(codes){
 /* The label rolls that come with the Phomemo M110 (2-inch thermal label
    printer, 48 mm printable width). Each label is its own page when printing. */
 const SIZES=[
+ {id:"a4x8",label:"105 × 74 mm — A4 sticker sheets, 8 per sheet (colour printer: fits every fragrance, red diamonds)",w:105,h:74,ok:true,
+  sheet:{cols:2,rows:4,left:0,top:0,pitchX:105,pitchY:74.25}},
  {id:"m110-50x80",label:"50 × 80 mm roll — fits every fragrance without a symbol",w:50,h:80,roll:true,ok:false,why:"2 mm narrower than the 52 × 74 mm minimum"},
  {id:"m110-50x30",label:"50 × 30 mm roll — small, no room for a symbol",w:50,h:30,roll:true,ok:false,why:"well under the 52 × 74 mm minimum"},
  {id:"m110-40x30",label:"40 × 30 mm roll — smallest",w:40,h:30,roll:true,ok:false,why:"well under the 52 × 74 mm minimum"}
@@ -79,7 +81,7 @@ const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&g
 const uid=()=>"f"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const state={
   biz:{name:"Over The Rainbow Wax Melts",addr:"18 Sutton Way\nEllesmere Port\nCH65 7DN",phone:"",email:""},
-  scents:[], packs:[], selId:null, search:"", size:"m110-50x80", fs:7, redName:false, gap:2, qty:{}, tab:"labels"
+  scents:[], packs:[], selId:null, search:"", size:"a4x8", fs:8, redName:false, gap:2, qty:{}, tab:"labels", nudge:{x:0,y:0}
 };
 let draft=null, saveTimer=null, bizTimer=null;
 
@@ -112,7 +114,7 @@ async function send(method,body,what){
 /* local fallback so the page still works signed out */
 const LS="otr-clp-v1";
 function lsRead(){ try{const r=localStorage.getItem(LS);return r?JSON.parse(r):null}catch(e){return null} }
-function lsWrite(){ try{localStorage.setItem(LS,JSON.stringify({biz:state.biz,scents:state.scents,packs:state.packs}))}catch(e){} }
+function lsWrite(){ try{localStorage.setItem(LS,JSON.stringify({biz:state.biz,scents:state.scents,packs:state.packs,nudge:state.nudge}))}catch(e){} }
 
 /* ---------------------------------------------------------------- label */
 function joinPhrases(codes,extra,table){
@@ -363,10 +365,31 @@ function renderSheet(){
   state.scents.forEach(s=>{ const n=Math.min(200,+state.qty[s.id]||0); for(let i=0;i<n;i++) labels.push(labelHTML(s,{size:sz})); });
   const empty='<div style="color:#555;font:400 13px sans-serif;padding:20px">Set how many of each you need above.</div>';
   $("#sheetFs").value=String(state.fs);
-  /* One label per page, the page being the label itself, so the Phomemo feeds
-     one sticker per label. The page size follows the chosen roll. */
-  $("#rollPage").textContent="@page{size:"+sz.w+"mm "+sz.h+"mm;margin:0}";
+  $("#nudgeRow").hidden=!sz.sheet;
   const total=labels.length;
+  if(sz.sheet){
+    /* A4 sheet of pre-cut stickers: each label goes exactly where its sticker
+       is, laid out from the page corner with no printer margin of our own. */
+    const sh=sz.sheet, per=sh.cols*sh.rows, nx=state.nudge.x, ny=state.nudge.y;
+    $("#rollPage").textContent="@page{size:A4;margin:0}";
+    $("#sheetFit").textContent=(total?total+" label"+(total===1?"":"s")+" to print, ":"")+per+" per A4 sheet ("+sh.cols+" across × "+sh.rows+" down). "+
+      "Print on the colour inkjet: paper size A4, margins none, scale 100%, no fit to page. Print one on plain paper first and hold it against a label sheet; if it is off, use the nudge boxes.";
+    const pages=[];
+    for(let i=0;i<labels.length;i+=per){
+      const slice=labels.slice(i,i+per);
+      pages.push('<div class="precut-page">'+slice.map((h,k)=>{
+        const c=k%sh.cols, r=Math.floor(k/sh.cols);
+        return '<div class="slot" style="left:'+(sh.left+c*sh.pitchX+nx).toFixed(2)+'mm;top:'+(sh.top+r*sh.pitchY+ny).toFixed(2)+'mm">'+h+'</div>';
+      }).join("")+'</div>');
+    }
+    g.innerHTML=pages.join("")||empty;
+    dropOverflowing(g,sz);
+    $("#picWarn").hidden=true;
+    return;
+  }
+  /* Phomemo rolls: one label per page, the page being the label itself, so the
+     printer feeds one sticker per label. The page size follows the chosen roll. */
+  $("#rollPage").textContent="@page{size:"+sz.w+"mm "+sz.h+"mm;margin:0}";
   $("#sheetFit").textContent=(total?total+" label"+(total===1?"":"s")+" to print, one per sticker, ":"")+
     "on the "+sz.w+" × "+sz.h+" mm roll. In the print box choose the Phomemo M110, set the paper size to "+sz.w+" × "+sz.h+" mm and the scale to 100%.";
   g.innerHTML=labels.map(h=>'<div class="roll-page">'+h+'</div>').join("")||empty;
@@ -732,6 +755,9 @@ $("#qtyBody").addEventListener("input",e=>{
   const i=e.target.closest("[data-qty]"); if(!i) return;
   state.qty[i.dataset.qty]=Math.max(0,Math.min(200,+i.value||0)); renderSheet();
 });
+["x","y"].forEach(k=>$("#nudge"+k.toUpperCase()).addEventListener("change",e=>{
+  state.nudge[k]=Math.max(-10,Math.min(10,Math.round((+e.target.value||0)*10)/10)); e.target.value=state.nudge[k]; lsWrite(); renderSheet();
+}));
 $("#clearQty").addEventListener("click",()=>{state.qty={};renderQty()});
 $("#printSheet").addEventListener("click",()=>{ $("#sheet-out").classList.remove("packs"); renderSheet(); window.print(); });
 $("#addPack").addEventListener("click",()=>{
@@ -774,7 +800,8 @@ $("#ioLoad").addEventListener("click",()=>{
 
 /* ---------------------------------------------------------------- boot */
 const cached=lsRead();
-if(cached){ if(cached.biz) state.biz={...state.biz,...cached.biz}; if(Array.isArray(cached.scents)) state.scents=cached.scents; if(Array.isArray(cached.packs)) state.packs=cached.packs; }
+if(cached){ if(cached.biz) state.biz={...state.biz,...cached.biz}; if(Array.isArray(cached.scents)) state.scents=cached.scents; if(Array.isArray(cached.packs)) state.packs=cached.packs; if(cached.nudge) state.nudge={x:+cached.nudge.x||0,y:+cached.nudge.y||0}; }
+$("#nudgeX").value=state.nudge.x; $("#nudgeY").value=state.nudge.y;
 renderBiz(); renderScents(); renderEditor(); renderPreview(); renderQty(); setTab("labels");
 
 (async()=>{

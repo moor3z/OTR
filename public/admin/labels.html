@@ -222,6 +222,11 @@ body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20
 .sheetgrid .lbl{box-shadow:none;outline:.2mm dashed #bbb;outline-offset:0}
 /* Roll labels: on screen a wrapped list; in print each one is its own page. */
 .roll-page{flex:none}
+/* Pre-cut A4 sheets: a true-size page with each label at its sticker's position. */
+.precut-page{position:relative;width:210mm;height:297mm;overflow:hidden;background:#fff;outline:1px solid var(--line);flex:none}
+.precut-page+.precut-page{margin-top:6mm}
+.precut-page .slot{position:absolute}
+.precut-page .lbl{outline:.2mm dashed #ccc}
 .nofit{box-sizing:border-box;display:flex;align-items:center;justify-content:center;text-align:center;padding:2mm;
   font:600 7pt/1.3 'DM Sans',Arial,sans-serif;color:var(--stop);background:var(--stop-bg);outline:.3mm dashed var(--stop);flex:none}
 @media print{.nofit{visibility:hidden}}
@@ -285,6 +290,9 @@ body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20
   #sheet-out .sheetgrid{display:block}
   .roll-page{break-after:page;page-break-after:always;margin:0;padding:0}
   .roll-page:last-child{break-after:auto;page-break-after:auto}
+  .precut-page{outline:none;break-after:page;page-break-after:always;margin:0}
+  .precut-page:last-child{break-after:auto;page-break-after:auto}
+  .precut-page .lbl{outline:none;box-shadow:none}
   .roll-page .lbl{outline:none;box-shadow:none}
   /* Pinned to the printable width so a long strip wraps instead of being shrunk to fit. */
   #sheet-out.packs{width:283mm!important}
@@ -369,9 +377,9 @@ body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20
                   <select id="fsize">
                     <option value="6">6 pt</option>
                     <option value="6.5">6.5 pt</option>
-                    <option value="7" selected>7 pt</option>
+                    <option value="7">7 pt</option>
                     <option value="7.5">7.5 pt</option>
-                    <option value="8">8 pt</option>
+                    <option value="8" selected>8 pt</option>
                     <option value="9">9 pt</option>
                   </select>
                 </div>
@@ -392,8 +400,8 @@ body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20
     <section class="panel" id="p-sheet" role="tabpanel" aria-labelledby="t-sheet" hidden>
       <div class="card">
         <h2>Print labels</h2>
-        <p class="sub">Set how many of each you need, then print to the Phomemo M110. Each label is its own page, so the printer feeds one sticker per label.</p>
-        <div class="note"><strong>To print:</strong> connect the Phomemo to the computer (USB, or Bluetooth with the Phomemo driver installed), click <strong>Print</strong> below, and in the print box choose the <strong>Phomemo M110</strong>, set the <strong>paper size to the roll you have loaded</strong> (50 × 80, 50 × 30 or 40 × 30 mm), <strong>margins to none</strong>, <strong>scale 100%</strong>, and headers and footers off. The first print on a new roll is often a test, so print one and check it before printing the lot.</div>
+        <p class="sub">Set how many of each you need, then print. The 105 × 74 mm size is for A4 sticker sheets on the colour inkjet (every fragrance fits, and the diamonds print red); the roll sizes are for the Phomemo, one sticker per label.</p>
+        <div class="note"><strong>To print:</strong> click <strong>Print</strong> below. In the print box choose the printer, set <strong>margins to none</strong>, <strong>scale 100%</strong> with "fit to page" off, and headers and footers off. For the sticker sheets the paper size is <strong>A4</strong>; for the Phomemo it is the <strong>roll you have loaded</strong> (50 × 80, 50 × 30 or 40 × 30 mm). Print one on plain paper first and check it.</div>
         <div class="sheetctrls" style="margin-top:14px">
           <div class="field">
             <label class="f" for="sheetSize">Label size</label>
@@ -404,14 +412,19 @@ body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20
             <select id="sheetFs">
                     <option value="6">6 pt</option>
                     <option value="6.5">6.5 pt</option>
-                    <option value="7" selected>7 pt</option>
+                    <option value="7">7 pt</option>
                     <option value="7.5">7.5 pt</option>
-                    <option value="8">8 pt</option>
+                    <option value="8" selected>8 pt</option>
                     <option value="9">9 pt</option>
                   </select>
           </div>
           <button class="btn btn-ghost" id="clearQty" type="button">Clear all</button>
           <button class="btn btn-pri" id="printSheet" type="button">Print</button>
+        </div>
+        <div class="sheetctrls" id="nudgeRow" style="margin-top:12px" hidden>
+          <div class="field" style="flex:0 0 150px"><label class="f" for="nudgeX">Nudge right (mm)</label><input type="number" id="nudgeX" min="-10" max="10" step="0.5" value="0"></div>
+          <div class="field" style="flex:0 0 150px"><label class="f" for="nudgeY">Nudge down (mm)</label><input type="number" id="nudgeY" min="-10" max="10" step="0.5" value="0"></div>
+          <p class="hintline" style="flex:1 1 200px;align-self:center;margin:0">Printers are often a millimetre or two out. Minus values move it the other way. Remembered on this device.</p>
         </div>
         <div id="sheetFit" class="hintline" style="margin-top:10px"></div>
         <div id="sheetWarn" class="note alert" style="margin-top:12px" hidden></div>
@@ -509,8 +522,10 @@ body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20
           <p>Under <strong>Sample packs</strong>, tick the fragrances in the pack and set the panel size: measure the space on the back of the clamshell, and that is one panel. The page works out how many panels the pack needs and warns if a strip is too wide for an A4 sheet. Multi-layer peel-back labels are sold for exactly this, or print the strip on sticker paper and concertina-fold it.</p>
           <p>If a pack needs more panels than you'd like, the levers are: fewer fragrances in the pack, picking melts whose labels are short (the ones with no symbol are a third the length of the ones with one), a taller panel, or a smaller text size — but not below 7 pt.</p>
 
+          <h3>A4 sticker sheets on the colour inkjet</h3>
+          <p>The <strong>105 × 74 mm, 8 per sheet</strong> size is for plain A4 sticker sheets (sold as "8 labels per sheet, 105 × 74 mm", two across and four down with no gaps) printed on the Canon PIXMA. Every fragrance fits, with the text at 7 or 8 pt, the warning diamonds print red as CLP requires, and the size is over the 52 × 74 mm minimum. Print the first run on plain paper, hold it against a label sheet up to the light, and use the nudge boxes if the printer is a millimetre out. This is the size to use for anything with a warning symbol.</p>
           <h3>The Phomemo M110 label printer</h3>
-          <p>The three label sizes are the rolls that come with the printer: <strong>50 × 80 mm</strong> (the big one, every fragrance fits), <strong>50 × 30 mm</strong> and <strong>40 × 30 mm</strong>. The printer is thermal, so no ink, and it prints one sticker per label. Print from a computer with the Phomemo driver installed, choosing the printer and the matching paper size in the print box; the phone app cannot print this page directly.</p>
+          <p>The three roll sizes are the rolls that come with the printer: <strong>50 × 80 mm</strong> (the big one, every fragrance fits), <strong>50 × 30 mm</strong> and <strong>40 × 30 mm</strong>. The printer is thermal, so no ink, and it prints one sticker per label. Print from a computer with the Phomemo driver installed, choosing the printer and the matching paper size in the print box; the phone app cannot print this page directly.</p>
           <p>Two things to know. First, it prints <strong>black only</strong>, and CLP requires the diamond frame around a warning symbol to be <strong>red</strong>. So the fragrances with a symbol (the ones that can cause an allergic skin reaction, or are harmful to aquatic life) cannot be properly labelled on this printer: for those, print on a colour printer or buy labels with the red diamond pre-printed. The page tells you which ones. Second, all three rolls are a little under the 52 × 74 mm CLP minimum (the 50 × 80 by 2 mm of width; the small two by a lot), so the small ones are only defensible on small packs where the full details are on the outer packaging too. Anything whose wording does not fit is left off and listed in red rather than printed cut short.</p>
 
           <h3>Not sure?</h3>
@@ -538,6 +553,6 @@ body[data-tab="sheet"] #sheet-out{display:block;box-shadow:0 3px 22px rgba(46,20
 <div id="sheet-out"><div class="sheetgrid" id="sheetGrid"></div></div>
 <div id="measure" aria-hidden="true"></div>
 
-<script type="module" src="/assets/js/clp.js?v=63"></script>
+<script type="module" src="/assets/js/clp.js?v=64"></script>
 </body>
 </html>

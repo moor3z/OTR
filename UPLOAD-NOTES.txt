@@ -1,6 +1,13 @@
-OTR - COMPLETE CURRENT PROJECT (version 63)
+OTR - COMPLETE CURRENT PROJECT (version 64)
 
-New in v63: the CLP label maker is set up for the Phomemo M110 label
+New in v64: a 105 x 74 mm size for A4 sticker sheets (8 per sheet, 2 x 4,
+no gaps) printed on the colour inkjet. It is the default: every fragrance
+fits at 8 pt, the warning diamonds print red, and the size is over the CLP
+minimum. The print puts each label exactly on its sticker, with the nudge
+boxes back for a printer that is a millimetre out. The three Phomemo roll
+sizes stay for symbol-free labels.
+
+v63: the CLP label maker is set up for the Phomemo M110 label
 printer. The label sizes are now just its three rolls - 50 x 80, 50 x 30 and
 40 x 30 mm - and the old A4 / Avery sticker-sheet sizes, the gap control and
 the nudge boxes are gone. Printing sends one label per page at the roll size,
