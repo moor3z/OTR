@@ -1,6 +1,16 @@
-OTR - COMPLETE CURRENT PROJECT (version 65)
+OTR - COMPLETE CURRENT PROJECT (version 66)
 
-New in v65: the label preview shrinks to fit a phone screen instead of
+New in v66: a label that fits the back of the clamshell. The pack back is
+about 78 x 70 mm, so the new default size is 72 x 63.5 mm on "12 per sheet,
+63.5 x 72 mm" A4 stickers (Avery L7164 size) in the Canon; the label is
+turned on its side on the sheet so a landscape label comes off an upright
+sticker. Labels now shrink their own text (7 -> 6.5 -> 6 pt) when that is
+the only way to fit, and the page lists which ones did. At 7 pt 51 of 59
+fit as is, 7 more go to 6.5 or 6 pt, and Clean Cotton does not fit at all
+and needs a fold-out from the Sample packs tab. 105 x 74 mm stays for bigger
+packaging; the Phomemo rolls stay for symbol-free labels.
+
+v65: the label preview shrinks to fit a phone screen instead of
 cutting the left edge off (it says "Shrunk to 72%"; printing is unaffected).
 
 v64: a 105 x 74 mm size for A4 sticker sheets (8 per sheet, 2 x 4,

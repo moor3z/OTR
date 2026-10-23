@@ -65,6 +65,8 @@ function required(codes){
 /* The label rolls that come with the Phomemo M110 (2-inch thermal label
    printer, 48 mm printable width). Each label is its own page when printing. */
 const SIZES=[
+ {id:"l7164",label:"72 × 63.5 mm — fits the back of the clamshell (A4 sheets, 12 per sheet, Avery L7164 size)",w:72,h:63.5,ok:false,why:"10 mm under the 74 mm minimum height, as the pack back is",
+  sheet:{cols:3,rows:4,left:7.2,top:4.5,pitchX:66,pitchY:72,rotate:true}},
  {id:"a4x8",label:"105 × 74 mm — A4 sticker sheets, 8 per sheet (colour printer: fits every fragrance, red diamonds)",w:105,h:74,ok:true,
   sheet:{cols:2,rows:4,left:0,top:0,pitchX:105,pitchY:74.25}},
  {id:"m110-50x80",label:"50 × 80 mm roll — fits every fragrance without a symbol",w:50,h:80,roll:true,ok:false,why:"2 mm narrower than the 52 × 74 mm minimum"},
@@ -81,7 +83,7 @@ const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&g
 const uid=()=>"f"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const state={
   biz:{name:"Over The Rainbow Wax Melts",addr:"18 Sutton Way\nEllesmere Port\nCH65 7DN",phone:"",email:""},
-  scents:[], packs:[], selId:null, search:"", size:"a4x8", fs:8, redName:false, gap:2, qty:{}, tab:"labels", nudge:{x:0,y:0}
+  scents:[], packs:[], selId:null, search:"", size:"l7164", fs:7, redName:false, gap:2, qty:{}, tab:"labels", nudge:{x:0,y:0}
 };
 let draft=null, saveTimer=null, bizTimer=null;
 
@@ -303,16 +305,22 @@ function renderEditor(){
 
 /* How many of her fragrances actually fit the chosen label, measured rather than guessed. */
 let fitHost=null;
+function overflows(html){
+  if(!fitHost){ fitHost=document.createElement("div"); fitHost.style.cssText="position:absolute;left:-9999px;top:0;visibility:hidden"; document.body.append(fitHost); }
+  fitHost.innerHTML=html; const e=fitHost.firstElementChild;
+  const over=e.scrollHeight>e.clientHeight+1; fitHost.innerHTML=""; return over;
+}
 function renderFitCount(){
   const el=$("#fitCount"); if(!el) return;
   if(!state.scents.length){ el.textContent=""; return; }
   if(!fitHost){ fitHost=document.createElement("div"); fitHost.style.cssText="position:absolute;left:-9999px;top:0;visibility:hidden"; document.body.append(fitHost); }
   const sz=SIZES.find(z=>z.id===state.size)||SIZES[0];
-  let fits=0, plain=0, plainFit=0;
+  let fits=0, plain=0, plainFit=0, small=0;
   for(const s of state.scents){
     fitHost.innerHTML=labelHTML(s,{size:sz});
     const e=fitHost.firstElementChild;
     const ok=e.scrollHeight<=e.clientHeight+1;
+    if(!ok){ let f=state.fs, okSmall=false; while(f>6&&!okSmall){ f=Math.round((f-0.5)*2)/2; okSmall=!overflows(labelHTML(s,{size:sz,fs:f})); } if(okSmall) small++; }
     const hasPic=(s.pictos||[]).some(k=>PICTOS[k]);
     if(ok) fits++;
     if(!hasPic){ plain++; if(ok) plainFit++; }
@@ -329,8 +337,10 @@ function renderFitCount(){
   }
   el.textContent=fits===n
     ? `All ${n} of your fragrances fit this size.`
-    : `${fits} of your ${n} fragrances fit this size — ${n-fits} need a bigger label or smaller text.`;
-  el.style.color=fits===n?"var(--ok)":"var(--warn)";
+    : fits+small===n
+      ? `${fits} of your ${n} fragrances fit this size at ${state.fs} pt; the other ${small} print with smaller text (down to 6 pt).`
+      : `${fits+small} of your ${n} fragrances fit this size${small?` (${small} with smaller text)`:""} — ${n-fits-small} do not fit even at 6 pt and need a bigger label or a fold-out.`;
+  el.style.color=fits===n?"var(--ok)":fits+small===n?"var(--ink)":"var(--warn)";
 }
 function renderPreview(){
   const demo=!draft;
@@ -366,8 +376,19 @@ function renderSheet(){
   const sz=SIZES.find(z=>z.id===$("#sheetSize").value)||SIZES[0];
   const out=$("#sheet-out"), g=$("#sheetGrid");
   out.classList.remove("packs");
-  const labels=[];
-  state.scents.forEach(s=>{ const n=Math.min(200,+state.qty[s.id]||0); for(let i=0;i<n;i++) labels.push(labelHTML(s,{size:sz})); });
+  /* Each label is printed at the chosen text size, or the next size down (to a
+     floor of 6 pt) if that is the only way its wording fits. The ones that had
+     to shrink are listed, so she knows which packs carry the small print. */
+  const labels=[], shrunk=[];
+  state.scents.forEach(s=>{
+    const n=Math.min(200,+state.qty[s.id]||0); if(!n) return;
+    let f=state.fs, html=labelHTML(s,{size:sz,fs:f});
+    while(f>6&&overflows(html)){ f=Math.round((f-0.5)*2)/2; html=labelHTML(s,{size:sz,fs:f}); }
+    if(f<state.fs&&!overflows(html)) shrunk.push((s.name||"Untitled")+" ("+f+" pt)");
+    for(let i=0;i<n;i++) labels.push(html);
+  });
+  const sw=$("#shrinkNote"); sw.hidden=!shrunk.length;
+  if(shrunk.length) sw.innerHTML='<strong>Printed with smaller text to fit:</strong> '+shrunk.map(esc).join(", ")+'. Pick a bigger label size if you would rather they matched the rest.';
   const empty='<div style="color:#555;font:400 13px sans-serif;padding:20px">Set how many of each you need above.</div>';
   $("#sheetFs").value=String(state.fs);
   $("#nudgeRow").hidden=!sz.sheet;
@@ -384,7 +405,9 @@ function renderSheet(){
       const slice=labels.slice(i,i+per);
       pages.push('<div class="precut-page">'+slice.map((h,k)=>{
         const c=k%sh.cols, r=Math.floor(k/sh.cols);
-        return '<div class="slot" style="left:'+(sh.left+c*sh.pitchX+nx).toFixed(2)+'mm;top:'+(sh.top+r*sh.pitchY+ny).toFixed(2)+'mm">'+h+'</div>';
+        /* A landscape label on a portrait sticker is turned on its side to fit. */
+        const turn=sh.rotate?' class="slot turn" style="width:'+sz.h+'mm;height:'+sz.w+'mm;':' class="slot" style="';
+        return '<div'+turn+'left:'+(sh.left+c*sh.pitchX+nx).toFixed(2)+'mm;top:'+(sh.top+r*sh.pitchY+ny).toFixed(2)+'mm">'+h+'</div>';
       }).join("")+'</div>');
     }
     g.innerHTML=pages.join("")||empty;
