@@ -124,7 +124,7 @@ const LOCAL_SETUP = {
 async function migrateContent(db) {
   const row = await db.prepare(`SELECT value FROM settings WHERE key='content_version'`).first();
   const have = Number(row?.value || 0);
-  if (have >= 13) return;
+  if (have >= 14) return;
   const now = new Date();
   const stmts = [];
   if (have < 2) { // FAQ page and starter blog posts
@@ -209,7 +209,11 @@ async function migrateContent(db) {
     stmts.push(db.prepare(`UPDATE pages SET body=body || char(10) || char(10) || ?, updated_at=?
       WHERE slug='delivery-returns' AND instr(body, '## Local delivery and collection')=0`).bind(LOCAL_DELIVERY_SECTION, iso));
   }
-  stmts.push(db.prepare(`INSERT INTO settings(key,value) VALUES('content_version','13') ON CONFLICT(key) DO UPDATE SET value='13'`));
+  if (have < 14) { // shape deals saved with no group word were one-scent-only by accident: make them "any N hearts"
+    for (const s of SHAPES)
+      stmts.push(db.prepare(`UPDATE variants SET deal_group=? WHERE shape=? AND deal_group='' AND deal_qty>0 AND deal_pence>0`).bind(s.name.toLowerCase(), s.id));
+  }
+  stmts.push(db.prepare(`INSERT INTO settings(key,value) VALUES('content_version','14') ON CONFLICT(key) DO UPDATE SET value='14'`));
   await db.batch(stmts);
 }
 

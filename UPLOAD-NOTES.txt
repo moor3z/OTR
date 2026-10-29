@@ -1,6 +1,16 @@
-OTR - COMPLETE CURRENT PROJECT (version 66)
+OTR - COMPLETE CURRENT PROJECT (version 67)
 
-New in v66: a label that fits the back of the clamshell. The pack back is
+New in v67: multi-buy deals are simpler. A deal typed on a shape line (the
+Hearts line under Price and stock) is now "any 2 hearts, any scent" by
+itself - no group word to type, and the greyed-out example numbers that
+looked filled in are gone. The product-level deal has a "Mix and match
+with" choice (this product only / any <category> / a group of your own)
+instead of a free-text word. Hearts deals already saved with no group word
+are fixed up once on deploy (content version 14), so Michelle's two-scents
+test should work straight after. The product list says "(this product
+only)" on any deal that does not mix.
+
+v66: a label that fits the back of the clamshell. The pack back is
 about 78 x 70 mm, so the new default size is 72 x 63.5 mm on "12 per sheet,
 63.5 x 72 mm" A4 stickers (Avery L7164 size) in the Canon; the label is
 turned on its side on the sheet so a landscape label comes off an upright

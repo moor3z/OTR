@@ -224,6 +224,15 @@ const shapeSession = sessions[sessions.length - 1];
 const shapeOrder = await orderByRef(shapeSession.client_reference_id);
 ok('the order and the Stripe line name the shape', r.status === 200 && shapeSession.form['line_items[0][price_data][product_data][name]'] === 'Fresh Linen Snap Bar – Hearts' && shapeOrder.items[0]?.label === 'Hearts', JSON.stringify(shapeSession.form['line_items[0][price_data][product_data][name]']));
 await j(`/api/admin/orders/${shapeSession.client_reference_id}`, { method: 'DELETE' });
+
+// A deal typed on a shape line with no group word mixes that shape across scents.
+r = await putProduct('fresh-linen-snap-bar', { shapes: ['hearts', 'square'], variants: [{ shape: 'hearts', price_pence: 300, stock: 5, deal_qty: 2, deal_pence: 500 }, { shape: 'square', price_pence: 350, stock: 7 }] });
+ok('a hearts deal with no group word becomes "Any 2 hearts for £5"', r.status === 200 && r.body.product.variants[0].own_deal?.group === 'hearts' && r.body.product.deal_labels[0] === 'Any 2 hearts for £5', JSON.stringify(r.body.product.variants[0].own_deal));
+r = await putProduct('lavender-dreams-snap-bar', { shapes: ['hearts'], variants: [{ shape: 'hearts', price_pence: 300, stock: 5, deal_qty: 2, deal_pence: 500 }] });
+const flH = (await prodById('fresh-linen-snap-bar')).variants.find((v) => v.shape === 'hearts'), lvH = r.body.product.variants[0];
+r = await post('/api/quote', { items: [{ variant_id: flH.id, qty: 1 }, { variant_id: lvH.id, qty: 1 }] });
+ok('two hearts of different scents get the deal together', r.body.discount_pence === 100 && r.body.subtotal_pence === 500, JSON.stringify(r.body.deals));
+await putProduct('lavender-dreams-snap-bar', { shapes: [], option_name: '', variants: [{ label: 'Default', price_pence: 350, stock: 18 }] });
 await putProduct('fresh-linen-snap-bar', { shapes: [], option_name: '', variants: [{ label: 'Default', price_pence: 350, stock: 24 }] });
 
 // Sample packs: a list of label ids plus a panel size, saved as a whole.

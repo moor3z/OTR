@@ -65,6 +65,9 @@ export function parseProduct(body, productId) {
       if (!Number.isInteger(d.deal_pence) || d.deal_pence < 30 || d.deal_pence > 100000) fields.variants = `The deal price on "${label}" must be between £0.30 and £1,000.`;
     } else d.deal_group = '';
     const shape = p.shapes.length ? clean(v.shape, 40) : '';
+    // A deal on a shape line with no group word means "any 2 hearts, any scent",
+    // which is what it is for; nobody wants a hearts deal on one scent only.
+    if (d.deal_qty && !d.deal_group && shape) d.deal_group = (SHAPES.find((s) => s.id === shape) || { name: shape }).name.toLowerCase();
     if (p.shapes.length && !Number.isInteger(price)) fields.variants = `Give the ${label} shape a price.`;
     return { id: keep ? v.id.slice(0, 120) : null, label, price_pence: price, stock, sort: i, shape, ...d };
   });
