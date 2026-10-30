@@ -1,6 +1,10 @@
-OTR - COMPLETE CURRENT PROJECT (version 67)
+OTR - COMPLETE CURRENT PROJECT (version 68)
 
-New in v67: multi-buy deals are simpler. A deal typed on a shape line (the
+New in v68: the slide-out basket shows the deals too - "Any 2 hearts for
+£5 applied - you save £1.00", or "add 1 more", with Items, Multi-buy saving
+and the real subtotal, the same as the basket page and checkout.
+
+v67: multi-buy deals are simpler. A deal typed on a shape line (the
 Hearts line under Price and stock) is now "any 2 hearts, any scent" by
 itself - no group word to type, and the greyed-out example numbers that
 looked filled in are gone. The product-level deal has a "Mix and match

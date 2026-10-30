@@ -1,4 +1,5 @@
-import { api, basket, lineHtml, wireLines, gbp, esc, $ } from './site.js?v=67';
+import { api, basket, lineHtml, wireLines, gbp, esc, $, dealHints } from './site.js?v=68';
+export { dealHints };
 
 const root = $('#basket-root');
 let seq = 0;
@@ -11,15 +12,6 @@ export function totalsHtml(q) {
     <div><dt>Subtotal</dt><dd>${gbp(q.subtotal_pence)}</dd></div>
     <div><dt>${esc(q.delivery_name || 'Delivery')}</dt><dd>${q.delivery_pence ? gbp(q.delivery_pence) : 'Free'}</dd></div>
     <div class="grand"><dt>Total</dt><dd>${gbp(q.total_pence)}</dd></div></dl>`;
-}
-
-// "Any 2 hearts for £5 — add 1 more" / "applied, saving £1.00". One line per deal in the basket.
-export function dealHints(q) {
-  return (q.deals || []).map((d) => {
-    const thing = d.group ? `of the ${esc(d.group)}` : 'of these';
-    if (d.need) return `<p class="deal-hint"><strong>${esc(d.label)}</strong> — add ${d.need} more ${thing} to get it${d.bundles ? ` again` : ''}.</p>`;
-    return `<p class="deal-hint is-on"><strong>${esc(d.label)}</strong> applied — you save ${gbp(d.saving_pence)}.</p>`;
-  }).join('');
 }
 
 // "Or collect for free / local delivery £4" — the choice itself is made at checkout.

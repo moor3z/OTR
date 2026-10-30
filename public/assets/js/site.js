@@ -201,6 +201,16 @@ export function wireLines(root, onChange) {
   });
 }
 
+// "Any 2 hearts for £5 — add 1 more" / "applied, saving £1.00". One line per deal in the basket.
+export function dealHints(q) {
+  return (q.deals || []).map((d) => {
+    const thing = d.group ? `of the ${esc(d.group)}` : 'of these';
+    if (d.need) return `<p class="deal-hint"><strong>${esc(d.label)}</strong> — add ${d.need} more ${thing} to get it${d.bundles ? ` again` : ''}.</p>`;
+    return `<p class="deal-hint is-on"><strong>${esc(d.label)}</strong> applied — you save ${gbp(d.saving_pence)}.</p>`;
+  }).join('');
+}
+
+let drawerSeq = 0;
 function renderDrawer(note) {
   const items = basket.read();
   const body = $('.drawer-body', drawer), foot = $('.drawer-foot', drawer);
@@ -211,10 +221,21 @@ function renderDrawer(note) {
   }
   const sub = items.reduce((n, i) => n + (i.unit_pence || 0) * i.qty, 0);
   body.innerHTML = `${note ? `<p class="free-hint" role="status" style="margin-top:1rem">${esc(note)}</p>` : ''}<ul class="lines">${items.map((i) => lineHtml(i)).join('')}</ul>`;
-  foot.innerHTML = `<div class="sub"><span>Subtotal</span><span>${gbp(sub)}</span></div>
+  const footHtml = (totals) => `${totals}
     <p class="small muted" style="margin:0">Delivery is added at the next step.</p>
     <a class="btn btn-primary btn-block" href="/checkout">Checkout</a>
     <a class="btn btn-ghost btn-block btn-sm" href="/basket">View basket</a>`;
+  foot.innerHTML = footHtml(`<div class="sub"><span>Subtotal</span><span>${gbp(sub)}</span></div>`);
+  // The drawer draws instantly from the saved basket, then the server prices
+  // it properly: multi-buy deals, "add 1 more" nudges and the real subtotal.
+  const mine = ++drawerSeq;
+  api('/api/quote', { method: 'POST', body: JSON.stringify({ items: basket.payload() }) }).then((q) => {
+    if (mine !== drawerSeq || !drawer.open) return;
+    const saving = q.discount_pence > 0;
+    foot.innerHTML = footHtml(`${dealHints(q)}${saving ? `<div class="sub small-sub"><span>Items</span><span>${gbp(q.items_pence)}</span></div>
+      <div class="sub small-sub saving"><span>Multi-buy saving</span><span>&minus;${gbp(q.discount_pence)}</span></div>` : ''}
+      <div class="sub"><span>Subtotal</span><span>${gbp(q.subtotal_pence)}</span></div>`);
+  }).catch(() => {});
 }
 
 export function openDrawer(note) {
